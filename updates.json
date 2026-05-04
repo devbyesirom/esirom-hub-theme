@@ -1,0 +1,104 @@
+[
+  {
+    "id": 9,
+    "title": "Password Reset & Security Enhancements",
+    "version": "1.8.0",
+    "description": "Users can now reset forgotten passwords directly from the login page! We've implemented a complete forgot password system with secure token-based email verification, plus enhanced UI consistency across all pages for a seamless experience.",
+    "date": "2026-02-03",
+    "highlights": [
+      "Forgot password functionality with email reset links",
+      "Secure token-based password reset (1-hour expiration)",
+      "Branded password reset email templates",
+      "Dedicated reset password page with validation",
+      "Desktop/tablet UI consistency improvements across Dashboard, Overview, and Workflow",
+      "Mobile header and navigation alignment enhancements"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "Production Workflow & SLA Tracking",
+    "version": "1.7.0",
+    "description": "Introducing the Production Workflow system for managing video projects, motion graphics, and animations! Track SLAs, manage project statuses, and collaborate with your team using @mentions and real-time notifications.",
+    "date": "2026-01-27",
+    "highlights": [
+      "Production project management with SLA tracking",
+      "Video-specific statuses (Editing, Rendering, Final Review)",
+      "@mention system for team collaboration",
+      "Reference link support for animation/motion graphics",
+      "Automatic notifications for status changes and mentions",
+      "DELETE endpoint for production projects"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Content Bank & Workflow System",
+    "version": "1.6.0",
+    "description": "Streamline your content creation with the new Workflow and Content Bank features! Submit concepts, get client feedback with @mentions, track approval statuses, and manage your entire content lifecycle from ideation to publication.",
+    "date": "2026-01-26",
+    "highlights": [
+      "Content Bank workflow with client approval system",
+      "Concept submission with reference images and attachments",
+      "@mention support in concept feedback",
+      "Automatic notifications for workflow updates",
+      "Admin role simulation (viewAs) for testing different user perspectives",
+      "Enhanced concept upload returning full concept data",
+      "Multiple workflow statuses: Draft, In Review, Approved, Rejected, Published"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Instagram to Facebook Mirroring & System Improvements",
+    "version": "1.5.0",
+    "description": "New Instagram to Facebook mirroring feature allows you to display Instagram posts with Facebook branding in the content calendar! Plus, we've fixed notification visibility issues and optimized the production environment for better performance.",
+    "date": "2026-01-23",
+    "highlights": [
+      "Mirror Instagram posts to Facebook in the content calendar",
+      "Separate KPI tracking for Facebook when mirroring is enabled",
+      "Fixed toast notification visibility and positioning",
+      "Database migration tools for seamless updates",
+      "Optimized Tailwind CSS for production use",
+      "Enhanced API endpoints with migration support"
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Automated KPI Tracking & Database Storage",
+    "version": "1.4.0",
+    "description": "KPI tracking just got smarter! Goals now automatically update with real-time data from your dashboard metrics. Set up multiple platform goals in seconds with our new Bulk Add feature, and all your configurations are now securely stored in the database for seamless access across devices.",
+    "date": "2025-10-02",
+    "highlights": [
+      "Auto-tracked metrics: Reach, Engagement, Impressions, and Engagement Rate",
+      "Bulk goal creation for multiple platforms at once",
+      "Database storage for persistent KPI goals and platform settings",
+      "Visual indicators showing auto-tracked vs manual KPIs"
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Dynamic Updates System",
+    "version": "1.3.0",
+    "description": "What's New section now updates automatically! We've implemented a dynamic changelog system that tracks all platform improvements and displays the latest updates on the login page.",
+    "date": "2025-10-02"
+  },
+  {
+    "id": 3,
+    "title": "Admin Panel & Multi-Brand Support",
+    "version": "1.2.0",
+    "description": "Introducing the powerful Admin Panel! Manage users, clients, and platform updates all in one place. Plus, clients can now be assigned to multiple brands for seamless multi-brand management.",
+    "date": "2025-10-01"
+  },
+  {
+    "id": 2,
+    "title": "KPI Management & Theme System",
+    "version": "1.1.0",
+    "description": "Track your progress with our new KPI Management System! Set platform-specific goals, monitor progress with visual indicators, and switch between light and dark modes for comfortable viewing.",
+    "date": "2025-10-01"
+  },
+  {
+    "id": 1,
+    "title": "Welcome to Agency Hub!",
+    "version": "1.0.0",
+    "description": "Your all-in-one social media management platform is here! Track performance across Facebook, Instagram, LinkedIn, YouTube, X, and TikTok with comprehensive analytics, audience insights, and advertising metrics.",
+    "date": "2025-10-01"
+  }
+]

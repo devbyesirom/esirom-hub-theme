@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esirom Client Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Set theme immediately to avoid FOUC (Flash of Unstyled Content)
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .sidebar-collapsed {
+            width: 5rem;
+        }
+        .sidebar-expanded {
+            width: 16rem;
+        }
+        .sidebar .nav-text {
+            display: inline;
+        }
+        .sidebar-collapsed .nav-text {
+            display: none;
+        }
+        .sidebar-collapsed .justify-between {
+           justify-content: center;
+        }
+        [x-cloak] { 
+            display: none !important; 
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white" x-data="clientHub">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex flex-col">
+            <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
+                <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
+                    <svg class="h-8 w-8 text-indigo-500 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.25-5.25" />
+                    </svg>
+                    <span class="text-xl font-bold text-gray-800 dark:text-white">Esirom</span>
+                </a>
+                <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+            </div>
+            <nav class="flex-1 px-2 py-4 space-y-2">
+                <a @click.prevent="activeView = 'dashboard'" href="#" :class="activeView === 'dashboard' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+                    <span class="ml-4 nav-text">Dashboard</span>
+                </a>
+                <a @click.prevent="activeView = 'calendar'" href="#" :class="activeView === 'calendar' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5" /></svg>
+                    <span class="ml-4 nav-text">Content Calendar</span>
+                </a>
+                <a @click.prevent="activeView = 'reports'" href="#" :class="activeView === 'reports' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                    <span class="ml-4 nav-text">Reports</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
+                <a href="#" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995a6.473 6.473 0 010 .255c0 .382.145.755.438.995l1.003.827c.48.398.668 1.05.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.003-.827c.293-.24.438-.613-.438-.995a6.473 6.473 0 010-.255c0-.382-.145-.755-.438-.995l-1.003-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124a6.57 6.57 0 01.22-.127c.332-.183-.582-.495-.645-.87l.213-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span class="ml-4 nav-text">Settings</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+            <header class="flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10">
+                <h1 class="text-xl font-semibold" x-text="pageTitle"></h1>
+                <div class="flex items-center space-x-4">
+                     <span class="text-sm text-gray-500 dark:text-gray-400" x-text="currentDate"></span>
+                    <button @click="toggleTheme" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Toggle theme">
+                        <svg x-show="theme === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        <svg x-show="theme === 'dark'" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    </button>
+                    <button class="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <svg class="h-6 w-6 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
+                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                    </button>
+                    <div x-data="{ dropdownOpen: false }" class="relative">
+                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center space-x-2">
+                            <img class="h-8 w-8 rounded-full" src="https://placehold.co/100x100/4a5568/ffffff?text=C" alt="Client logo">
+                            <span class="hidden sm:inline">Partner's Heart & Health</span>
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4 sm:p-6 lg:p-8">
+                <!-- Dashboard View -->
+                <div x-show="activeView === 'dashboard'" x-cloak>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- KPI Cards -->
+                        <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Followers</h3>
+                                <svg class="h-6 w-6 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962A3 3 0 003 11.178V15a3 3 0 003 3h2.962m4.5-9A3 3 0 009 5.178V3a3 3 0 00-3 3v.178m12 .428a3 3 0 00-3-3v2.178m-2.178 4.5A3 3 0 0012 12.822V15a3 3 0 003-3v-2.178z" /></svg>
+                            </div>
+                            <p class="text-3xl font-semibold mt-2">5,846</p>
+                            <p class="text-sm text-green-500 dark:text-green-400 flex items-center mt-1">+1.2% vs last month</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Engagement Rate</h3>
+                                <svg class="h-6 w-6 text-pink-500 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                            </div>
+                            <p class="text-3xl font-semibold mt-2">8.53%</p>
+                            <p class="text-sm text-red-500 dark:text-red-400 flex items-center mt-1">-15.2% vs last month</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Reach</h3>
+                                <svg class="h-6 w-6 text-teal-500 dark:text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+                            </div>
+                            <p class="text-3xl font-semibold mt-2">109,072</p>
+                            <p class="text-sm text-green-500 dark:text-green-400 flex items-center mt-1">+98.5% vs last month</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Ad Spend</h3>
+                                <svg class="h-6 w-6 text-yellow-500 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <p class="text-3xl font-semibold mt-2">$209.40</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">This month</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                        <div class="lg:col-span-2 bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <h3 class="text-lg font-semibold mb-4">Overall Reach</h3>
+                            <canvas id="reachChart"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                             <h3 class="text-lg font-semibold mb-4">Engagement by Platform</h3>
+                            <canvas id="engagementChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Calendar View -->
+                <div x-show="activeView === 'calendar'" x-cloak>
+                     <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 text-center shadow-sm">
+                        <h2 class="text-2xl font-semibold mb-4">Content Calendar</h2>
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">The full interactive content calendar will be available here.</p>
+                         <div class="p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5" /></svg>
+                            <p class="mt-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Calendar view coming soon</p>
+                         </div>
+                        <button class="mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            Schedule New Post
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reports View -->
+                <div x-show="activeView === 'reports'" x-cloak>
+                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-semibold">Reports</h2>
+                            <button class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                Generate New Report
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Report Name</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Date Range</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">Generated On</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <td class="p-3">Social Media Insights - August 2025</td>
+                                        <td class="p-3 text-gray-500 dark:text-gray-400">Aug 1 - Aug 31, 2025</td>
+                                        <td class="p-3 text-gray-500 dark:text-gray-400">Sep 5, 2025</td>
+                                        <td class="p-3 text-right">
+                                            <a href="#" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">View</a>
+                                            <a href="#" class="ml-4 font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Download</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <td class="p-3">Social Media Insights - July 2025</td>
+                                        <td class="p-3 text-gray-500 dark:text-gray-400">Jul 1 - Jul 31, 2025</td>
+                                        <td class="p-3 text-gray-500 dark:text-gray-400">Aug 4, 2025</td>
+                                        <td class="p-3 text-right">
+                                            <a href="#" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">View</a>
+                                            <a href="#" class="ml-4 font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Download</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('clientHub', () => ({
+                isSidebarOpen: true,
+                activeView: 'dashboard',
+                theme: localStorage.getItem('theme') || 'light',
+                currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+
+                toggleTheme() {
+                    this.theme = this.theme === 'light' ? 'dark' : 'light';
+                    localStorage.setItem('theme', this.theme);
+                    if (this.theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                get pageTitle() {
+                    switch (this.activeView) {
+                        case 'dashboard':
+                            return 'Dashboard Overview';
+                        case 'calendar':
+                            return 'Content Calendar';
+                        case 'reports':
+                            return 'Monthly Reports';
+                        default:
+                            return 'Dashboard';
+                    }
+                },
+                init() {
+                    this.$watch('activeView', () => {
+                        if (this.activeView === 'dashboard') {
+                           setTimeout(() => this.initCharts(), 0);
+                        }
+                    });
+                    
+                    this.$watch('theme', () => {
+                        setTimeout(() => this.initCharts(), 0);
+                    });
+
+                    this.initCharts();
+                },
+
+                initCharts() {
+                    if (window.reachChartInstance) window.reachChartInstance.destroy();
+                    if (window.engagementChartInstance) window.engagementChartInstance.destroy();
+
+                    const isDarkMode = this.theme === 'dark';
+                    const chartFontColor = isDarkMode ? '#9ca3af' : '#6b7280';
+                    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                    const lineBorderColor = isDarkMode ? '#818cf8' : '#6366f1';
+                    const pointBgColor = isDarkMode ? '#a5b4fc' : '#818cf8';
+                    const gradientStart = isDarkMode ? 'rgba(99, 102, 241, 0.5)' : 'rgba(129, 140, 248, 0.5)';
+                    const gradientEnd = isDarkMode ? 'rgba(99, 102, 241, 0)' : 'rgba(129, 140, 248, 0)';
+                    const doughnutBgColors = isDarkMode ? ['#3b82f6', '#ec4899', '#0ea5e9', '#64748b'] : ['#60a5fa', '#f472b6', '#38bdf8', '#94a3b8'];
+                    const doughnutBorderColor = isDarkMode ? '#1f2937' : '#ffffff';
+
+                    // Reach Chart
+                    const reachCtx = document.getElementById('reachChart')?.getContext('2d');
+                    if (reachCtx) {
+                        const gradient = reachCtx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, gradientStart);
+                        gradient.addColorStop(1, gradientEnd);
+                        
+                        window.reachChartInstance = new Chart(reachCtx, {
+                            type: 'line',
+                            data: {
+                                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                                datasets: [{
+                                    label: 'Reach',
+                                    data: [54060, 48320, 65040, 78120, 69340, 82500, 95100, 109072],
+                                    borderColor: lineBorderColor,
+                                    backgroundColor: gradient,
+                                    borderWidth: 2,
+                                    pointBackgroundColor: pointBgColor,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    fill: true,
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: { 
+                                        beginAtZero: true,
+                                        grid: { color: gridColor },
+                                        ticks: { color: chartFontColor, font: { size: 12 } }
+                                    },
+                                    x: {
+                                        grid: { display: false },
+                                        ticks: { color: chartFontColor, font: { size: 12 } }
+                                    }
+                                },
+                                plugins: {
+                                    legend: { display: false }
+                                }
+                            }
+                        });
+                    }
+
+                    // Engagement Chart
+                    const engagementCtx = document.getElementById('engagementChart')?.getContext('2d');
+                    if (engagementCtx) {
+                       window.engagementChartInstance = new Chart(engagementCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Facebook', 'Instagram', 'LinkedIn', 'X'],
+                                datasets: [{
+                                    label: 'Engagement',
+                                    data: [1486, 1275, 450, 320],
+                                    backgroundColor: doughnutBgColors,
+                                    borderColor: doughnutBorderColor,
+                                    borderWidth: 4,
+                                    hoverOffset: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: { 
+                                            color: chartFontColor,
+                                            padding: 20,
+                                            font: { size: 12 }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }));
+        });
+
+        // Firebase related code (currently commented out)
+        // Note: When using a regular script tag, you'll need to use the global 'firebase' object
+        // instead of ES6 imports. Example: const { initializeApp } = firebase.app;
+        
+        // IMPORTANT: Replace with your actual Firebase config
+        // const firebaseConfig = {
+        //   apiKey: "YOUR_API_KEY",
+        //   authDomain: "YOUR_AUTH_DOMAIN",
+        //   projectId: "YOUR_PROJECT_ID",
+        //   storageBucket: "YOUR_STORAGE_BUCKET",
+        //   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        //   appId: "YOUR_APP_ID"
+        // };
+
+        // const app = firebase.initializeApp(firebaseConfig);
+        // const auth = firebase.auth();
+        // const db = firebase.firestore();
+    </script>
+</body>
+</html>
+
