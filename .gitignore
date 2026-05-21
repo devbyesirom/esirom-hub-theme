@@ -1,4 +1,7 @@
 .DS_Store
+._*
+.AppleDouble
+.LSOverride
 backend/
 node_modules/
 *.log
