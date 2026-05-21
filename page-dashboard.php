@@ -410,6 +410,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <svg class="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     Reports
                                 </h3>
+                                <button
+                                    x-show="viewMode === 'client' || user.role === 'client'"
+                                    @click="generateOverviewReport()"
+                                    class="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    :disabled="generatingReport">
+                                    <span x-show="!generatingReport">Generate From Overview</span>
+                                    <span x-show="generatingReport">Generating...</span>
+                                </button>
                             </div>
                             <div x-show="!dashboardData.recentReports || dashboardData.recentReports.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
                                 <p class="mb-1">No saved reports yet. When you generate or save a report (including PDF export), it will list here with the date range and status.</p>
@@ -426,6 +434,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                                 :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
                                                 x-text="report.status || 'draft'"></span>
                                             <a x-show="report.pdfUrl" :href="report.pdfUrl" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">PDF</a>
+                                            <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download</button>
                                         </div>
                                     </li>
                                 </template>
@@ -1704,6 +1713,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 dashboardData: {},
                 loading: true,
                 toasts: [],
+                generatingReport: false,
                 availableClients: [],
                 selectedClient: null,
                 showKPIUpdateModal: false,
@@ -3942,6 +3952,110 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     const start = new Date(range.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     const end = new Date(range.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     return `${start} - ${end}`;
+                },
+
+                async generateOverviewReport() {
+                    const clientId = this.getClientId();
+                    if (!clientId) {
+                        this.showToast('No client selected for report generation.', 'error');
+                        return;
+                    }
+                    if (!this.dashboardData?.metrics) {
+                        this.showToast('Dashboard data is still loading. Please try again.', 'error');
+                        return;
+                    }
+
+                    const periodStart = this.currentPeriodStart || new Date(new Date().getFullYear(), 0, 1);
+                    const periodEnd = this.currentPeriodEnd || new Date();
+                    const reportName = `${this.dashboardData?.client?.brandName || this.dashboardData?.client?.name || 'Client'} Overview Report (${this.currentPeriodLabel || this.dateRange || 'Custom'})`;
+
+                    const payload = {
+                        clientId,
+                        name: reportName,
+                        type: 'automated',
+                        status: 'draft',
+                        dateRange: {
+                            start: periodStart.toISOString(),
+                            end: periodEnd.toISOString()
+                        },
+                        platforms: Object.keys(this.dashboardData.platformBreakdown || {}),
+                        metrics: {
+                            totalReach: Number(this.dashboardData?.metrics?.reach?.current) || 0,
+                            totalImpressions: Number(this.dashboardData?.metrics?.impressions?.current) || 0,
+                            totalEngagement: Number(this.dashboardData?.metrics?.engagement?.current) || 0,
+                            engagementRate: Number(this.dashboardData?.metrics?.engagementRate?.current) || 0,
+                            followerGrowth: 0,
+                            totalAdSpend: Number(this.dashboardData?.metrics?.adSpend?.current) || 0,
+                            platformBreakdown: this.dashboardData.platformBreakdown || {}
+                        },
+                        customData: {
+                            generatedFrom: 'page_overview',
+                            periodLabel: this.currentPeriodLabel || this.dateRange || 'custom',
+                            insights: this.dashboardData.insights || null,
+                            demographics: this.dashboardData.demographics || null
+                        }
+                    };
+
+                    this.generatingReport = true;
+                    try {
+                        const response = await fetch(`${API_URL}/reports`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to generate report');
+                        }
+
+                        await this.loadDashboardData(this.clientLoadToken);
+                        this.showToast('Report generated successfully.', 'success');
+                    } catch (error) {
+                        console.error('Generate report error:', error);
+                        this.showToast(error.message || 'Failed to generate report.', 'error');
+                    } finally {
+                        this.generatingReport = false;
+                    }
+                },
+
+                async downloadReport(report) {
+                    if (!report) return;
+                    if (report.pdfUrl) {
+                        window.open(report.pdfUrl, '_blank', 'noopener,noreferrer');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${API_URL}/reports/${report._id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to download report');
+                        }
+
+                        const safeName = (report.name || 'report')
+                            .replace(/[^a-z0-9]+/gi, '_')
+                            .replace(/^_+|_+$/g, '')
+                            .toLowerCase();
+                        const blob = new Blob([JSON.stringify(data.data || report, null, 2)], { type: 'application/json' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `${safeName || 'report'}.json`;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        URL.revokeObjectURL(link.href);
+                    } catch (error) {
+                        console.error('Download report error:', error);
+                        this.showToast(error.message || 'Unable to download report.', 'error');
+                    }
                 },
 
                 initCharts() {
