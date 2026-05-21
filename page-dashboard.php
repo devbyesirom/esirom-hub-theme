@@ -48,6 +48,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script>
         // Set theme immediately to avoid FOUC (Flash of Unstyled Content)
         const theme = localStorage.getItem('theme') || 'light';
@@ -262,7 +263,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <span class="ml-4 nav-text">Page Overview</span>
                 </a>
-                <a x-show="viewMode === 'client'" href="#reports" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a x-show="viewMode === 'client'" href="#reports" @click="activeView = 'reports'" :class="activeView === 'reports' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     <span class="ml-4 nav-text">Reports</span>
                 </a>
@@ -287,7 +288,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <span class="ml-4 nav-text">Insights</span>
                 </a>
-                <a x-show="viewMode !== 'client'" href="#reports" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a x-show="viewMode !== 'client'" href="#reports" @click="activeView = 'reports'" :class="activeView === 'reports' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     <span class="ml-4 nav-text">Reports</span>
                 </a>
@@ -433,8 +434,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             <span class="text-xs font-medium px-2 py-0.5 rounded capitalize"
                                                 :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
                                                 x-text="report.status || 'draft'"></span>
-                                            <a x-show="report.pdfUrl" :href="report.pdfUrl" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">PDF</a>
-                                            <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download</button>
+                                            <button @click.prevent="openReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View</button>
+                                            <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download PDF</button>
                                         </div>
                                     </li>
                                 </template>
@@ -923,6 +924,49 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
+                <!-- Reports View -->
+                <div x-show="activeView === 'reports'" x-cloak>
+                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Reports</h2>
+                            <button
+                                x-show="viewMode === 'client' || user.role === 'client'"
+                                @click="generateOverviewReport()"
+                                class="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                :disabled="generatingReport">
+                                <span x-show="!generatingReport">Generate From Overview</span>
+                                <span x-show="generatingReport">Generating...</span>
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            View all saved reports for this brand. Use View to open report details and Download to export PDF.
+                        </p>
+
+                        <div x-show="!reports.length" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                            No reports found for this client yet.
+                        </div>
+
+                        <ul x-show="reports.length" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <template x-for="report in reports" :key="report._id">
+                                <li class="py-3 first:pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white" x-text="report.name"></p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatDateRange(report.dateRange)"></p>
+                                    </div>
+                                    <div class="flex items-center flex-wrap gap-3">
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded capitalize"
+                                            :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
+                                            x-text="report.status || 'draft'"></span>
+                                        <button @click.prevent="openReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View</button>
+                                        <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download PDF</button>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- Published Posts View -->
                 <div x-show="activeView === 'calendar'" x-cloak>
                     <!-- Posts Header -->
@@ -1303,6 +1347,49 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" x-text="postForm.id ? 'Update Post' : 'Create Post'"></button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div x-show="showReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showReportModal = false">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+            <h3 class="text-lg font-bold mb-4 dark:text-white" x-text="selectedReport?.name || 'Report'"></h3>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-gray-500 dark:text-gray-400">Date Range</p>
+                        <p class="font-semibold text-gray-900 dark:text-white" x-text="formatDateRange(selectedReport?.dateRange)"></p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-gray-500 dark:text-gray-400">Status</p>
+                        <p class="font-semibold text-gray-900 dark:text-white capitalize" x-text="selectedReport?.status || 'draft'"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Reach</p>
+                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(selectedReport?.metrics?.totalReach || 0)"></p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Impressions</p>
+                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(selectedReport?.metrics?.totalImpressions || 0)"></p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Engagement</p>
+                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(selectedReport?.metrics?.totalEngagement || 0)"></p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Engagement Rate</p>
+                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="(selectedReport?.metrics?.engagementRate || 0).toFixed(2) + '%'"></p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
+                    <button type="button" @click="showReportModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
+                    <button type="button" @click="downloadReport(selectedReport)" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Download PDF</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1711,6 +1798,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
                 user: {},
                 dashboardData: {},
+                reports: [],
+                selectedReport: null,
+                showReportModal: false,
                 loading: true,
                 toasts: [],
                 generatingReport: false,
@@ -1735,6 +1825,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.resetInsightsUpload();
 
                     await this.loadDashboardData(token);
+                    await this.loadReports(token);
                     await this.loadPosts(token);
                     this.loadCampaigns();
                     this.loadPlatformFollowers();
@@ -2250,8 +2341,39 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             return this.viewMode === 'client' ? 'Page Overview' : 'Dashboard Overview';
                         case 'calendar':
                             return this.viewMode === 'client' ? 'Published Posts' : (this.selectedClient?.brandName || this.selectedClient?.name || 'Dashboard');
+                        case 'reports':
+                            return 'Reports';
                         default:
                             return 'Dashboard';
+                    }
+                },
+
+                async loadReports(loadToken = null) {
+                    const clientId = this.getClientId();
+                    if (!clientId) {
+                        this.reports = [];
+                        return;
+                    }
+
+                    const token = loadToken ?? this.clientLoadToken;
+                    try {
+                        const response = await fetch(`${API_URL}/reports?clientId=${encodeURIComponent(clientId)}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+
+                        if (token !== this.clientLoadToken) return;
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.reports = data.data || [];
+                        } else {
+                            this.reports = [];
+                        }
+                    } catch (error) {
+                        console.error('Load reports error:', error);
+                        this.reports = [];
                     }
                 },
 
@@ -3102,16 +3224,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         'overview': 'dashboard',
                         'dashboard': 'dashboard', // Support old links
                         'content-calendar': 'calendar',
-                        'reports': 'dashboard',
-                        'manage-reports': 'dashboard'
+                        'reports': 'reports',
+                        'manage-reports': 'reports'
                     };
                     this.activeView = routeMap[hash] || 'dashboard';
-                    if (hash === 'reports' || hash === 'manage-reports') {
-                        this.$nextTick(() => {
-                            const el = document.getElementById('client-reports-section');
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        });
-                    }
                 },
 
                 togglePostSelection(postId, event) {
@@ -4013,6 +4129,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
 
                         await this.loadDashboardData(this.clientLoadToken);
+                        await this.loadReports(this.clientLoadToken);
                         this.showToast('Report generated successfully.', 'success');
                     } catch (error) {
                         console.error('Generate report error:', error);
@@ -4025,7 +4142,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 async downloadReport(report) {
                     if (!report) return;
                     if (report.pdfUrl) {
-                        window.open(report.pdfUrl, '_blank', 'noopener,noreferrer');
+                        const a = document.createElement('a');
+                        a.href = report.pdfUrl;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.download = `${(report.name || 'report').replace(/[^a-z0-9]+/gi, '_').toLowerCase()}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
                         return;
                     }
 
@@ -4040,22 +4164,74 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             throw new Error(data.message || 'Failed to download report');
                         }
 
-                        const safeName = (report.name || 'report')
-                            .replace(/[^a-z0-9]+/gi, '_')
-                            .replace(/^_+|_+$/g, '')
-                            .toLowerCase();
-                        const blob = new Blob([JSON.stringify(data.data || report, null, 2)], { type: 'application/json' });
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = `${safeName || 'report'}.json`;
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        URL.revokeObjectURL(link.href);
+                        this.downloadReportAsPdf(data.data || report);
                     } catch (error) {
                         console.error('Download report error:', error);
                         this.showToast(error.message || 'Unable to download report.', 'error');
                     }
+                },
+
+                async openReport(report) {
+                    if (!report?._id) return;
+                    try {
+                        const response = await fetch(`${API_URL}/reports/${report._id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to load report');
+                        }
+                        this.selectedReport = data.data;
+                        this.showReportModal = true;
+                    } catch (error) {
+                        console.error('Open report error:', error);
+                        this.showToast(error.message || 'Unable to open report.', 'error');
+                    }
+                },
+
+                downloadReportAsPdf(report) {
+                    const jsPdfApi = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+                    if (!jsPdfApi) {
+                        this.showToast('PDF library failed to load. Please try again.', 'error');
+                        return;
+                    }
+
+                    const doc = new jsPdfApi();
+                    const lineGap = 7;
+                    const left = 14;
+                    let y = 20;
+
+                    const safeText = (value) => (value == null ? '' : String(value));
+                    const writeLine = (label, value) => {
+                        const text = `${label}: ${safeText(value)}`;
+                        const lines = doc.splitTextToSize(text, 180);
+                        doc.text(lines, left, y);
+                        y += lines.length * lineGap;
+                    };
+
+                    doc.setFontSize(16);
+                    doc.text(safeText(report.name || 'Client Report'), left, y);
+                    y += 10;
+                    doc.setFontSize(11);
+
+                    const start = report?.dateRange?.start ? new Date(report.dateRange.start).toLocaleDateString() : 'N/A';
+                    const end = report?.dateRange?.end ? new Date(report.dateRange.end).toLocaleDateString() : 'N/A';
+                    writeLine('Date range', `${start} - ${end}`);
+                    writeLine('Status', report.status || 'draft');
+                    writeLine('Type', report.type || 'automated');
+                    y += 2;
+
+                    const metrics = report.metrics || {};
+                    writeLine('Total reach', metrics.totalReach || 0);
+                    writeLine('Total impressions', metrics.totalImpressions || 0);
+                    writeLine('Total engagement', metrics.totalEngagement || 0);
+                    writeLine('Engagement rate', `${Number(metrics.engagementRate || 0).toFixed(2)}%`);
+                    writeLine('Ad spend', `$${Number(metrics.totalAdSpend || 0).toFixed(2)}`);
+
+                    const filename = `${safeText(report.name || 'report').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'report'}.pdf`;
+                    doc.save(filename);
                 },
 
                 initCharts() {
