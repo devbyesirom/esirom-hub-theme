@@ -167,12 +167,6 @@ show_admin_bar(false);
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     <span class="ml-4 nav-text" x-show="isSidebarOpen">Content Calendar</span>
                 </a>
-                <!-- Workflow - Client View Only (active on this page) -->
-                <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>" class="flex items-center p-3 rounded-lg transition-colors duration-200" :class="activeTab !== 'contentBank' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                    <span class="ml-4 nav-text" x-show="isSidebarOpen">Workflow</span>
-                </a>
-
                 <!-- ADMIN/BRAND REP VIEW NAVIGATION -->
                 <!-- Workflow - active on this page -->
                 <a x-show="viewMode !== 'client'" href="#" class="flex items-center p-3 rounded-lg bg-indigo-500 text-white transition-colors duration-200">
@@ -2961,6 +2955,7 @@ show_admin_bar(false);
                         await this.loadConcepts();
                         await this.loadTasks();
                         await this.loadProductions();
+                        if (this.activeTab === 'contentBank') await this.loadContentBank();
                         if (this.activeTab === 'planner') await this.loadPlans();
                         if (this.activeTab === 'feed') await this.loadFeed();
                         // Load last feed check from localStorage and check for unread items
@@ -4683,14 +4678,6 @@ show_admin_bar(false);
                 </svg>
                 <span class="text-xs">Calendar</span>
             </a>
-            <!-- Workflow - Client View (active on this page) -->
-            <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-indigo-600 dark:text-indigo-400">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                </svg>
-                <span class="text-xs font-medium">Workflow</span>
-            </a>
-
             <!-- ADMIN/BRAND REP VIEW MOBILE NAV -->
             <!-- Workflow - current page -->
             <a x-show="viewMode !== 'client'" href="#" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-indigo-600 dark:text-indigo-400">
