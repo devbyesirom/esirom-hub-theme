@@ -208,7 +208,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <!-- Client Selector (only when in client view) -->
                                 <div x-show="viewMode === 'client'" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 px-3">View as Client:</label>
-                                    <select x-model="selectedViewClient" @change="localStorage.setItem('selectedViewClient', selectedViewClient); reloadClientScopedData();" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    <select x-model="selectedViewClient" @change="handleSelectedViewClientChange()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <option value="">All Brands</option>
                                         <template x-for="client in availableClients" :key="client._id">
                                             <option :value="client._id" x-text="client.brandName || client.name"></option>
                                         </template>
@@ -343,6 +344,29 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     </div>
                                 </button>
                             </template>
+                        </div>
+                    </div>
+                    <!-- Client multi-brand scope (for client users with multiple brands) -->
+                    <div x-show="user.role === 'client' && availableClients.length > 1" class="flex items-center gap-2">
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Brand Scope:</span>
+                        <button @click="setClientBrandScope('')"
+                                :class="!selectedViewClient ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors">
+                            All Brands
+                        </button>
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
+                                Choose Brand
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-30 max-h-72 overflow-y-auto">
+                                <template x-for="client in availableClients" :key="`client-scope-${client._id}`">
+                                    <button @click="setClientBrandScope(client._id); open = false"
+                                            :class="selectedViewClient === client._id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                                            class="w-full text-left px-3 py-2 text-sm">
+                                        <span x-text="client.brandName || client.companyName || client.name"></span>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2062,8 +2086,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         window.location.hash = 'content-calendar';
                     }
                     
-                    // Load available clients for admins/brand reps
-                    if (this.user.role === 'admin' || this.user.role === 'brand_rep') {
+                    // Load available clients for admins/brand reps and multi-brand clients
+                    if (this.user.role === 'admin' || this.user.role === 'brand_rep' || this.user.role === 'client') {
                         await this.loadAvailableClients();
                     }
                     
@@ -2116,14 +2140,26 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         if (response.ok) {
                             const data = await response.json();
                             this.availableClients = data.data || [];
-                            
-                            // Restore previously selected client or use first
-                            const savedClientId = localStorage.getItem('selectedClientId');
-                            if (savedClientId && this.availableClients.length > 0) {
-                                const savedClient = this.availableClients.find(c => c._id === savedClientId);
-                                this.selectedClient = savedClient || this.availableClients[0];
-                            } else if (this.availableClients.length > 0) {
-                                this.selectedClient = this.availableClients[0];
+
+                            if (this.user.role === 'client') {
+                                // For real client users: allow "All Brands" when they have more than one brand.
+                                const savedViewClient = localStorage.getItem('selectedViewClient') || '';
+                                const hasSaved = this.availableClients.some(c => c._id === savedViewClient);
+                                this.selectedViewClient = hasSaved ? savedViewClient : '';
+                                if (this.selectedViewClient) {
+                                    localStorage.setItem('selectedViewClient', this.selectedViewClient);
+                                } else {
+                                    localStorage.removeItem('selectedViewClient');
+                                }
+                            } else {
+                                // Restore previously selected client or use first (admin/brand rep)
+                                const savedClientId = localStorage.getItem('selectedClientId');
+                                if (savedClientId && this.availableClients.length > 0) {
+                                    const savedClient = this.availableClients.find(c => c._id === savedClientId);
+                                    this.selectedClient = savedClient || this.availableClients[0];
+                                } else if (this.availableClients.length > 0) {
+                                    this.selectedClient = this.availableClients[0];
+                                }
                             }
                         }
                     } catch (error) {
@@ -2141,11 +2177,59 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     try {
                         this.loading = true;
                         const token = loadToken ?? this.clientLoadToken;
-                        
-                        const clientId = this.getClientId();
-                        if (!clientId) {
+
+                        const clientIds = this.getActiveClientIds();
+                        if (!clientIds.length) {
                             throw new Error('No client selected');
                         }
+
+                        // Client "All Brands" scope: aggregate data from each allowed brand dashboard.
+                        if (clientIds.length > 1) {
+                            const snapshots = await Promise.all(clientIds.map(async (id) => {
+                                try {
+                                    const res = await fetch(`${API_URL}/dashboard/${id}`, {
+                                        headers: {
+                                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                        }
+                                    });
+                                    if (!res.ok) return null;
+                                    const data = await res.json();
+                                    return data?.data || null;
+                                } catch (error) {
+                                    console.error(`Error loading dashboard for client ${id}:`, error);
+                                    return null;
+                                }
+                            }));
+
+                            if (token !== this.clientLoadToken) return;
+
+                            const validSnapshots = snapshots.filter(Boolean);
+                            this.dashboardData = this.mergeDashboardSnapshots(validSnapshots);
+                            this.clientPlatforms = [...new Set(validSnapshots.flatMap(s => Object.keys(s?.platformBreakdown || {})))];
+                            if (this.clientPlatforms.length === 0) {
+                                this.clientPlatforms = ['facebook', 'instagram'];
+                            }
+                            this.activePlatforms = [...this.clientPlatforms];
+
+                            const savedPreferences = localStorage.getItem('widgetPreferences_all_clients');
+                            if (savedPreferences) {
+                                this.userWidgetPreferences = JSON.parse(savedPreferences);
+                            } else {
+                                this.userWidgetPreferences = [
+                                    'reach', 'engagement_rate', 'total_engagement', 'ad_spend',
+                                    'impressions', 'views', 'likes', 'comments', 'shares', 'saves',
+                                    'watch_time', 'skip_rate', 'follower_views', 'non_follower_views', 'followers'
+                                ];
+                            }
+
+                            setTimeout(() => {
+                                this.updateAutoTrackedKPIs();
+                                this.initCharts();
+                            }, 100);
+                            return;
+                        }
+
+                        const clientId = clientIds[0];
                         
                         const response = await fetch(`${API_URL}/dashboard/${clientId}`, {
                             headers: {
@@ -2268,6 +2352,81 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     } finally {
                         this.loading = false;
                     }
+                },
+
+                mergeDashboardSnapshots(snapshots = []) {
+                    const combined = {
+                        client: { brandName: 'All Brands' },
+                        metrics: {
+                            reach: { current: 0, previous: 0, change: 0 },
+                            impressions: { current: 0, previous: 0, change: 0 },
+                            engagement: { current: 0, previous: 0, change: 0 },
+                            engagementRate: { current: 0, previous: 0, change: 0 },
+                            adSpend: { current: 0, previous: 0, change: 0 }
+                        },
+                        platformBreakdown: {},
+                        recentReports: [],
+                        upcomingPosts: [],
+                        pendingPosts: [],
+                        kpis: [],
+                        insights: [],
+                        demographics: null,
+                        advertising: null
+                    };
+
+                    snapshots.forEach((snapshot) => {
+                        if (!snapshot) return;
+
+                        const addMetric = (key) => {
+                            const current = Number(snapshot?.metrics?.[key]?.current || 0);
+                            const previous = Number(snapshot?.metrics?.[key]?.previous || 0);
+                            combined.metrics[key].current += current;
+                            combined.metrics[key].previous += previous;
+                        };
+
+                        addMetric('reach');
+                        addMetric('impressions');
+                        addMetric('engagement');
+                        addMetric('adSpend');
+
+                        Object.entries(snapshot?.platformBreakdown || {}).forEach(([platform, values]) => {
+                            if (!combined.platformBreakdown[platform]) {
+                                combined.platformBreakdown[platform] = { posts: 0, reach: 0, engagement: 0 };
+                            }
+                            combined.platformBreakdown[platform].posts += Number(values?.posts || 0);
+                            combined.platformBreakdown[platform].reach += Number(values?.reach || 0);
+                            combined.platformBreakdown[platform].engagement += Number(values?.engagement || 0);
+                        });
+
+                        combined.recentReports.push(...(snapshot?.recentReports || []));
+                        combined.upcomingPosts.push(...(snapshot?.upcomingPosts || []));
+                        combined.pendingPosts.push(...(snapshot?.pendingPosts || []));
+                    });
+
+                    const engagementCurrent = combined.metrics.engagement.current;
+                    const impressionsCurrent = combined.metrics.impressions.current;
+                    const engagementPrevious = combined.metrics.engagement.previous;
+                    const impressionsPrevious = combined.metrics.impressions.previous;
+                    combined.metrics.engagementRate.current = impressionsCurrent > 0 ? (engagementCurrent / impressionsCurrent) * 100 : 0;
+                    combined.metrics.engagementRate.previous = impressionsPrevious > 0 ? (engagementPrevious / impressionsPrevious) * 100 : 0;
+
+                    Object.keys(combined.metrics).forEach((key) => {
+                        const metric = combined.metrics[key];
+                        metric.change = metric.previous > 0 ? ((metric.current - metric.previous) / metric.previous) * 100 : (metric.current > 0 ? 100 : 0);
+                    });
+
+                    combined.recentReports = combined.recentReports
+                        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                        .slice(0, 5);
+
+                    combined.upcomingPosts = combined.upcomingPosts
+                        .sort((a, b) => new Date(a.scheduledDate || 0) - new Date(b.scheduledDate || 0))
+                        .slice(0, 10);
+
+                    combined.pendingPosts = combined.pendingPosts
+                        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+                    return combined;
                 },
 
                 updateAutoTrackedKPIs() {
@@ -2399,7 +2558,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             
                             // Now load the dashboard
                             await this.verifyAuth();
-                            if (this.user.role === 'admin' || this.user.role === 'brand_rep') {
+                            if (this.user.role === 'admin' || this.user.role === 'brand_rep' || this.user.role === 'client') {
                                 await this.loadAvailableClients();
                             }
                             this.setDateRange('ytd');
@@ -2427,8 +2586,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     
                     // For client view, select first client if not already selected
                     if (mode === 'client' && !this.selectedViewClient && this.availableClients.length > 0) {
-                        this.selectedViewClient = this.availableClients[0]._id;
-                        localStorage.setItem('selectedViewClient', this.selectedViewClient);
+                        this.selectedViewClient = '';
+                        localStorage.removeItem('selectedViewClient');
                     } else if (mode !== 'client') {
                         this.selectedViewClient = null;
                         localStorage.removeItem('selectedViewClient');
@@ -2436,6 +2595,39 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     
                     // Reload all data with the new view perspective
                     this.reloadClientScopedData();
+                },
+
+                handleSelectedViewClientChange() {
+                    if (this.selectedViewClient) {
+                        localStorage.setItem('selectedViewClient', this.selectedViewClient);
+                    } else {
+                        localStorage.removeItem('selectedViewClient');
+                    }
+                    this.reloadClientScopedData();
+                },
+
+                setClientBrandScope(clientId) {
+                    this.selectedViewClient = clientId || '';
+                    this.handleSelectedViewClientChange();
+                },
+
+                getActiveClientIds() {
+                    if (this.user.role === 'client') {
+                        if (this.selectedViewClient) return [this.selectedViewClient];
+                        const ids = (this.availableClients || []).map(c => c?._id).filter(Boolean);
+                        if (ids.length > 0) return ids;
+                        const fallbackId = this.user?.clientId?._id || this.user?.clientId;
+                        return fallbackId ? [fallbackId] : [];
+                    }
+
+                    if (this.viewMode === 'client') {
+                        if (this.selectedViewClient) return [this.selectedViewClient];
+                        const allIds = (this.availableClients || []).map(c => c?._id).filter(Boolean);
+                        if (allIds.length > 0) return allIds;
+                    }
+
+                    const selectedId = this.selectedClient?._id;
+                    return selectedId ? [selectedId] : [];
                 },
 
                 toggleTheme() {
@@ -2463,14 +2655,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 async loadReports(loadToken = null) {
                     const clientId = this.getClientId();
-                    if (!clientId) {
+                    if (!clientId && this.user.role !== 'client') {
                         this.reports = [];
                         return;
                     }
 
                     const token = loadToken ?? this.clientLoadToken;
                     try {
-                        const response = await fetch(`${API_URL}/reports?clientId=${encodeURIComponent(clientId)}`, {
+                        const reportsUrl = clientId
+                            ? `${API_URL}/reports?clientId=${encodeURIComponent(clientId)}`
+                            : `${API_URL}/reports`;
+                        const response = await fetch(reportsUrl, {
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
                             }
@@ -2560,7 +2755,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 validateReportBuilderPayload(payload) {
-                    if (!payload.clientId) return 'No client selected for report generation.';
+                    if (!payload.clientId) {
+                        if (this.user.role === 'client' && (this.availableClients || []).length > 1) {
+                            return 'Select a specific brand before generating a report.';
+                        }
+                        return 'No client selected for report generation.';
+                    }
                     if (!payload.dateRange?.start || !payload.dateRange?.end) return 'Please select a valid start and end date.';
                     if (!Array.isArray(payload.platforms) || payload.platforms.length === 0) return 'Please select at least one platform.';
                     if (payload.selectedPostIds && payload.selectedPostIds.length > 0 && !this.reportBuilder.useSelectedPosts) {
@@ -2647,7 +2847,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     
                     try {
                         // Load posts from API
-                        const response = await fetch(`${API_URL}/posts?clientId=${clientId}`, {
+                        const postsUrl = clientId
+                            ? `${API_URL}/posts?clientId=${encodeURIComponent(clientId)}`
+                            : `${API_URL}/posts`;
+                        const response = await fetch(postsUrl, {
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
                             }
@@ -2796,9 +2999,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 getClientId() {
                     if (this.user.role === 'client') {
-                        return this.user.clientId._id || this.user.clientId;
-                    } else if (this.viewMode === 'client' && this.selectedViewClient) {
-                        return this.selectedViewClient;
+                        if (this.selectedViewClient) return this.selectedViewClient;
+                        const clientCount = (this.availableClients || []).length;
+                        if (clientCount > 1) return '';
+                        return this.user?.clientId?._id || this.user?.clientId || '';
+                    } else if (this.viewMode === 'client') {
+                        return this.selectedViewClient || '';
                     } else if (this.selectedClient) {
                         return this.selectedClient._id;
                     } else {
