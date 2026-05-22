@@ -929,19 +929,86 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                         <div class="flex items-center justify-between gap-3 mb-4">
                             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Reports</h2>
-                            <button
-                                x-show="viewMode === 'client' || user.role === 'client'"
-                                @click="generateOverviewReport()"
-                                class="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                                :disabled="generatingReport">
-                                <span x-show="!generatingReport">Generate From Overview</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Name</label>
+                                <input type="text" x-model="reportBuilder.name" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Monthly Social Performance Report">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                                <select x-model="reportBuilder.status" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="draft">Draft</option>
+                                    <option value="finalized">Finalized</option>
+                                    <option value="sent">Sent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                                <input type="date" x-model="reportBuilder.startDate" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                                <input type="date" x-model="reportBuilder.endDate" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Platforms</h3>
+                                <button @click="reportBuilder.platforms = [...clientPlatforms]" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Select all</button>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="platform in clientPlatforms" :key="`report-platform-${platform}`">
+                                    <button @click="toggleReportPlatform(platform)"
+                                            :class="reportBuilder.platforms.includes(platform) ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                            class="px-3 py-1 rounded-full text-sm font-medium transition-colors capitalize"
+                                            x-text="platform"></button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                <input type="checkbox" x-model="reportBuilder.useSelectedPosts" class="rounded">
+                                <span>Choose specific published posts for this report</span>
+                            </label>
+                            <div x-show="reportBuilder.useSelectedPosts" class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 max-h-52 overflow-y-auto space-y-2">
+                                <template x-for="post in reportCandidatePosts" :key="`report-post-${post.id}`">
+                                    <label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                        <input type="checkbox" :checked="reportBuilder.selectedPostIds.includes(post.id)" @change="toggleReportPostSelection(post.id)" class="mt-1 rounded">
+                                        <span>
+                                            <span class="font-medium capitalize" x-text="post.platforms?.[0] || post.platform || 'post'"></span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400" x-text="formatDate(post.publishedDate || post.scheduledDate || post.createdAt)"></span>
+                                            <span class="block text-xs text-gray-500 dark:text-gray-400 truncate" x-text="post.caption || 'Untitled post'"></span>
+                                        </span>
+                                    </label>
+                                </template>
+                                <p x-show="!reportCandidatePosts.length" class="text-xs text-gray-500 dark:text-gray-400">No published posts available for current filters.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button @click="previewReportBuilder()" class="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600" :disabled="reportPreviewLoading">
+                                <span x-show="!reportPreviewLoading">Preview Report</span>
+                                <span x-show="reportPreviewLoading">Previewing...</span>
+                            </button>
+                            <button @click="generateReportFromBuilder()" class="px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="generatingReport">
+                                <span x-show="!generatingReport">Generate Report</span>
                                 <span x-show="generatingReport">Generating...</span>
                             </button>
                         </div>
 
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            View all saved reports for this brand. Use View to open report details and Download to export PDF.
-                        </p>
+                        <div x-show="reportPreview" class="mb-6 border border-indigo-200 dark:border-indigo-700 rounded-lg p-3 bg-indigo-50/50 dark:bg-indigo-900/10">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white mb-2">Preview Metrics</p>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                <div><p class="text-gray-500 dark:text-gray-400">Reach</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.metrics?.totalReach || 0)"></p></div>
+                                <div><p class="text-gray-500 dark:text-gray-400">Impressions</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.metrics?.totalImpressions || 0)"></p></div>
+                                <div><p class="text-gray-500 dark:text-gray-400">Engagement</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.metrics?.totalEngagement || 0)"></p></div>
+                                <div><p class="text-gray-500 dark:text-gray-400">Engagement Rate</p><p class="font-semibold text-gray-900 dark:text-white" x-text="(reportPreview?.metrics?.engagementRate || 0).toFixed(2) + '%'"></p></div>
+                            </div>
+                        </div>
 
                         <div x-show="!reports.length" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
                             No reports found for this client yet.
@@ -959,6 +1026,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
                                             x-text="report.status || 'draft'"></span>
                                         <button @click.prevent="openReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View</button>
+                                        <button @click.prevent="startReportEdit(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
+                                        <button @click.prevent="deleteReport(report)" class="text-sm text-red-600 dark:text-red-400 hover:underline">Delete</button>
                                         <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download PDF</button>
                                     </div>
                                 </li>
@@ -1385,8 +1454,38 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-gray-500 dark:text-gray-400">Platforms</p>
+                        <p class="font-semibold text-gray-900 dark:text-white capitalize" x-text="(selectedReport?.platforms || []).join(', ') || 'N/A'"></p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <p class="text-gray-500 dark:text-gray-400">Selected Posts</p>
+                        <p class="font-semibold text-gray-900 dark:text-white" x-text="selectedReport?.customData?.selectedPostCount || selectedReport?.selectedPostIds?.length || 0"></p>
+                    </div>
+                </div>
+
+                <div x-show="reportEditForm" class="space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">Edit Report</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Name</label>
+                            <input type="text" x-model="reportEditForm.name" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Status</label>
+                            <select x-model="reportEditForm.status" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="draft">Draft</option>
+                                <option value="finalized">Finalized</option>
+                                <option value="sent">Sent</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
                     <button type="button" @click="showReportModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
+                    <button type="button" @click="saveReportEdits()" x-show="reportEditForm" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="savingReportEdit">Save</button>
                     <button type="button" @click="downloadReport(selectedReport)" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Download PDF</button>
                 </div>
             </div>
@@ -1801,6 +1900,19 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 reports: [],
                 selectedReport: null,
                 showReportModal: false,
+                reportEditForm: null,
+                savingReportEdit: false,
+                reportPreview: null,
+                reportPreviewLoading: false,
+                reportBuilder: {
+                    name: '',
+                    status: 'draft',
+                    startDate: '',
+                    endDate: '',
+                    platforms: [],
+                    useSelectedPosts: false,
+                    selectedPostIds: []
+                },
                 loading: true,
                 toasts: [],
                 generatingReport: false,
@@ -1831,6 +1943,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.loadPlatformFollowers();
                     this.loadPageLevelMetrics();
                     this.updateDashboardMetrics();
+                    this.initializeReportBuilder();
                 },
                 
                 // Platform filter for dashboard
@@ -2374,6 +2487,121 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     } catch (error) {
                         console.error('Load reports error:', error);
                         this.reports = [];
+                    }
+                },
+
+                get reportCandidatePosts() {
+                    return (this.posts || []).filter((post) => {
+                        const status = (post.status || '').toLowerCase();
+                        return status === 'published' || status === 'completed' || status === 'posted';
+                    });
+                },
+
+                initializeReportBuilder() {
+                    const today = new Date();
+                    const end = this.currentPeriodEnd || today;
+                    const start = this.currentPeriodStart || new Date(today.getFullYear(), today.getMonth(), 1);
+                    const selectedClientName = this.dashboardData?.client?.brandName || this.dashboardData?.client?.name || 'Client';
+                    this.reportBuilder = {
+                        ...this.reportBuilder,
+                        name: `${selectedClientName} Performance Report`,
+                        status: this.reportBuilder.status || 'draft',
+                        startDate: this.toDateInputValue(start),
+                        endDate: this.toDateInputValue(end),
+                        platforms: this.activePlatforms?.length ? [...this.activePlatforms] : [...this.clientPlatforms],
+                        selectedPostIds: [],
+                        useSelectedPosts: false
+                    };
+                    this.reportPreview = null;
+                },
+
+                toDateInputValue(dateValue) {
+                    const date = new Date(dateValue);
+                    if (Number.isNaN(date.getTime())) return '';
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                },
+
+                toggleReportPlatform(platform) {
+                    const exists = this.reportBuilder.platforms.includes(platform);
+                    if (exists) {
+                        this.reportBuilder.platforms = this.reportBuilder.platforms.filter((item) => item !== platform);
+                    } else {
+                        this.reportBuilder.platforms = [...this.reportBuilder.platforms, platform];
+                    }
+                },
+
+                toggleReportPostSelection(postId) {
+                    const exists = this.reportBuilder.selectedPostIds.includes(postId);
+                    if (exists) {
+                        this.reportBuilder.selectedPostIds = this.reportBuilder.selectedPostIds.filter((id) => id !== postId);
+                    } else {
+                        this.reportBuilder.selectedPostIds = [...this.reportBuilder.selectedPostIds, postId];
+                    }
+                },
+
+                buildReportBuilderPayload() {
+                    const clientId = this.getClientId();
+                    const startDate = this.reportBuilder.startDate;
+                    const endDate = this.reportBuilder.endDate;
+                    const payload = {
+                        clientId,
+                        name: this.reportBuilder.name?.trim() || undefined,
+                        status: this.reportBuilder.status || 'draft',
+                        type: 'automated',
+                        source: 'generated',
+                        dateRange: {
+                            start: startDate ? new Date(`${startDate}T00:00:00`).toISOString() : null,
+                            end: endDate ? new Date(`${endDate}T23:59:59`).toISOString() : null
+                        },
+                        platforms: this.reportBuilder.platforms || [],
+                        selectedPostIds: this.reportBuilder.useSelectedPosts ? (this.reportBuilder.selectedPostIds || []) : []
+                    };
+                    return payload;
+                },
+
+                validateReportBuilderPayload(payload) {
+                    if (!payload.clientId) return 'No client selected for report generation.';
+                    if (!payload.dateRange?.start || !payload.dateRange?.end) return 'Please select a valid start and end date.';
+                    if (!Array.isArray(payload.platforms) || payload.platforms.length === 0) return 'Please select at least one platform.';
+                    if (payload.selectedPostIds && payload.selectedPostIds.length > 0 && !this.reportBuilder.useSelectedPosts) {
+                        return 'Invalid post selection state. Please try again.';
+                    }
+                    return null;
+                },
+
+                async previewReportBuilder() {
+                    const payload = this.buildReportBuilderPayload();
+                    const validationError = this.validateReportBuilderPayload(payload);
+                    if (validationError) {
+                        this.showToast(validationError, 'error');
+                        return;
+                    }
+
+                    this.reportPreviewLoading = true;
+                    try {
+                        const params = new URLSearchParams({
+                            clientId: payload.clientId,
+                            startDate: payload.dateRange.start,
+                            endDate: payload.dateRange.end,
+                            platforms: (payload.platforms || []).join(','),
+                            selectedPostIds: (payload.selectedPostIds || []).join(',')
+                        });
+                        const response = await fetch(`${API_URL}/reports/preview?${params.toString()}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to preview report');
+                        }
+                        this.reportPreview = data.data;
+                        this.showToast('Report preview updated.', 'success');
+                    } catch (error) {
+                        console.error('Preview report error:', error);
+                        this.showToast(error.message || 'Unable to preview report.', 'error');
+                    } finally {
+                        this.reportPreviewLoading = false;
                     }
                 },
 
@@ -4070,51 +4298,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return `${start} - ${end}`;
                 },
 
-                async generateOverviewReport() {
-                    const clientId = this.getClientId();
-                    if (!clientId) {
-                        this.showToast('No client selected for report generation.', 'error');
+                async generateReportFromBuilder() {
+                    const payload = this.buildReportBuilderPayload();
+                    const validationError = this.validateReportBuilderPayload(payload);
+                    if (validationError) {
+                        this.showToast(validationError, 'error');
                         return;
                     }
-                    if (!this.dashboardData?.metrics) {
-                        this.showToast('Dashboard data is still loading. Please try again.', 'error');
-                        return;
-                    }
-
-                    const periodStart = this.currentPeriodStart || new Date(new Date().getFullYear(), 0, 1);
-                    const periodEnd = this.currentPeriodEnd || new Date();
-                    const reportName = `${this.dashboardData?.client?.brandName || this.dashboardData?.client?.name || 'Client'} Overview Report (${this.currentPeriodLabel || this.dateRange || 'Custom'})`;
-
-                    const payload = {
-                        clientId,
-                        name: reportName,
-                        type: 'automated',
-                        status: 'draft',
-                        dateRange: {
-                            start: periodStart.toISOString(),
-                            end: periodEnd.toISOString()
-                        },
-                        platforms: Object.keys(this.dashboardData.platformBreakdown || {}),
-                        metrics: {
-                            totalReach: Number(this.dashboardData?.metrics?.reach?.current) || 0,
-                            totalImpressions: Number(this.dashboardData?.metrics?.impressions?.current) || 0,
-                            totalEngagement: Number(this.dashboardData?.metrics?.engagement?.current) || 0,
-                            engagementRate: Number(this.dashboardData?.metrics?.engagementRate?.current) || 0,
-                            followerGrowth: 0,
-                            totalAdSpend: Number(this.dashboardData?.metrics?.adSpend?.current) || 0,
-                            platformBreakdown: this.dashboardData.platformBreakdown || {}
-                        },
-                        customData: {
-                            generatedFrom: 'page_overview',
-                            periodLabel: this.currentPeriodLabel || this.dateRange || 'custom',
-                            insights: this.dashboardData.insights || null,
-                            demographics: this.dashboardData.demographics || null
-                        }
-                    };
 
                     this.generatingReport = true;
                     try {
-                        const response = await fetch(`${API_URL}/reports`, {
+                        const response = await fetch(`${API_URL}/reports/generate`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -4128,14 +4322,90 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             throw new Error(data.message || 'Failed to generate report');
                         }
 
-                        await this.loadDashboardData(this.clientLoadToken);
                         await this.loadReports(this.clientLoadToken);
+                        this.reportPreview = null;
+                        this.reportBuilder.selectedPostIds = [];
+                        this.reportBuilder.useSelectedPosts = false;
                         this.showToast('Report generated successfully.', 'success');
                     } catch (error) {
                         console.error('Generate report error:', error);
                         this.showToast(error.message || 'Failed to generate report.', 'error');
                     } finally {
                         this.generatingReport = false;
+                    }
+                },
+
+                async generateOverviewReport() {
+                    // Backward-compatible action from legacy buttons.
+                    await this.generateReportFromBuilder();
+                },
+
+                startReportEdit(report) {
+                    this.selectedReport = report;
+                    this.reportEditForm = {
+                        _id: report._id,
+                        name: report.name || '',
+                        status: report.status || 'draft'
+                    };
+                    this.showReportModal = true;
+                },
+
+                async saveReportEdits() {
+                    if (!this.reportEditForm?._id) return;
+                    this.savingReportEdit = true;
+                    try {
+                        const response = await fetch(`${API_URL}/reports/${this.reportEditForm._id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                                name: this.reportEditForm.name,
+                                status: this.reportEditForm.status
+                            })
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to update report');
+                        }
+                        this.selectedReport = data.data;
+                        await this.loadReports(this.clientLoadToken);
+                        this.showToast('Report updated successfully.', 'success');
+                    } catch (error) {
+                        console.error('Save report error:', error);
+                        this.showToast(error.message || 'Unable to update report.', 'error');
+                    } finally {
+                        this.savingReportEdit = false;
+                    }
+                },
+
+                async deleteReport(report) {
+                    if (!report?._id) return;
+                    if (!confirm(`Delete report "${report.name || 'Untitled'}"? This action cannot be undone.`)) {
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`${API_URL}/reports/${report._id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to delete report');
+                        }
+                        if (this.selectedReport?._id === report._id) {
+                            this.showReportModal = false;
+                            this.selectedReport = null;
+                            this.reportEditForm = null;
+                        }
+                        await this.loadReports(this.clientLoadToken);
+                        this.showToast('Report deleted successfully.', 'success');
+                    } catch (error) {
+                        console.error('Delete report error:', error);
+                        this.showToast(error.message || 'Unable to delete report.', 'error');
                     }
                 },
 
@@ -4184,6 +4454,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             throw new Error(data.message || 'Failed to load report');
                         }
                         this.selectedReport = data.data;
+                        this.reportEditForm = {
+                            _id: data.data?._id,
+                            name: data.data?.name || '',
+                            status: data.data?.status || 'draft'
+                        };
                         this.showReportModal = true;
                     } catch (error) {
                         console.error('Open report error:', error);
@@ -4221,6 +4496,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     writeLine('Date range', `${start} - ${end}`);
                     writeLine('Status', report.status || 'draft');
                     writeLine('Type', report.type || 'automated');
+                    writeLine('Platforms', (report.platforms || []).join(', ') || 'All');
+                    writeLine('Selected posts', report?.customData?.selectedPostCount || report?.selectedPostIds?.length || 0);
                     y += 2;
 
                     const metrics = report.metrics || {};
@@ -4229,6 +4506,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     writeLine('Total engagement', metrics.totalEngagement || 0);
                     writeLine('Engagement rate', `${Number(metrics.engagementRate || 0).toFixed(2)}%`);
                     writeLine('Ad spend', `$${Number(metrics.totalAdSpend || 0).toFixed(2)}`);
+
+                    const platformBreakdown = metrics.platformBreakdown || {};
+                    const platforms = Object.keys(platformBreakdown);
+                    if (platforms.length > 0) {
+                        y += 4;
+                        writeLine('Platform breakdown', '');
+                        platforms.forEach((platform) => {
+                            const row = platformBreakdown[platform] || {};
+                            writeLine(`- ${platform}`, `Reach ${Number(row.reach || 0).toLocaleString()}, Engagement ${Number(row.engagement || 0).toLocaleString()}, Posts ${Number(row.posts || 0).toLocaleString()}`);
+                        });
+                    }
 
                     const filename = `${safeText(report.name || 'report').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'report'}.pdf`;
                     doc.save(filename);
@@ -4436,6 +4724,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
                 <span class="text-xs" :class="activeView === 'dashboard' ? 'font-medium' : ''">Overview</span>
+            </a>
+            <!-- Reports - Client View -->
+            <a x-show="viewMode === 'client'" href="#reports" @click="activeView = 'reports'" :class="activeView === 'reports' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'" class="flex flex-col items-center justify-center flex-1 h-full space-y-1">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-xs" :class="activeView === 'reports' ? 'font-medium' : ''">Reports</span>
             </a>
             <!-- Content Calendar - Client View -->
             <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('content-calendar'))); ?>" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-gray-600 dark:text-gray-400">

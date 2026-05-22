@@ -162,6 +162,11 @@ show_admin_bar(false);
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                     <span class="ml-4 nav-text" x-show="isSidebarOpen">Page Overview</span>
                 </a>
+                <!-- Reports - Client View Only -->
+                <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#reports" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-4 nav-text" x-show="isSidebarOpen">Reports</span>
+                </a>
                 <!-- Content Calendar - Client View Only -->
                 <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('content-calendar'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -917,27 +922,43 @@ show_admin_bar(false);
                 <div x-show="activeTab === 'contentBank'">
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                         <div class="flex items-center space-x-4">
-                            <!-- Status Filter: Admin/Brand Rep see all statuses, Clients see only Pending/Approved -->
-                            <select x-model="contentBankStatusFilter" @change="loadContentBank()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <template x-if="viewMode === 'client'">
-                                    <option value="pending" selected>Pending Approval</option>
-                                </template>
-                                <template x-if="viewMode === 'client'">
-                                    <option value="approved">Approved</option>
-                                </template>
-                                <template x-if="viewMode !== 'client'">
-                                    <option value="">All Status</option>
-                                </template>
-                                <template x-if="viewMode !== 'client'">
-                                    <option value="pending">Awaiting Client Review</option>
-                                </template>
-                                <template x-if="viewMode !== 'client'">
-                                    <option value="approved">Client Approved</option>
-                                </template>
-                                <template x-if="viewMode !== 'client'">
-                                    <option value="needs_changes">Needs Changes</option>
-                                </template>
-                            </select>
+                            <!-- Status Filter: pill toggles for clients, compact toggle-group for admin/brand_rep -->
+                            <!-- Client view: two-pill toggle -->
+                            <div x-show="viewMode === 'client'" class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1 gap-1">
+                                <button @click="contentBankStatusFilter = 'pending'; loadContentBank()"
+                                        :class="contentBankStatusFilter === 'pending' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">
+                                    Pending Approval
+                                </button>
+                                <button @click="contentBankStatusFilter = 'approved'; loadContentBank()"
+                                        :class="contentBankStatusFilter === 'approved' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">
+                                    Approved
+                                </button>
+                            </div>
+                            <!-- Admin/Brand Rep view: multi-option toggle group -->
+                            <div x-show="viewMode !== 'client'" class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1 gap-1">
+                                <button @click="contentBankStatusFilter = ''; loadContentBank()"
+                                        :class="contentBankStatusFilter === '' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-all">
+                                    All
+                                </button>
+                                <button @click="contentBankStatusFilter = 'pending'; loadContentBank()"
+                                        :class="contentBankStatusFilter === 'pending' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-all">
+                                    Awaiting Review
+                                </button>
+                                <button @click="contentBankStatusFilter = 'approved'; loadContentBank()"
+                                        :class="contentBankStatusFilter === 'approved' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-all">
+                                    Client Approved
+                                </button>
+                                <button @click="contentBankStatusFilter = 'needs_changes'; loadContentBank()"
+                                        :class="contentBankStatusFilter === 'needs_changes' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-all">
+                                    Needs Changes
+                                </button>
+                            </div>
                             <!-- Client Filter: Admin/Brand Rep see All Clients dropdown, Clients see their assigned brands -->
                             <template x-if="viewMode !== 'client'">
                                 <select x-model="contentBankClientFilter" @change="loadContentBank()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -4670,6 +4691,13 @@ show_admin_bar(false);
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
                 <span class="text-xs">Overview</span>
+            </a>
+            <!-- Reports - Client View -->
+            <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#reports" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-gray-600 dark:text-gray-400">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-xs">Reports</span>
             </a>
             <!-- Content Calendar - Client View -->
             <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('content-calendar'))); ?>" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-gray-600 dark:text-gray-400">
