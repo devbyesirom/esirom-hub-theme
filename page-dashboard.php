@@ -1241,9 +1241,36 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                                 </template>
                                             </div>
                                         </div>
-                                        <span class="text-xs px-2.5 py-1 rounded-full font-medium capitalize whitespace-nowrap"
-                                              :class="booking.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : booking.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : booking.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'"
-                                              x-text="booking.status.replace(/_/g, ' ')"></span>
+                                        <!-- Status + Calendar sync health (stacked, right-aligned) -->
+                                        <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                                            <!-- Booking status badge -->
+                                            <span class="text-xs px-2.5 py-1 rounded-full font-medium capitalize whitespace-nowrap"
+                                                  :class="booking.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : booking.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : booking.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'"
+                                                  x-text="booking.status.replace(/_/g, ' ')"></span>
+                                            <!-- Calendar Sync Health — admin/brand_rep only -->
+                                            <template x-if="user.role !== 'client' && booking.calendarSyncStatus">
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full cursor-default whitespace-nowrap"
+                                                      :class="{
+                                                          'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800': booking.calendarSyncStatus === 'synced',
+                                                          'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800': booking.calendarSyncStatus === 'sync_failed',
+                                                          'bg-gray-100 text-gray-500 dark:bg-gray-700/60 dark:text-gray-400 border border-gray-200 dark:border-gray-600': booking.calendarSyncStatus === 'not_configured'
+                                                      }"
+                                                      :title="booking.calendarSyncStatus === 'sync_failed' ? ('Sync error: ' + (booking.calendarSyncError || 'Unknown error')) : booking.calendarSyncStatus === 'synced' ? ('Last synced: ' + (booking.calendarLastSyncedAt ? new Date(booking.calendarLastSyncedAt).toLocaleString() : 'N/A')) : 'Google Calendar not configured on the server'">
+                                                    <!-- Calendar icon dot -->
+                                                    <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                              :d="booking.calendarSyncStatus === 'synced' ? 'M5 13l4 4L19 7' : booking.calendarSyncStatus === 'sync_failed' ? 'M6 18L18 6M6 6l12 12' : 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'"/>
+                                                    </svg>
+                                                    <span x-text="booking.calendarSyncStatus === 'synced' ? 'Cal Synced' : booking.calendarSyncStatus === 'sync_failed' ? 'Sync Failed' : 'Cal Off'"></span>
+                                                    <!-- Link to calendar event when synced -->
+                                                    <a x-show="booking.calendarSyncStatus === 'synced' && booking.googleCalendarEventLink"
+                                                       :href="booking.googleCalendarEventLink" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-0.5 underline underline-offset-2"
+                                                       @click.stop
+                                                       title="Open in Google Calendar">↗</a>
+                                                </span>
+                                            </template>
+                                        </div>
                                     </div>
 
                                     <p class="text-sm text-gray-600 dark:text-gray-300 mt-3" x-text="booking.details || 'No extra details provided.'"></p>
