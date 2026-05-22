@@ -268,6 +268,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     <span class="ml-4 nav-text">Reports</span>
                 </a>
+                <a x-show="viewMode === 'client'" href="#event-coverage" @click="activeView = 'eventCoverage'" :class="activeView === 'eventCoverage' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25" /></svg>
+                    <span class="ml-4 nav-text">Event Coverage</span>
+                </a>
                 <!-- Content Calendar - Client View Only -->
                 <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('content-calendar'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
@@ -292,6 +296,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 <a x-show="viewMode !== 'client'" href="#reports" @click="activeView = 'reports'" :class="activeView === 'reports' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     <span class="ml-4 nav-text">Reports</span>
+                </a>
+                <a x-show="viewMode !== 'client'" href="#event-coverage" @click="activeView = 'eventCoverage'" :class="activeView === 'eventCoverage' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center p-3 rounded-lg transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25" /></svg>
+                    <span class="ml-4 nav-text">Event Coverage</span>
                 </a>
                 <!-- Published Posts - Admin/Brand Rep View -->
                 <a x-show="viewMode !== 'client'" href="#content-calendar" @click="activeView = 'calendar'" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" :class="activeView === 'calendar' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' : ''">
@@ -1057,6 +1065,133 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 </li>
                             </template>
                         </ul>
+                    </div>
+                </div>
+
+                <!-- Event Coverage View -->
+                <div x-show="activeView === 'eventCoverage'" x-cloak>
+                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Event Coverage</h2>
+                            <span class="text-xs px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">Booking + Estimate Workflow</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    Request event coverage with your preferred services. Our team reviews availability, proposes updates if needed, and shares estimate details manually.
+                                </p>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Services</label>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        <template x-for="service in eventCoverageServiceOptions" :key="service.id">
+                                            <button @click="toggleEventCoverageService(service.id)"
+                                                    :class="eventCoverageForm.services.includes(service.id) ? 'bg-white/25 text-white border-indigo-400 shadow-lg' : 'bg-white/10 text-gray-200 border-white/20 hover:bg-white/20'"
+                                                    class="backdrop-blur-xl border rounded-xl px-3 py-3 text-left transition-all bg-gradient-to-br from-indigo-500/50 via-purple-500/40 to-cyan-500/40">
+                                                <div class="text-xl mb-1" x-text="service.icon"></div>
+                                                <div class="text-xs font-semibold" x-text="service.label"></div>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Date</label>
+                                        <input type="datetime-local" x-model="eventCoverageForm.eventDate" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                        <input type="text" x-model="eventCoverageForm.location" placeholder="Venue / address" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">More Details</label>
+                                    <textarea x-model="eventCoverageForm.details" rows="4" placeholder="Audience size, event type, shot list, streaming requirements, special notes..." class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button @click="submitEventCoverageBooking()" :disabled="submittingEventCoverage" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <span x-show="!submittingEventCoverage">Request Booking</span>
+                                        <span x-show="submittingEventCoverage">Submitting...</span>
+                                    </button>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400" x-show="user.role === 'client' && !getClientId()">Select one brand scope to submit a booking.</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">How It Works</h3>
+                                <ol class="text-sm text-gray-600 dark:text-gray-400 space-y-2 list-decimal pl-5">
+                                    <li>Client submits event request.</li>
+                                    <li>Brand rep/admin accepts, declines, or proposes changes.</li>
+                                    <li>Estimate is provided manually and tracked on booking.</li>
+                                    <li>After event, team uploads Google Drive folder link.</li>
+                                    <li>Client keeps searchable event history in the Hub.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Event Log</h3>
+                            <button @click="loadEventCoverageBookings()" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Refresh</button>
+                        </div>
+
+                        <div x-show="!eventCoverageBookings.length" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                            No event coverage bookings yet.
+                        </div>
+
+                        <div x-show="eventCoverageBookings.length" class="space-y-3">
+                            <template x-for="booking in eventCoverageBookings" :key="booking._id">
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-medium text-gray-900 dark:text-white" x-text="booking.clientId?.brandName || booking.clientId?.name || 'Client'"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="new Date(booking.eventDate).toLocaleString()"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="booking.location"></p>
+                                            <div class="flex flex-wrap gap-1 mt-2">
+                                                <template x-for="srv in (booking.services || [])" :key="`${booking._id}-${srv}`">
+                                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 capitalize" x-text="srv.replace('_', ' ')"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs px-2 py-1 rounded-full capitalize"
+                                              :class="booking.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : booking.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : booking.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'"
+                                              x-text="booking.status.replace('_', ' ')"></span>
+                                    </div>
+
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-3" x-text="booking.details || 'No extra details provided.'"></p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2" x-show="booking.estimate && (booking.estimate.amount !== null || booking.estimate.notes)">
+                                        Estimate: <span x-text="booking.estimate.amount != null ? '$' + Number(booking.estimate.amount).toFixed(2) : 'Pending amount'"></span>
+                                        <span x-show="booking.estimate?.notes"> - <span x-text="booking.estimate.notes"></span></span>
+                                    </p>
+
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        <a x-show="booking.driveFolderUrl" :href="booking.driveFolderUrl" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Open Google Drive Folder</a>
+
+                                        <template x-if="user.role === 'client' && booking.status === 'modification_proposed'">
+                                            <div class="flex gap-2">
+                                                <button @click="respondToEventCoverageProposal(booking, true)" class="text-sm text-green-600 dark:text-green-400 hover:underline">Approve Changes</button>
+                                                <button @click="respondToEventCoverageProposal(booking, false)" class="text-sm text-red-600 dark:text-red-400 hover:underline">Reject Changes</button>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="user.role !== 'client'">
+                                            <div class="flex flex-wrap gap-2">
+                                                <button @click="reviewEventCoverageBooking(booking, 'accept')" class="text-sm text-green-600 dark:text-green-400 hover:underline">Accept</button>
+                                                <button @click="reviewEventCoverageBooking(booking, 'decline')" class="text-sm text-red-600 dark:text-red-400 hover:underline">Decline</button>
+                                                <button @click="reviewEventCoverageBooking(booking, 'propose')" class="text-sm text-amber-600 dark:text-amber-400 hover:underline">Suggest Modification</button>
+                                                <button @click="reviewEventCoverageBooking(booking, 'estimate')" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Add Estimate</button>
+                                                <button x-show="booking.status === 'accepted'" @click="completeEventCoverageBooking(booking)" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Complete + Drive Link</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
@@ -1937,6 +2072,22 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     useSelectedPosts: false,
                     selectedPostIds: []
                 },
+                eventCoverageBookings: [],
+                eventCoverageLoading: false,
+                submittingEventCoverage: false,
+                eventCoverageServiceOptions: [
+                    { id: 'photography', label: 'Photography', icon: '📸' },
+                    { id: 'videography', label: 'Videography', icon: '🎥' },
+                    { id: 'live_coverage', label: 'Live Coverage', icon: '🎬' },
+                    { id: 'live_streaming', label: 'Live Streaming', icon: '📡' },
+                    { id: 'combo', label: 'Combo', icon: '✨' }
+                ],
+                eventCoverageForm: {
+                    services: [],
+                    eventDate: '',
+                    location: '',
+                    details: ''
+                },
                 loading: true,
                 toasts: [],
                 generatingReport: false,
@@ -1963,6 +2114,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     await this.loadDashboardData(token);
                     await this.loadReports(token);
                     await this.loadPosts(token);
+                    await this.loadEventCoverageBookings(token);
                     this.loadCampaigns();
                     this.loadPlatformFollowers();
                     this.loadPageLevelMetrics();
@@ -2648,6 +2800,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             return this.viewMode === 'client' ? 'Published Posts' : (this.selectedClient?.brandName || this.selectedClient?.name || 'Dashboard');
                         case 'reports':
                             return 'Reports';
+                        case 'eventCoverage':
+                            return 'Event Coverage';
                         default:
                             return 'Dashboard';
                     }
@@ -2682,6 +2836,202 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     } catch (error) {
                         console.error('Load reports error:', error);
                         this.reports = [];
+                    }
+                },
+
+                async loadEventCoverageBookings(loadToken = null) {
+                    const token = loadToken ?? this.clientLoadToken;
+                    this.eventCoverageLoading = true;
+                    try {
+                        const clientId = this.getClientId();
+                        const bookingsUrl = clientId
+                            ? `${API_URL}/event-coverage?clientId=${encodeURIComponent(clientId)}`
+                            : `${API_URL}/event-coverage`;
+                        const response = await fetch(bookingsUrl, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+
+                        if (token !== this.clientLoadToken) return;
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.eventCoverageBookings = data.data || [];
+                        } else {
+                            this.eventCoverageBookings = [];
+                        }
+                    } catch (error) {
+                        console.error('Load event coverage bookings error:', error);
+                        this.eventCoverageBookings = [];
+                    } finally {
+                        this.eventCoverageLoading = false;
+                    }
+                },
+
+                toggleEventCoverageService(serviceId) {
+                    if (this.eventCoverageForm.services.includes(serviceId)) {
+                        this.eventCoverageForm.services = this.eventCoverageForm.services.filter((id) => id !== serviceId);
+                    } else {
+                        this.eventCoverageForm.services = [...this.eventCoverageForm.services, serviceId];
+                    }
+                },
+
+                async submitEventCoverageBooking() {
+                    const clientId = this.getClientId();
+                    if (!clientId) {
+                        this.showToast('Please choose one brand scope before requesting a booking.', 'error');
+                        return;
+                    }
+                    if (!this.eventCoverageForm.services.length) {
+                        this.showToast('Select at least one coverage service.', 'error');
+                        return;
+                    }
+                    if (!this.eventCoverageForm.eventDate || !this.eventCoverageForm.location) {
+                        this.showToast('Event date and location are required.', 'error');
+                        return;
+                    }
+
+                    this.submittingEventCoverage = true;
+                    try {
+                        const response = await fetch(`${API_URL}/event-coverage`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                                clientId,
+                                services: this.eventCoverageForm.services,
+                                eventDate: this.eventCoverageForm.eventDate,
+                                location: this.eventCoverageForm.location,
+                                details: this.eventCoverageForm.details
+                            })
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to submit event coverage booking');
+                        }
+
+                        this.eventCoverageForm = {
+                            services: [],
+                            eventDate: '',
+                            location: '',
+                            details: ''
+                        };
+                        await this.loadEventCoverageBookings(this.clientLoadToken);
+                        this.showToast('Event coverage request submitted.', 'success');
+                    } catch (error) {
+                        console.error('Submit event coverage booking error:', error);
+                        this.showToast(error.message || 'Unable to submit booking request.', 'error');
+                    } finally {
+                        this.submittingEventCoverage = false;
+                    }
+                },
+
+                async reviewEventCoverageBooking(booking, action) {
+                    if (!booking?._id) return;
+                    const payload = { action };
+
+                    if (action === 'propose') {
+                        const proposedDate = prompt('Proposed date/time (YYYY-MM-DDTHH:mm):', booking.eventDate ? booking.eventDate.slice(0, 16) : '');
+                        if (proposedDate === null) return;
+                        const proposedLocation = prompt('Proposed location:', booking.location || '');
+                        if (proposedLocation === null) return;
+                        const message = prompt('Message to client (optional):', '');
+                        payload.proposedEventDate = proposedDate ? new Date(proposedDate).toISOString() : booking.eventDate;
+                        payload.proposedLocation = proposedLocation || booking.location;
+                        payload.proposedDetails = booking.details || '';
+                        payload.message = message || '';
+                    } else if (action === 'estimate') {
+                        const amount = prompt('Estimate amount (numbers only):', booking.estimate?.amount != null ? String(booking.estimate.amount) : '');
+                        if (amount === null) return;
+                        const notes = prompt('Estimate notes (optional):', booking.estimate?.notes || '');
+                        payload.estimateAmount = amount ? Number(amount) : null;
+                        payload.estimateNotes = notes || '';
+                    } else if (action === 'decline') {
+                        const reason = prompt('Decline reason (optional):', '');
+                        payload.message = reason || '';
+                    } else if (action === 'accept') {
+                        const note = prompt('Acceptance note (optional):', '');
+                        payload.message = note || '';
+                    }
+
+                    try {
+                        const response = await fetch(`${API_URL}/event-coverage/${booking._id}/review`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to update booking');
+                        }
+                        await this.loadEventCoverageBookings(this.clientLoadToken);
+                        this.showToast('Booking updated successfully.', 'success');
+                    } catch (error) {
+                        console.error('Review booking error:', error);
+                        this.showToast(error.message || 'Unable to update booking.', 'error');
+                    }
+                },
+
+                async respondToEventCoverageProposal(booking, approve) {
+                    if (!booking?._id) return;
+                    const message = prompt(approve ? 'Add approval note (optional):' : 'Reason for rejecting proposed change (optional):', '');
+                    if (message === null) return;
+                    try {
+                        const response = await fetch(`${API_URL}/event-coverage/${booking._id}/client-response`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                                approve,
+                                message: message || ''
+                            })
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to send response');
+                        }
+                        await this.loadEventCoverageBookings(this.clientLoadToken);
+                        this.showToast('Response submitted.', 'success');
+                    } catch (error) {
+                        console.error('Client response error:', error);
+                        this.showToast(error.message || 'Unable to submit response.', 'error');
+                    }
+                },
+
+                async completeEventCoverageBooking(booking) {
+                    if (!booking?._id) return;
+                    const driveLink = prompt('Google Drive folder link:', booking.driveFolderUrl || '');
+                    if (!driveLink) return;
+                    const note = prompt('Completion note (optional):', '');
+                    try {
+                        const response = await fetch(`${API_URL}/event-coverage/${booking._id}/complete`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                                driveFolderUrl: driveLink,
+                                message: note || ''
+                            })
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to complete booking');
+                        }
+                        await this.loadEventCoverageBookings(this.clientLoadToken);
+                        this.showToast('Event marked complete and Drive link saved.', 'success');
+                    } catch (error) {
+                        console.error('Complete booking error:', error);
+                        this.showToast(error.message || 'Unable to complete booking.', 'error');
                     }
                 },
 
@@ -3659,7 +4009,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         'dashboard': 'dashboard', // Support old links
                         'content-calendar': 'calendar',
                         'reports': 'reports',
-                        'manage-reports': 'reports'
+                        'manage-reports': 'reports',
+                        'event-coverage': 'eventCoverage',
+                        'events': 'eventCoverage'
                     };
                     this.activeView = routeMap[hash] || 'dashboard';
                 },
@@ -4938,6 +5290,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </svg>
                 <span class="text-xs" :class="activeView === 'reports' ? 'font-medium' : ''">Reports</span>
             </a>
+            <!-- Event Coverage - Client View -->
+            <a x-show="viewMode === 'client'" href="#event-coverage" @click="activeView = 'eventCoverage'" :class="activeView === 'eventCoverage' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'" class="flex flex-col items-center justify-center flex-1 h-full space-y-1">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/>
+                </svg>
+                <span class="text-xs" :class="activeView === 'eventCoverage' ? 'font-medium' : ''">Events</span>
+            </a>
             <!-- Content Calendar - Client View -->
             <a x-show="viewMode === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('content-calendar'))); ?>" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-gray-600 dark:text-gray-400">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -4966,6 +5325,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
                 <span class="text-xs" :class="activeView === 'dashboard' ? 'font-medium' : ''">Insights</span>
+            </a>
+            <a x-show="viewMode !== 'client'" href="#event-coverage" @click="activeView = 'eventCoverage'" :class="activeView === 'eventCoverage' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'" class="flex flex-col items-center justify-center flex-1 h-full space-y-1">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/>
+                </svg>
+                <span class="text-xs" :class="activeView === 'eventCoverage' ? 'font-medium' : ''">Events</span>
             </a>
             <!-- Published Posts - Admin/Brand Rep View -->
             <a x-show="viewMode !== 'client'" href="#content-calendar" @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'" class="flex flex-col items-center justify-center flex-1 h-full space-y-1">
