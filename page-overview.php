@@ -325,6 +325,10 @@ show_admin_bar(false);
                                 <p class="text-xs text-gray-500 mt-0.5" x-text="user?.email"></p>
                                 <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 capitalize font-medium" x-text="user?.role?.replace('_', ' ')"></p>
                             </div>
+                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Change Password
+                            </a>
                             <a @click.prevent="logout()" href="#" class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
                         </div>
                     </div>
@@ -539,6 +543,8 @@ show_admin_bar(false);
                 loading: true,
                 user: {},
                 viewMode: localStorage.getItem('viewMode') || 'admin',
+                showPwModal: false,
+                pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 selectedViewClient: localStorage.getItem('selectedViewClient') || null,
                 theme: localStorage.getItem('theme') || 'light',
                 isSidebarOpen: true,
@@ -802,6 +808,27 @@ show_admin_bar(false);
                     window.location.href = DASHBOARD_URL;
                 },
 
+                async changePassword() {
+                    this.pwError = ''; this.pwSuccess = '';
+                    if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+                    if (this.pwNew.length < 6) { this.pwError = 'New password must be at least 6 characters.'; return; }
+                    if (this.pwNew !== this.pwConfirm) { this.pwError = 'New passwords do not match.'; return; }
+                    this.pwLoading = true;
+                    try {
+                        const res = await fetch(`${API_URL}/auth/update-password`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                        if (data.token) localStorage.setItem('token', data.token);
+                        this.pwSuccess = 'Password updated successfully!';
+                        this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                        setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 2000);
+                    } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+                },
+
                 logout() {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
@@ -887,5 +914,7 @@ show_admin_bar(false);
             </div>
         </template>
     </div>
+
+    <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
 </body>
 </html>

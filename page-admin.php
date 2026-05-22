@@ -121,8 +121,12 @@ show_admin_bar(false);
         <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
             <header class="flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm">
                 <h1 class="text-xl font-semibold" x-text="pageTitle"></h1>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm text-gray-500 dark:text-gray-400" x-text="user.fullName"></span>
+                <div class="flex items-center gap-2">
+                    <button @click="showPwModal = true"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span x-text="user.fullName"></span>
+                    </button>
                 </div>
             </header>
 
@@ -1130,6 +1134,8 @@ show_admin_bar(false);
                 users: [],
                 pendingUsers: [],
                 clients: [],
+                showPwModal: false,
+                pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 showUserModal: false,
                 showClientModal: false,
                 showCustomizeModal: false,
@@ -1923,6 +1929,27 @@ show_admin_bar(false);
                     }
                 },
 
+                async changePassword() {
+                    this.pwError = ''; this.pwSuccess = '';
+                    if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+                    if (this.pwNew.length < 6) { this.pwError = 'New password must be at least 6 characters.'; return; }
+                    if (this.pwNew !== this.pwConfirm) { this.pwError = 'New passwords do not match.'; return; }
+                    this.pwLoading = true;
+                    try {
+                        const res = await fetch(`${API_URL}/auth/update-password`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                        if (data.token) localStorage.setItem('token', data.token);
+                        this.pwSuccess = 'Password updated successfully!';
+                        this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                        setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 2000);
+                    } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+                },
+
                 logout() {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
@@ -2440,6 +2467,7 @@ show_admin_bar(false);
         </template>
     </div>
 
+    <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
     <?php wp_footer(); ?>
 </body>
 </html>

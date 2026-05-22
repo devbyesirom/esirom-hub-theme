@@ -185,10 +185,13 @@ show_admin_bar(false);
                         </svg>
                     </button>
                     <!-- User Info -->
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-medium" x-text="userName.charAt(0)"></div>
+                    <button @click="showPwModal = true"
+                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            title="Change password">
+                        <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-medium text-sm" x-text="userName.charAt(0)"></div>
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="userName"></span>
-                    </div>
+                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </button>
                 </div>
             </header>
 
@@ -368,6 +371,8 @@ show_admin_bar(false);
             userRole: '',
             viewMode: localStorage.getItem('viewMode') || 'admin',
             userName: '',
+            showPwModal: false,
+            pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
             clients: [],
             events: [],
             selectedClient: '',
@@ -573,6 +578,27 @@ show_admin_bar(false);
                 } catch (e) { console.error('Create concept error:', e); this.showToast('Failed to create concept', 'error'); }
             },
 
+            async changePassword() {
+                this.pwError = ''; this.pwSuccess = '';
+                if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+                if (this.pwNew.length < 6) { this.pwError = 'New password must be at least 6 characters.'; return; }
+                if (this.pwNew !== this.pwConfirm) { this.pwError = 'New passwords do not match.'; return; }
+                this.pwLoading = true;
+                try {
+                    const res = await fetch(`${API_URL}/auth/update-password`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                    if (data.token) localStorage.setItem('token', data.token);
+                    this.pwSuccess = 'Password updated successfully!';
+                    this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                    setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 2000);
+                } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+            },
+
             logout() {
                 localStorage.removeItem('token');
                 window.location.href = LOGIN_URL;
@@ -606,5 +632,7 @@ show_admin_bar(false);
         </div>
     </template>
 </div>
+
+<?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
 </body>
 </html>

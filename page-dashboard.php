@@ -359,6 +359,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p class="text-xs text-gray-500" x-text="user.email"></p>
                                 <p class="text-xs text-indigo-600 mt-1 capitalize" x-text="user.role?.replace('_', ' ')"></p>
                             </div>
+                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Change Password
+                            </a>
                             <a @click.prevent="logout()" href="#" class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Logout</a>
                         </div>
                     </div>
@@ -2155,6 +2159,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 loading: true,
                 toasts: [],
                 generatingReport: false,
+                showPwModal: false,
+                pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 availableClients: [],
                 selectedClient: null,
                 showKPIUpdateModal: false,
@@ -2790,6 +2796,27 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         console.error('Password change error:', error);
                         this.showToast('Error changing password. Please try again.', 'error');
                     }
+                },
+
+                async changePassword() {
+                    this.pwError = ''; this.pwSuccess = '';
+                    if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+                    if (this.pwNew.length < 6) { this.pwError = 'New password must be at least 6 characters.'; return; }
+                    if (this.pwNew !== this.pwConfirm) { this.pwError = 'New passwords do not match.'; return; }
+                    this.pwLoading = true;
+                    try {
+                        const res = await fetch(`${API_URL}/auth/update-password`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                        if (data.token) localStorage.setItem('token', data.token);
+                        this.pwSuccess = 'Password updated successfully!';
+                        this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                        setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 2000);
+                    } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
                 },
 
                 logout() {
@@ -5540,6 +5567,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         </template>
     </div>
 
+    <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
     <?php wp_footer(); ?>
 </body>
 </html>
