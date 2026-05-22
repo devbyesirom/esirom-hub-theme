@@ -603,6 +603,41 @@ show_admin_bar(false);
                     </div>
                     <p class="text-xs text-gray-500 mt-1">Assign one or more brands for this brand representative</p>
                 </div>
+
+                <!-- Department & Role (admin/brand_rep only) -->
+                <div class="mb-4" x-show="userForm.role === 'brand_rep' || userForm.role === 'admin'">
+                    <div class="border rounded-lg p-4 bg-gray-50 space-y-3">
+                        <p class="text-sm font-semibold text-gray-700">Team Performance Settings</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Department</label>
+                                <select x-model="userForm.department" class="w-full border rounded px-3 py-2 text-sm">
+                                    <option value="">— No Department —</option>
+                                    <option value="web_developer">Web Developer</option>
+                                    <option value="graphic_designer">Graphic Designer</option>
+                                    <option value="social_media_exec">Social Media Executive</option>
+                                    <option value="multimedia">Multimedia</option>
+                                </select>
+                            </div>
+                            <div x-show="userForm.department === 'multimedia'">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Multimedia Role</label>
+                                <select x-model="userForm.multimediaRole" class="w-full border rounded px-3 py-2 text-sm">
+                                    <option value="">— Select Role —</option>
+                                    <option value="photographer">Photographer</option>
+                                    <option value="videographer">Videographer</option>
+                                    <option value="editor">Editor</option>
+                                    <option value="all">All (Generalist)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" x-model="userForm.isManager" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-gray-700">This person is a department manager</span>
+                        </label>
+                        <p class="text-xs text-gray-500">Managers can view their team's performance on the My Progress page.</p>
+                    </div>
+                </div>
+
                 <div class="flex justify-end space-x-2">
                     <button type="button" @click="showUserModal = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
                     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save</button>
@@ -1122,7 +1157,7 @@ show_admin_bar(false);
                     tiktok: { enabled: false, target: 0 }
                 },
                 editingUpdate: null,
-                userForm: { firstName: '', lastName: '', email: '', role: 'client', clientIds: [], assignedClients: [], isActive: true },
+                userForm: { firstName: '', lastName: '', email: '', role: 'client', clientIds: [], assignedClients: [], isActive: true, department: '', multimediaRole: '', isManager: false },
                 clientForm: { name: '', brandName: '', contactEmail: '', contactPhone: '', industry: '', logo: '' },
                 customizeForm: { 
                     widgets: ['metrics', 'charts', 'kpis', 'pending', 'reports'], 
@@ -1307,7 +1342,10 @@ show_admin_bar(false);
                         role: user.role,
                         clientIds: mergedClientIds,
                         assignedClients: assignedClientIds,
-                        isActive: user.isActive !== undefined ? user.isActive : true
+                        isActive: user.isActive !== undefined ? user.isActive : true,
+                        department: user.department || '',
+                        multimediaRole: user.multimediaRole || '',
+                        isManager: user.isManager || false
                     };
                     this.showUserModal = true;
                 },
@@ -1335,8 +1373,11 @@ show_admin_bar(false);
                             const normalizedClientIds = [...new Set((this.userForm.clientIds || []).filter(Boolean))];
                             userData.clientIds = normalizedClientIds;
                             userData.clientId = normalizedClientIds[0] || undefined;
-                        } else if (this.userForm.role === 'brand_rep') {
+                        } else if (this.userForm.role === 'brand_rep' || this.userForm.role === 'admin') {
                             userData.assignedClients = [...new Set((this.userForm.assignedClients || []).filter(Boolean))];
+                            userData.department = this.userForm.department || null;
+                            userData.multimediaRole = this.userForm.department === 'multimedia' ? (this.userForm.multimediaRole || null) : null;
+                            userData.isManager = Boolean(this.userForm.isManager);
                         }
 
                         const response = await fetch(url, {
@@ -1351,7 +1392,7 @@ show_admin_bar(false);
                         const data = await response.json();
                         if (data.success || response.ok) {
                             this.showUserModal = false;
-                            this.userForm = { firstName: '', lastName: '', email: '', role: 'client', clientIds: [], assignedClients: [], isActive: true };
+                            this.userForm = { firstName: '', lastName: '', email: '', role: 'client', clientIds: [], assignedClients: [], isActive: true, department: '', multimediaRole: '', isManager: false };
                             await this.loadUsers();
                             
                             // Show temporary password modal for new users

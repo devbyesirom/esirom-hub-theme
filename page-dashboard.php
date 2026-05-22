@@ -311,6 +311,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
                     <span class="ml-4 nav-text">Content Calendar</span>
                 </a>
+                <!-- My Progress - Admin/Brand Rep View -->
+                <a x-show="viewMode !== 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('progress'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    <span class="ml-4 nav-text">My Progress</span>
+                </a>
             </nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
                 <!-- Update KPIs - hidden in Client View -->
@@ -1071,65 +1076,135 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 <!-- Event Coverage View -->
                 <div x-show="activeView === 'eventCoverage'" x-cloak>
                     <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-                        <div class="flex items-center justify-between gap-3 mb-4">
-                            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Event Coverage</h2>
-                            <span class="text-xs px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">Booking + Estimate Workflow</span>
+                        <div class="flex items-center justify-between gap-3 mb-5">
+                            <div>
+                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Event Coverage</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Request event coverage with your preferred services. We'll review, provide an estimate, and confirm your booking.</p>
+                            </div>
+                            <span class="hidden sm:inline-flex text-xs px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium whitespace-nowrap">Booking Workflow</span>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="space-y-4">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Request event coverage with your preferred services. Our team reviews availability, proposes updates if needed, and shares estimate details manually.
-                                </p>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 space-y-5">
 
+                                <!-- Brand Scope Indicator -->
+                                <div x-show="user.role === 'client'" class="flex items-center gap-3 p-3 rounded-lg border"
+                                     :class="getClientId() ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700/50' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50'">
+                                    <div :class="getClientId() ? 'text-indigo-500' : 'text-amber-500'">
+                                        <svg x-show="getClientId()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        <svg x-show="!getClientId()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold" :class="getClientId() ? 'text-indigo-700 dark:text-indigo-300' : 'text-amber-700 dark:text-amber-300'">
+                                            <span x-show="getClientId()">Booking for: <span class="font-bold" x-text="availableClients.find(c => c._id === (selectedViewClient?._id || selectedViewClient))?.brandName || 'Selected Brand'"></span></span>
+                                            <span x-show="!getClientId()">No brand selected — choose a specific brand above before submitting.</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Event Name -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Services</label>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Event Name / Title <span class="text-red-400">*</span></label>
+                                    <input type="text" x-model="eventCoverageForm.eventName" placeholder="e.g. Annual Gala 2026, Product Launch Event..." class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all" />
+                                </div>
+
+                                <!-- Services -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Services <span class="text-red-400">*</span></label>
+                                        <span x-show="eventCoverageForm.services.length > 0" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium" x-text="eventCoverageForm.services.length + ' selected'"></span>
+                                    </div>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                                         <template x-for="service in eventCoverageServiceOptions" :key="service.id">
-                                            <button @click="toggleEventCoverageService(service.id)"
-                                                    :class="eventCoverageForm.services.includes(service.id) ? 'bg-white/25 text-white border-indigo-400 shadow-lg' : 'bg-white/10 text-gray-200 border-white/20 hover:bg-white/20'"
-                                                    class="backdrop-blur-xl border rounded-xl px-3 py-3 text-left transition-all bg-gradient-to-br from-indigo-500/50 via-purple-500/40 to-cyan-500/40">
-                                                <div class="text-xl mb-1" x-text="service.icon"></div>
-                                                <div class="text-xs font-semibold" x-text="service.label"></div>
+                                            <button type="button" @click="toggleEventCoverageService(service.id)"
+                                                    class="relative border-2 rounded-xl p-3.5 text-left transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-400"
+                                                    :class="eventCoverageForm.services.includes(service.id)
+                                                        ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 shadow-md ring-2 ring-indigo-200 dark:ring-indigo-700'
+                                                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10'">
+                                                <!-- Checkmark badge -->
+                                                <div x-show="eventCoverageForm.services.includes(service.id)"
+                                                     class="absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+                                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                </div>
+                                                <div class="text-2xl mb-2" x-text="service.icon"></div>
+                                                <div class="text-xs font-semibold leading-tight"
+                                                     :class="eventCoverageForm.services.includes(service.id) ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'"
+                                                     x-text="service.label"></div>
                                             </button>
+                                        </template>
+                                    </div>
+                                    <!-- Selected summary -->
+                                    <div x-show="eventCoverageForm.services.length > 0" class="mt-2 flex flex-wrap gap-1.5">
+                                        <template x-for="sid in eventCoverageForm.services" :key="sid">
+                                            <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium">
+                                                <span x-text="(eventCoverageServiceOptions.find(o => o.id === sid) || {}).icon"></span>
+                                                <span x-text="(eventCoverageServiceOptions.find(o => o.id === sid) || {}).label"></span>
+                                            </span>
                                         </template>
                                     </div>
                                 </div>
 
+                                <!-- Date + Location -->
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Date</label>
-                                        <input type="datetime-local" x-model="eventCoverageForm.eventDate" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Event Date & Time <span class="text-red-400">*</span></label>
+                                        <input type="datetime-local" x-model="eventCoverageForm.eventDate" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                                        <input type="text" x-model="eventCoverageForm.location" placeholder="Venue / address" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Location <span class="text-red-400">*</span></label>
+                                        <input type="text" x-model="eventCoverageForm.location" placeholder="Venue / address" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all">
                                     </div>
                                 </div>
 
+                                <!-- More Details -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">More Details</label>
-                                    <textarea x-model="eventCoverageForm.details" rows="4" placeholder="Audience size, event type, shot list, streaming requirements, special notes..." class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">More Details</label>
+                                    <textarea x-model="eventCoverageForm.details" rows="3" placeholder="Audience size, shot list, streaming requirements, special requests..." class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all resize-none"></textarea>
                                 </div>
 
-                                <div class="flex items-center gap-2">
-                                    <button @click="submitEventCoverageBooking()" :disabled="submittingEventCoverage" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <!-- Submit -->
+                                <div class="flex items-center gap-3 pt-1">
+                                    <button @click="submitEventCoverageBooking()" :disabled="submittingEventCoverage"
+                                            class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm flex items-center gap-2">
+                                        <svg x-show="!submittingEventCoverage" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <svg x-show="submittingEventCoverage" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         <span x-show="!submittingEventCoverage">Request Booking</span>
                                         <span x-show="submittingEventCoverage">Submitting...</span>
                                     </button>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400" x-show="user.role === 'client' && !getClientId()">Select one brand scope to submit a booking.</span>
+                                    <span class="text-xs text-amber-600 dark:text-amber-400 font-medium" x-show="user.role === 'client' && !getClientId()">⚠ Select a specific brand to submit.</span>
                                 </div>
                             </div>
 
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">How It Works</h3>
-                                <ol class="text-sm text-gray-600 dark:text-gray-400 space-y-2 list-decimal pl-5">
-                                    <li>Client submits event request.</li>
-                                    <li>Brand rep/admin accepts, declines, or proposes changes.</li>
-                                    <li>Estimate is provided manually and tracked on booking.</li>
-                                    <li>After event, team uploads Google Drive folder link.</li>
-                                    <li>Client keeps searchable event history in the Hub.</li>
-                                </ol>
+                            <!-- How It Works sidebar -->
+                            <div class="space-y-4">
+                                <div class="bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4">
+                                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        How It Works
+                                    </h3>
+                                    <ol class="space-y-3">
+                                        <li class="flex gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center mt-0.5">1</span>
+                                            <span>Submit your event request with desired services, date, and location.</span>
+                                        </li>
+                                        <li class="flex gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center mt-0.5">2</span>
+                                            <span>Our team reviews availability and may suggest modifications.</span>
+                                        </li>
+                                        <li class="flex gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center mt-0.5">3</span>
+                                            <span>A cost estimate is provided and the event is confirmed.</span>
+                                        </li>
+                                        <li class="flex gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center mt-0.5">4</span>
+                                            <span>After the event, we upload your content to Google Drive.</span>
+                                        </li>
+                                        <li class="flex gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center mt-0.5">5</span>
+                                            <span>Your event history is stored here as a searchable gallery.</span>
+                                        </li>
+                                    </ol>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1148,19 +1223,27 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <template x-for="booking in eventCoverageBookings" :key="booking._id">
                                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div class="flex flex-wrap items-start justify-between gap-3">
-                                        <div>
-                                            <p class="font-medium text-gray-900 dark:text-white" x-text="booking.clientId?.brandName || booking.clientId?.name || 'Client'"></p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="new Date(booking.eventDate).toLocaleString()"></p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="booking.location"></p>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <p class="font-semibold text-gray-900 dark:text-white" x-text="booking.eventName || 'Untitled Event'"></p>
+                                                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="booking.clientId?.brandName || booking.clientId?.name || 'Client'"></span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                <svg class="inline w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                <span x-text="new Date(booking.eventDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })"></span>
+                                                <span class="mx-1">·</span>
+                                                <svg class="inline w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                <span x-text="booking.location"></span>
+                                            </p>
                                             <div class="flex flex-wrap gap-1 mt-2">
                                                 <template x-for="srv in (booking.services || [])" :key="`${booking._id}-${srv}`">
-                                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 capitalize" x-text="srv.replace('_', ' ')"></span>
+                                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium capitalize" x-text="srv.replace(/_/g, ' ')"></span>
                                                 </template>
                                             </div>
                                         </div>
-                                        <span class="text-xs px-2 py-1 rounded-full capitalize"
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-medium capitalize whitespace-nowrap"
                                               :class="booking.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : booking.status === 'declined' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : booking.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'"
-                                              x-text="booking.status.replace('_', ' ')"></span>
+                                              x-text="booking.status.replace(/_/g, ' ')"></span>
                                     </div>
 
                                     <p class="text-sm text-gray-600 dark:text-gray-300 mt-3" x-text="booking.details || 'No extra details provided.'"></p>
@@ -2083,6 +2166,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     { id: 'combo', label: 'Combo', icon: '✨' }
                 ],
                 eventCoverageForm: {
+                    eventName: '',
                     services: [],
                     eventDate: '',
                     location: '',
@@ -2883,6 +2967,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         this.showToast('Please choose one brand scope before requesting a booking.', 'error');
                         return;
                     }
+                    if (!this.eventCoverageForm.eventName || !this.eventCoverageForm.eventName.trim()) {
+                        this.showToast('Please provide an event name or title.', 'error');
+                        return;
+                    }
                     if (!this.eventCoverageForm.services.length) {
                         this.showToast('Select at least one coverage service.', 'error');
                         return;
@@ -2902,6 +2990,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             },
                             body: JSON.stringify({
                                 clientId,
+                                eventName: this.eventCoverageForm.eventName,
                                 services: this.eventCoverageForm.services,
                                 eventDate: this.eventCoverageForm.eventDate,
                                 location: this.eventCoverageForm.location,
@@ -2914,6 +3003,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
 
                         this.eventCoverageForm = {
+                            eventName: '',
                             services: [],
                             eventDate: '',
                             location: '',
