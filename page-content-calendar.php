@@ -184,14 +184,28 @@ show_admin_bar(false);
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                     </button>
-                    <!-- User Info -->
-                    <button @click="showPwModal = true"
-                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Change password">
-                        <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-medium text-sm" x-text="userName.charAt(0)"></div>
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="userName"></span>
-                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                    </button>
+                    <!-- User Dropdown -->
+                    <div x-data="{ dropdownOpen: false }" class="relative">
+                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <div class="w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-xs" x-text="userName.charAt(0)"></div>
+                            <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="userName"></span>
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak
+                             class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
+                            <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="userName"></p>
+                                <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 capitalize font-medium" x-text="userRole?.replace('_', ' ')"></p>
+                            </div>
+                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#"
+                               class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Change Password
+                            </a>
+                            <a @click.prevent="logout(); dropdownOpen = false" href="#"
+                               class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -631,8 +645,8 @@ show_admin_bar(false);
             </div>
         </div>
     </template>
-</div>
 
-<?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
+    <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
+</div>
 </body>
 </html>

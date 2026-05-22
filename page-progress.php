@@ -70,16 +70,30 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
         <div class="p-4 border-t border-gray-200 dark:border-gray-700">
             <?php esirom_hub_staff_sidebar_footer('site', false); ?>
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" x-text="((user?.firstName || '?')[0] + (user?.lastName || '')[0]).toUpperCase()"></div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="(user?.firstName || '') + ' ' + (user?.lastName || '')"></p>
-                    <p class="text-xs text-gray-500 capitalize" x-text="user?.role?.replace('_', ' ') || ''"></p>
-                </div>
-                <button @click="showPwModal = true" title="Change password"
-                        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <!-- User dropdown -->
+            <div x-data="{ dropdownOpen: false }" class="relative">
+                <button @click="dropdownOpen = !dropdownOpen"
+                        class="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0"
+                         x-text="((user?.firstName || '?')[0] + (user?.lastName || '')[0]).toUpperCase()"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate"
+                           x-text="(user?.firstName || '') + ' ' + (user?.lastName || '')"></p>
+                        <p class="text-xs text-gray-500 capitalize"
+                           x-text="user?.role?.replace('_', ' ') || ''"></p>
+                    </div>
+                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
                 </button>
+                <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak
+                     class="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
+                    <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#"
+                       class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        Change Password
+                    </a>
+                </div>
             </div>
         </div>
     </aside>
