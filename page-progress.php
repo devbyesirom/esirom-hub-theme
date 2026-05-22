@@ -64,30 +64,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             </div>
         </div>
 
-        <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-            <a href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
-                <span class="ml-3 text-sm">Workflow</span>
-            </a>
-            <a href="<?php echo esc_url(get_permalink(get_page_by_path('overview'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                <span class="ml-3 text-sm">Agency Overview</span>
-            </a>
-            <a href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                <span class="ml-3 text-sm">Insights</span>
-            </a>
-            <a href="<?php echo esc_url(get_permalink(get_page_by_path('progress'))); ?>" class="flex items-center p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium transition-colors">
-                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span class="ml-3 text-sm">My Progress</span>
-            </a>
-            <a x-show="user?.role === 'admin'" href="<?php echo esc_url(get_permalink(get_page_by_path('admin'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span class="ml-3 text-sm">Admin Panel</span>
-            </a>
+        <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+            <?php esirom_hub_staff_sidebar_nav('progress', 'site', false); ?>
         </nav>
 
         <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            <?php esirom_hub_staff_sidebar_footer('site', false); ?>
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" x-text="((user?.firstName || '?')[0] + (user?.lastName || '')[0]).toUpperCase()"></div>
                 <div class="flex-1 min-w-0">
@@ -495,6 +477,7 @@ function progressApp() {
     return {
         authChecked: false,
         user: null,
+        viewMode: localStorage.getItem('viewMode') || 'admin',
         isDark: localStorage.getItem('darkMode') === 'true',
         loading: false,
         view: 'personal',
@@ -566,9 +549,15 @@ function progressApp() {
                 if (data.success && data.data) {
                     this.user = data.data;
                     if (this.user.role === 'client') {
-                        // clients don't have access to this page
                         window.location.href = '<?php echo esc_js(get_permalink(get_page_by_path('dashboard'))); ?>';
                         return;
+                    }
+                    if (this.user.role === 'brand_rep' && this.viewMode === 'admin') {
+                        this.viewMode = 'brand_rep';
+                        localStorage.setItem('viewMode', 'brand_rep');
+                    } else if (this.user.role === 'admin' && !['admin', 'brand_rep', 'client'].includes(this.viewMode)) {
+                        this.viewMode = 'admin';
+                        localStorage.setItem('viewMode', 'admin');
                     }
                     if (this.user.isManager) this.view = 'personal';
                     await this.loadData();

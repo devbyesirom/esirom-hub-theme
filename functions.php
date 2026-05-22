@@ -26,6 +26,25 @@ function esirom_hub_setup() {
 add_action('after_setup_theme', 'esirom_hub_setup');
 
 /**
+ * Render shared staff sidebar navigation (admin / brand_rep).
+ */
+function esirom_hub_staff_sidebar_nav($active = '', $context = 'site', $alpine_labels = false) {
+    $hub_nav_active = $active;
+    $hub_nav_context = $context;
+    $hub_nav_alpine_labels = $alpine_labels;
+    include get_template_directory() . '/inc/hub-staff-sidebar-nav.php';
+}
+
+/**
+ * Render shared staff sidebar footer (Update KPIs, Admin Panel).
+ */
+function esirom_hub_staff_sidebar_footer($context = 'site', $alpine_labels = false) {
+    $hub_nav_context = $context;
+    $hub_nav_alpine_labels = $alpine_labels;
+    include get_template_directory() . '/inc/hub-staff-sidebar-footer.php';
+}
+
+/**
  * Enqueue scripts and styles
  */
 function esirom_hub_scripts() {
