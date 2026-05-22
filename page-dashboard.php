@@ -138,6 +138,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
+        <?php esirom_hub_layout_styles(); ?>
     </style>
     <?php wp_head(); ?>
     <script>
@@ -169,7 +170,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         });
     </script>
 </head>
-<body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="clientHub">
+<body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="clientHub">
     <div class="flex h-full flex-col md:flex-row">
         <!-- Mobile Header -->
         <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
@@ -2142,8 +2143,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     { id: 'photography', label: 'Photography', icon: '📸' },
                     { id: 'videography', label: 'Videography', icon: '🎥' },
                     { id: 'live_coverage', label: 'Live Coverage', icon: '🎬' },
-                    { id: 'live_streaming', label: 'Live Streaming', icon: '📡' },
-                    { id: 'combo', label: 'Combo', icon: '✨' }
+                    { id: 'live_streaming', label: 'Live Streaming', icon: '📡' }
                 ],
                 eventCoverageForm: {
                     eventName: '',
@@ -5333,7 +5333,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
     </script>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40">
+    <nav class="hub-mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40">
         <div class="flex justify-around items-center h-16">
             <!-- CLIENT VIEW MOBILE NAV -->
             <!-- Content Bank - Client View -->

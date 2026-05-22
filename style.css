@@ -4,7 +4,7 @@ Theme URI: https://esirom.com
 Author: Esirom
 Author URI: https://esirom.com
 Description: A comprehensive social media client hub theme with dashboard, reporting, and content management capabilities.
-Version: 1.6.1
+Version: 1.6.2
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: esirom-hub
@@ -14,3 +14,13 @@ This theme is designed for the Esirom Social Media Client Hub application.
 */
 
 /* Theme styles are handled by Tailwind CSS in the individual pages */
+
+/* Hide mobile bottom nav on tablet/desktop (fixes grey bar showing on wide screens) */
+@media (min-width: 768px) {
+  .hub-mobile-bottom-nav {
+    display: none !important;
+  }
+  body.hub-has-mobile-nav {
+    padding-bottom: 0 !important;
+  }
+}

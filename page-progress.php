@@ -152,8 +152,13 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center mx-auto mb-3">
                     <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 </div>
-                <h3 class="font-semibold text-amber-800 dark:text-amber-300 mb-1">Department Not Set</h3>
-                <p class="text-sm text-amber-700 dark:text-amber-400">Your department hasn't been assigned yet. Ask an admin to set it in the Admin Panel so your progress goals can be tracked.</p>
+                <h3 class="font-semibold text-amber-800 dark:text-amber-300 mb-1" x-text="user?.role === 'admin' ? 'Agency oversight' : 'Department not set'"></h3>
+                <p class="text-sm text-amber-700 dark:text-amber-400" x-show="user?.role === 'admin'">
+                    You are not assigned to a department. Use <button type="button" @click="view = 'team'; loadData()" class="font-semibold underline text-amber-800 dark:text-amber-200">Team View</button> to see performance across all divisions and team members.
+                </p>
+                <p class="text-sm text-amber-700 dark:text-amber-400" x-show="user?.role !== 'admin'">
+                    Your department hasn't been assigned yet. Ask an admin to set it in the Admin Panel so your progress goals can be tracked.
+                </p>
             </div>
 
             <!-- PERSONAL VIEW -->
@@ -546,20 +551,26 @@ function progressApp() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (data.success && data.data) {
-                    this.user = data.data;
+                if (!res.ok) throw new Error(data.message || 'Auth failed');
+
+                if (data.success && data.user) {
+                    this.user = {
+                        ...data.user,
+                        _id: data.user._id || data.user.id
+                    };
+                    localStorage.setItem('user', JSON.stringify(this.user));
+
                     if (this.user.role === 'client') {
                         window.location.href = '<?php echo esc_js(get_permalink(get_page_by_path('dashboard'))); ?>';
                         return;
                     }
-                    if (this.user.role === 'brand_rep' && this.viewMode === 'admin') {
-                        this.viewMode = 'brand_rep';
-                        localStorage.setItem('viewMode', 'brand_rep');
-                    } else if (this.user.role === 'admin' && !['admin', 'brand_rep', 'client'].includes(this.viewMode)) {
-                        this.viewMode = 'admin';
-                        localStorage.setItem('viewMode', 'admin');
+
+                    if (this.user.role === 'admin') {
+                        this.view = 'team';
+                    } else if (this.user.isManager) {
+                        this.view = 'team';
                     }
-                    if (this.user.isManager) this.view = 'personal';
+
                     await this.loadData();
                 }
             } catch (e) {

@@ -45,6 +45,13 @@ function esirom_hub_staff_sidebar_footer($context = 'site', $alpine_labels = fal
 }
 
 /**
+ * Inline CSS: hide mobile bottom nav on desktop (prevents grey bar on wide screens).
+ */
+function esirom_hub_layout_styles() {
+    include get_template_directory() . '/inc/hub-layout-styles.php';
+}
+
+/**
  * Enqueue scripts and styles
  */
 function esirom_hub_scripts() {

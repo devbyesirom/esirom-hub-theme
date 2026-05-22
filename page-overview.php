@@ -91,10 +91,11 @@ show_admin_bar(false);
         #wpadminbar { display: none !important; }
         html { margin-top: 0 !important; }
         body { margin-top: 0 !important; }
+        <?php esirom_hub_layout_styles(); ?>
     </style>
     <?php wp_head(); ?>
 </head>
-<body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="agencyOverview()" x-init="init()">
+<body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="agencyOverview()" x-init="init()">
     <div class="flex h-full flex-col md:flex-row">
         <!-- Mobile Header -->
         <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
@@ -762,7 +763,7 @@ show_admin_bar(false);
     </script>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40" x-data="{ viewMode: localStorage.getItem('viewMode') || 'admin', user: (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })(), init() { window.addEventListener('viewModeChanged', (e) => { this.viewMode = e?.detail?.viewMode || (localStorage.getItem('viewMode') || 'admin'); }); } }">
+    <nav class="hub-mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40" x-data="{ viewMode: localStorage.getItem('viewMode') || 'admin', user: (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })(), init() { window.addEventListener('viewModeChanged', (e) => { this.viewMode = e?.detail?.viewMode || (localStorage.getItem('viewMode') || 'admin'); }); } }">
         <div class="flex justify-around items-center h-16">
             <!-- Overview - current page, hidden in client view -->
             <a x-show="viewMode !== 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('overview'))); ?>" class="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-indigo-600 dark:text-indigo-400">
