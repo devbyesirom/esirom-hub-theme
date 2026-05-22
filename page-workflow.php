@@ -270,7 +270,8 @@ show_admin_bar(false);
                                 <!-- Client Selector (only when in client view) -->
                                 <div x-show="viewMode === 'client'" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 px-3">View as Client:</label>
-                                    <select x-model="selectedViewClient" @change="localStorage.setItem('selectedViewClient', selectedViewClient); loadConcepts(); loadContentBank(); loadProductions();" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    <select x-model="selectedViewClient" @change="handleSelectedViewClientChange()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <option value="">All Brands</option>
                                         <template x-for="client in clients" :key="client._id">
                                             <option :value="client._id" x-text="client.brandName || client.name"></option>
                                         </template>
@@ -310,6 +311,21 @@ show_admin_bar(false);
 
             <!-- Main Workflow Content -->
             <div x-show="!loading" x-cloak class="p-4 sm:p-6 lg:p-8">
+                <div x-show="viewMode === 'client' && clients.length > 1" class="mb-4">
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1">Brands:</span>
+                        <button @click="setClientBrandScope('')" :class="!selectedViewClient ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors">
+                            All Brands
+                        </button>
+                        <template x-for="client in clients" :key="`brand-toggle-${client._id}`">
+                            <button @click="setClientBrandScope(client._id)"
+                                    :class="selectedViewClient === client._id ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                    class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                                    x-text="client.brandName || client.name"></button>
+                        </template>
+                    </div>
+                </div>
+
                 <!-- Tabs - Client View only sees Content Bank - scrollable on mobile -->
                 <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-6" role="tablist" aria-label="Workflow sections">
                     <div class="flex space-x-1 bg-gray-200/90 dark:bg-gray-800/90 rounded-xl p-1 w-max md:w-fit border border-gray-200/80 dark:border-gray-600/50 shadow-sm">
@@ -3030,6 +3046,22 @@ show_admin_bar(false);
                         const response = await fetch(`${API_URL}/workflow/concepts?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
                         if (response.ok) { const data = await response.json(); this.tasks = data.concepts || []; }
                     } catch (error) { console.error('Load tasks error:', error); }
+                },
+
+                handleSelectedViewClientChange() {
+                    if (this.selectedViewClient) {
+                        localStorage.setItem('selectedViewClient', this.selectedViewClient);
+                    } else {
+                        localStorage.removeItem('selectedViewClient');
+                    }
+                    this.loadConcepts();
+                    this.loadContentBank();
+                    this.loadProductions();
+                },
+
+                setClientBrandScope(clientId) {
+                    this.selectedViewClient = clientId || '';
+                    this.handleSelectedViewClientChange();
                 },
 
                 openConceptModal() {

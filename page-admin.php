@@ -573,21 +573,35 @@ show_admin_bar(false);
                 </div>
                 <div class="mb-4" x-show="userForm.role === 'client'">
                     <label class="block text-sm font-medium mb-1">Assign to Clients (Multiple)</label>
-                    <select x-model="userForm.clientIds" multiple class="w-full border rounded px-3 py-2 h-32">
-                        <template x-for="client in clients" :key="client._id">
-                            <option :value="client._id" x-text="client.companyName"></option>
+                    <div class="border rounded px-3 py-2 max-h-40 overflow-y-auto space-y-2">
+                        <div class="flex items-center justify-between mb-1">
+                            <button type="button" @click="userForm.clientIds = clients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
+                            <button type="button" @click="userForm.clientIds = []" class="text-xs text-gray-500 hover:underline">Clear</button>
+                        </div>
+                        <template x-for="client in clients" :key="`client-user-${client._id}`">
+                            <label class="flex items-center gap-2 text-sm py-0.5">
+                                <input type="checkbox" :value="client._id" x-model="userForm.clientIds" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span x-text="client.brandName || client.companyName || client.name"></span>
+                            </label>
                         </template>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple clients</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Assign one or more brands to this client account</p>
                 </div>
                 <div class="mb-4" x-show="userForm.role === 'brand_rep'">
                     <label class="block text-sm font-medium mb-1">Assign Clients</label>
-                    <select x-model="userForm.assignedClients" multiple class="w-full border rounded px-3 py-2 h-32">
-                        <template x-for="client in clients" :key="client._id">
-                            <option :value="client._id" x-text="client.companyName"></option>
+                    <div class="border rounded px-3 py-2 max-h-40 overflow-y-auto space-y-2">
+                        <div class="flex items-center justify-between mb-1">
+                            <button type="button" @click="userForm.assignedClients = clients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
+                            <button type="button" @click="userForm.assignedClients = []" class="text-xs text-gray-500 hover:underline">Clear</button>
+                        </div>
+                        <template x-for="client in clients" :key="`rep-client-${client._id}`">
+                            <label class="flex items-center gap-2 text-sm py-0.5">
+                                <input type="checkbox" :value="client._id" x-model="userForm.assignedClients" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span x-text="client.brandName || client.companyName || client.name"></span>
+                            </label>
                         </template>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple clients</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Assign one or more brands for this brand representative</p>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" @click="showUserModal = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
@@ -1277,14 +1291,22 @@ show_admin_bar(false);
 
                 editUser(user) {
                     this.editingUser = user;
+                    const clientIdsFromUser = Array.isArray(user.clientIds)
+                        ? user.clientIds.map(c => c?._id || c).filter(Boolean)
+                        : [];
+                    const primaryClientId = user.clientId?._id || user.clientId;
+                    const mergedClientIds = [...new Set([...(primaryClientId ? [primaryClientId] : []), ...clientIdsFromUser])];
+                    const assignedClientIds = Array.isArray(user.assignedClients)
+                        ? user.assignedClients.map(c => c?._id || c).filter(Boolean)
+                        : [];
                     this.userForm = {
                         firstName: user.firstName,
                         lastName: user.lastName,
                         email: user.email,
                         password: '',
                         role: user.role,
-                        clientIds: user.clientId ? [user.clientId._id || user.clientId] : [],
-                        assignedClients: user.assignedClients || [],
+                        clientIds: mergedClientIds,
+                        assignedClients: assignedClientIds,
                         isActive: user.isActive !== undefined ? user.isActive : true
                     };
                     this.showUserModal = true;
@@ -1310,9 +1332,11 @@ show_admin_bar(false);
                         }
                         
                         if (this.userForm.role === 'client') {
-                            userData.clientId = this.userForm.clientIds[0];
+                            const normalizedClientIds = [...new Set((this.userForm.clientIds || []).filter(Boolean))];
+                            userData.clientIds = normalizedClientIds;
+                            userData.clientId = normalizedClientIds[0] || undefined;
                         } else if (this.userForm.role === 'brand_rep') {
-                            userData.assignedClients = this.userForm.assignedClients;
+                            userData.assignedClients = [...new Set((this.userForm.assignedClients || []).filter(Boolean))];
                         }
 
                         const response = await fetch(url, {
