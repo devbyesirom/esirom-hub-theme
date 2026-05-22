@@ -19,6 +19,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         const API_URL = '<?php echo esc_js($api_url); ?>';
+        const LOGIN_URL = '<?php echo esc_js(get_permalink(get_page_by_path('login'))); ?>';
         tailwind.config = {
             darkMode: 'class',
             theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
@@ -93,6 +94,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         Change Password
                     </a>
+                    <a @click.prevent="logout(); dropdownOpen = false" href="#"
+                       class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
                 </div>
             </div>
         </div>
@@ -574,6 +577,12 @@ function progressApp() {
                 this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
                 setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 2000);
             } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = LOGIN_URL;
         },
 
         setPeriodType(type) {

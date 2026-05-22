@@ -256,7 +256,7 @@ show_admin_bar(false);
 
         <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto mt-14 md:mt-0">
             <!-- Header / Command Bar -->
-            <header class="hidden md:flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700/60 sticky top-0 z-10 gap-4 flex-wrap">
+            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
                 <!-- Left: title + period picker -->
                 <div class="flex items-center gap-5 flex-wrap min-w-0">
                     <div class="min-w-0">
@@ -314,12 +314,12 @@ show_admin_bar(false);
                     </button>
 
                     <div x-data="{ dropdownOpen: false }" class="relative">
-                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                             <img class="h-7 w-7 rounded-full object-cover" :src="user?.clientId?.logo || 'https://placehold.co/100x100/4a5568/ffffff?text=' + (user?.firstName?.[0] || 'U')" :alt="user?.fullName">
                             <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="user?.fullName"></span>
-                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-20">
+                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-20">
                             <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
                                 <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="user?.fullName"></p>
                                 <p class="text-xs text-gray-500 mt-0.5" x-text="user?.email"></p>

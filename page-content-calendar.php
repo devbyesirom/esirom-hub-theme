@@ -195,6 +195,7 @@ show_admin_bar(false);
                              class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
                             <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
                                 <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="userName"></p>
+                                <p class="text-xs text-gray-500 mt-0.5" x-text="user?.email || ''"></p>
                                 <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 capitalize font-medium" x-text="userRole?.replace('_', ' ')"></p>
                             </div>
                             <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#"
@@ -382,6 +383,7 @@ show_admin_bar(false);
 
     function calendarApp() {
         return {
+            user: {},
             userRole: '',
             viewMode: localStorage.getItem('viewMode') || 'admin',
             userName: '',
