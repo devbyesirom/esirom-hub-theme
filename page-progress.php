@@ -250,6 +250,17 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     </div>
                 </div>
 
+                <!-- Scoring explanation (context-aware) -->
+                <div x-show="myData.goals && myData.goals.length > 0" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-xl p-4 flex gap-3 items-start">
+                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                    <div>
+                        <p class="text-xs font-semibold text-blue-800 dark:text-blue-200">How is my score calculated?</p>
+                        <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5"
+                           x-text="myData.department === 'multimedia' ? 'Your score is the average of all your active delivery goals this month. Goals are only counted when you have projects assigned for that type.' : myData.department === 'graphic_designer' ? 'Graphics Completed counts double towards your score, as it reflects volume of work. On-Time Delivery counts once. Score = (Graphics% × 2 + On-Time%) ÷ 3.' : myData.department === 'social_media_exec' ? 'Score is based on concepts created vs. your monthly target across assigned brands. If No Data appears, ask your admin to set a monthly target per brand.' : 'Your score is a weighted average of all active goals for this period.'">
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Goals breakdown -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <template x-for="goal in myData.goals" :key="goal.id">
@@ -437,18 +448,21 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                                     <!-- Info -->
                                     <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="member.user.firstName + ' ' + member.user.lastName"></p>
+                                        <div class="flex items-center gap-1.5 flex-wrap mb-2">
+                                            <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="member.user.firstName + ' ' + member.user.lastName"></p>
                                             <span x-show="member.user.isManager" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">MANAGER</span>
-                                            <span x-show="member.user.multimediaRole" class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 capitalize" x-text="(member.user.multimediaRole || '').replace('_', ' ')"></span>
+                                            <span x-show="member.user.multimediaRole" class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 capitalize" x-text="(member.user.multimediaRole || '').replace('_', ' ')"></span>
                                         </div>
 
-                                        <!-- Mini goal bars -->
-                                        <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                                        <!-- Per-goal rows — much clearer than anonymous bars -->
+                                        <div class="space-y-1.5">
                                             <template x-for="goal in member.goals" :key="goal.id">
-                                                <div class="flex items-center gap-1 group relative">
-                                                    <div class="w-16 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                        <div class="h-1.5 rounded-full"
+                                                <div class="flex items-center gap-2">
+                                                    <!-- Label -->
+                                                    <span class="text-[11px] text-gray-500 dark:text-gray-400 w-28 flex-shrink-0 truncate leading-tight" x-text="goal.label"></span>
+                                                    <!-- Bar -->
+                                                    <div class="flex-1 max-w-[80px] h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                        <div class="h-1.5 rounded-full transition-all"
                                                              :class="{
                                                                  'bg-green-500': goal.status === 'achieved',
                                                                  'bg-blue-400': goal.status === 'on_track',
@@ -457,16 +471,37 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                                              }"
                                                              :style="'width: ' + Math.min(goal.percentage || 0, 100) + '%'"></div>
                                                     </div>
-                                                    <span class="text-[10px] text-gray-400 leading-none" x-text="goal.percentage !== null ? goal.percentage + '%' : '?'"></span>
+                                                    <!-- Current / target -->
+                                                    <span class="text-[11px] font-medium leading-none whitespace-nowrap"
+                                                          :class="{
+                                                              'text-green-600 dark:text-green-400': goal.status === 'achieved',
+                                                              'text-blue-500 dark:text-blue-400': goal.status === 'on_track',
+                                                              'text-red-500 dark:text-red-400': goal.status === 'behind',
+                                                              'text-gray-400': goal.status === 'no_data' || goal.status === 'pending'
+                                                          }"
+                                                          x-text="goal.status === 'no_data' ? 'No data' : goal.status === 'pending' ? 'Pending' : goal.current + ' / ' + goal.target + ' ' + goal.unit"></span>
+                                                    <!-- Status dot -->
+                                                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                                          :class="{
+                                                              'bg-green-500': goal.status === 'achieved',
+                                                              'bg-blue-400': goal.status === 'on_track',
+                                                              'bg-red-400': goal.status === 'behind',
+                                                              'bg-gray-300 dark:bg-gray-600': goal.status === 'no_data' || goal.status === 'pending'
+                                                          }"></span>
                                                 </div>
                                             </template>
+
+                                            <!-- Hint for SM exec / web dev with no data -->
+                                            <div x-show="member.score === null && (dept.department === 'social_media_exec')" class="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-1">
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                                Set monthly concept target in Admin → Clients
+                                            </div>
                                         </div>
-                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5" x-text="member.goals.map(g => g.label).join(' · ')"></p>
                                     </div>
 
                                     <!-- Score badge -->
-                                    <div class="text-right flex-shrink-0">
-                                        <span class="text-lg font-extrabold"
+                                    <div class="text-right flex-shrink-0 ml-2">
+                                        <span class="text-lg font-extrabold leading-none"
                                               :class="{
                                                   'text-green-600 dark:text-green-400': member.score >= 90,
                                                   'text-blue-600 dark:text-blue-400': member.score >= 70 && member.score < 90,
@@ -475,7 +510,14 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                                   'text-gray-400': member.score === null
                                               }"
                                               x-text="member.score !== null ? member.score + '%' : '—'"></span>
-                                        <p class="text-[10px] text-gray-400 mt-0.5"
+                                        <p class="text-[10px] mt-0.5"
+                                           :class="{
+                                               'text-green-600 dark:text-green-400': member.score >= 90,
+                                               'text-blue-500 dark:text-blue-400': member.score >= 70 && member.score < 90,
+                                               'text-amber-500': member.score >= 50 && member.score < 70,
+                                               'text-red-500': member.score !== null && member.score < 50,
+                                               'text-gray-400': member.score === null
+                                           }"
                                            x-text="member.score >= 90 ? 'Excellent' : member.score >= 70 ? 'Good' : member.score >= 50 ? 'Needs Work' : member.score !== null ? 'Behind' : 'No Data'"></p>
                                     </div>
                                 </div>

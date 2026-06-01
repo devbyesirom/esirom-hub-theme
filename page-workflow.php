@@ -1021,13 +1021,21 @@ show_admin_bar(false);
                     </div>
 
                     <!-- Stats strip -->
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-5">
                         <template x-for="s in productionStatsStrip" :key="s.label">
-                            <div class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 px-4 py-3 flex flex-col cursor-pointer hover:border-indigo-400 transition-colors" @click="productionStatusFilter = s.status; loadProductions()" :class="productionStatusFilter === s.status ? 'border-indigo-500 ring-1 ring-indigo-400' : ''">
-                                <span class="text-2xl font-bold" :class="s.color" x-text="productions.filter(p => !s.status || p.status === s.status).length"></span>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 px-4 py-3 flex flex-col cursor-pointer hover:border-indigo-400 transition-colors"
+                                 @click="productionStatusFilter = s.status; loadProductions()"
+                                 :class="productionStatusFilter === s.status && !(s.overdue) ? 'border-indigo-500 ring-1 ring-indigo-400' : ''">
+                                <span class="text-2xl font-bold" :class="s.color"
+                                    x-text="s.overdue ? productions.filter(p => p.isOverdue).length : productions.filter(p => !s.status || p.status === s.status).length"></span>
                                 <span class="text-xs text-gray-500 mt-0.5" x-text="s.label"></span>
                             </div>
                         </template>
+                        <!-- Overdue badge card -->
+                        <div class="bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 px-4 py-3 flex flex-col">
+                            <span class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="productions.filter(p => p.isOverdue && p.status !== 'delivered').length"></span>
+                            <span class="text-xs text-red-500 mt-0.5">⚠ Overdue</span>
+                        </div>
                     </div>
 
                     <!-- Table -->
@@ -2485,6 +2493,23 @@ show_admin_bar(false);
                                         </div>
                                     </div>
                                 </template>
+                            </div>
+                        </div>
+
+                        <!-- Send to Content Bank -->
+                        <div x-show="['client_review','approved','final_delivery','delivered'].includes(selectedProduction?.status) && (user?.role === 'admin' || user?.role === 'brand_rep')"
+                             class="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl">
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-200">Send to Client Portal</p>
+                                    <p class="text-xs text-indigo-700 dark:text-indigo-300 mt-0.5">Add this production to the Content Bank so the client can view and approve it.</p>
+                                </div>
+                                <button @click="sendProductionToContentBank()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 flex-shrink-0">
+                                    Send Now
+                                </button>
                             </div>
                         </div>
 
@@ -4180,6 +4205,25 @@ show_admin_bar(false);
                     } catch (err) { this.showToast('Failed to remove file', 'error'); }
                 },
 
+                async sendProductionToContentBank() {
+                    if (!confirm('Send this production to the Content Bank for client approval? The client will be able to view and approve it from their portal.')) return;
+                    const token = localStorage.getItem('token');
+                    try {
+                        const res = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}/send-to-content-bank`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            this.showToast('Sent to Content Bank — client can now approve it', 'success');
+                        } else if (res.status === 409) {
+                            this.showToast('Already in Content Bank', 'info');
+                        } else {
+                            this.showToast(data.message || 'Failed to send to Content Bank', 'error');
+                        }
+                    } catch (err) { this.showToast('Failed to send to Content Bank', 'error'); }
+                },
+
                 handleMentionInput(event) {
                     const text = event.target.value;
                     const cursorPos = event.target.selectionStart;
@@ -4232,11 +4276,11 @@ show_admin_bar(false);
 
                 // Stats strip data
                 productionStatsStrip: [
-                    { label: 'All Active', status: '', color: 'text-gray-900 dark:text-white' },
-                    { label: 'In Production', status: 'filming', color: 'text-purple-600 dark:text-purple-400' },
+                    { label: 'All', status: '', color: 'text-gray-900 dark:text-white' },
+                    { label: 'Filming', status: 'filming', color: 'text-purple-600 dark:text-purple-400' },
                     { label: 'Editing', status: 'editing', color: 'text-indigo-600 dark:text-indigo-400' },
                     { label: 'Client Review', status: 'client_review', color: 'text-yellow-600 dark:text-yellow-400' },
-                    { label: 'Overdue', status: '', color: 'text-red-600 dark:text-red-400' }
+                    { label: 'Delivered', status: 'delivered', color: 'text-emerald-600 dark:text-emerald-400' }
                 ],
 
                 formatProductionStatus(status) {

@@ -1,5 +1,22 @@
 [
   {
+    "id": 12,
+    "title": "Content Bank Integration & Progress Clarity",
+    "version": "2.1.0",
+    "description": "Production projects can now be sent directly to the Content Bank for client approval. The stats strip now shows a Delivered card and a separate Overdue indicator. Team Progress cards show per-goal detail rows with actual counts, clearer labels, and helpful hints for Social Media Execs.",
+    "date": "2026-06-01",
+    "highlights": [
+      "Send to Client Portal button — push any production (in Client Review or later) to Content Bank so the client can approve it",
+      "Content Bank stats: awaiting client approval count now reflects productions sent for review",
+      "Stats strip: replaced Overdue card with Delivered; Overdue now shown as a separate read-only indicator",
+      "Team Progress: per-goal rows now show label + current/target count (e.g. 1 / 1 production) instead of anonymous bars",
+      "Multimedia goals: goals with no projects assigned this period are now excluded from score (no longer penalised)",
+      "Social Media Exec 'No Data' now shows a hint to set monthly targets in Admin → Clients",
+      "Personal progress view: inline scoring explanation for each department type"
+    ],
+    "type": "update"
+  },
+  {
     "id": 11,
     "title": "Production Workflow Rebuild",
     "version": "2.0.0",
