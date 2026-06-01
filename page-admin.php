@@ -1794,7 +1794,10 @@ show_admin_bar(false);
                         });
                         const data = await response.json().catch(() => ({}));
                         if (response.ok && data.success) {
-                            this.showToast('Workflow digest sent to Google Space — check AgencyHUB: Workflow Notifications', 'success', 7000);
+                            const counts = data.result?.counts;
+                            const sample = data.result?.samplePosted;
+                            const summary = counts ? ` (${counts.overdue} overdue, ${counts.dueToday} due today, ${counts.dueSoon} due soon)` : '';
+                            this.showToast(`${sample ? 'Test card' : 'Workflow digest'} sent to Google Space${summary} — check AgencyHUB: Workflow Notifications`, 'success', 9000);
                         } else if (response.status === 401) {
                             this.showToast('Session expired — log in again as admin', 'error', 5000);
                         } else {
