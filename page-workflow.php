@@ -975,9 +975,16 @@ show_admin_bar(false);
 
                 <!-- Production Tab -->
                 <div x-show="activeTab === 'productions'">
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div class="flex items-center space-x-4">
-                            <select x-model="productionStatusFilter" @change="loadProductions()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <!-- Toolbar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Search -->
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"></path></svg>
+                                <input type="text" x-model="productionSearch" @input.debounce.300ms="loadProductions()" placeholder="Search projects…" class="pl-9 pr-4 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-52">
+                            </div>
+                            <!-- Status filter -->
+                            <select x-model="productionStatusFilter" @change="loadProductions()" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">All Status</option>
                                 <option value="scripting">Scripting</option>
                                 <option value="script_review">Script Review</option>
@@ -988,63 +995,123 @@ show_admin_bar(false);
                                 <option value="revisions">Revisions</option>
                                 <option value="approved">Approved</option>
                                 <option value="final_delivery">Final Delivery</option>
+                                <option value="delivered">Delivered</option>
                             </select>
-                            <select x-model="productionClientFilter" @change="loadProductions()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <!-- Type filter -->
+                            <select x-model="productionTypeFilter" @change="loadProductions()" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">All Types</option>
+                                <option value="videography">Videography</option>
+                                <option value="photography">Photography</option>
+                                <option value="editing">Editing Only</option>
+                                <option value="web_project">Web Project</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <!-- Client filter -->
+                            <select x-model="productionClientFilter" @change="loadProductions()" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">All Clients</option>
                                 <template x-for="client in clients" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.name"></option>
                                 </template>
                             </select>
                         </div>
-                        <button @click="openProductionModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <button @click="openProductionModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             New Production
                         </button>
                     </div>
 
-                    <!-- Production Projects List -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Project</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Client</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Editor</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Due Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">SLA</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y dark:divide-gray-700">
-                                <template x-for="project in productions" :key="project._id">
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" :class="project.isOverdue ? 'bg-red-50 dark:bg-red-900/20' : ''" @click="viewProduction(project)">
-                                        <td class="px-6 py-4">
-                                            <p class="font-medium text-gray-900 dark:text-white" x-text="project.title"></p>
-                                            <p class="text-xs text-gray-500" x-text="project.videoType"></p>
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500" x-text="project.clientId?.brandName || project.clientId?.name"></td>
-                                        <td class="px-6 py-4">
-                                            <span :class="getProductionStatusClass(project.status)" class="px-2 py-1 text-xs rounded-full" x-text="formatProductionStatus(project.status)"></span>
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500" x-text="project.editor ? (project.editor.firstName + ' ' + project.editor.lastName) : 'Unassigned'"></td>
-                                        <td class="px-6 py-4 text-sm text-gray-500" x-text="formatDate(project.dueDate)"></td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center gap-2">
-                                                <div class="w-16 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                                                    <div :class="getSLABarClass(project)" :style="'width: ' + getSLAPercentage(project) + '%'" class="h-full"></div>
-                                                </div>
-                                                <span class="text-xs" :class="getSLATextClass(project)" x-text="getHoursInStatus(project) + 'h'"></span>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <button @click.stop="viewProduction(project)" class="text-indigo-600 hover:text-indigo-800 text-sm">View</button>
-                                        </td>
+                    <!-- Stats strip -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+                        <template x-for="s in productionStatsStrip" :key="s.label">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 px-4 py-3 flex flex-col cursor-pointer hover:border-indigo-400 transition-colors" @click="productionStatusFilter = s.status; loadProductions()" :class="productionStatusFilter === s.status ? 'border-indigo-500 ring-1 ring-indigo-400' : ''">
+                                <span class="text-2xl font-bold" :class="s.color" x-text="productions.filter(p => !s.status || p.status === s.status).length"></span>
+                                <span class="text-xs text-gray-500 mt-0.5" x-text="s.label"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                                    <tr>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Project</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Client</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Type</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Team</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Due</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">SLA</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Priority</th>
+                                        <th class="px-5 py-3"></th>
                                     </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                        <div x-show="productions.length === 0" class="p-8 text-center text-gray-500">No production projects found</div>
+                                </thead>
+                                <tbody class="divide-y dark:divide-gray-700">
+                                    <template x-for="project in productions" :key="project._id">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                                            :class="project.isOverdue ? 'bg-red-50/60 dark:bg-red-900/10' : ''"
+                                            @click="viewProduction(project)">
+                                            <!-- Project -->
+                                            <td class="px-5 py-3.5">
+                                                <div class="flex items-start gap-2">
+                                                    <div>
+                                                        <p class="font-semibold text-gray-900 dark:text-white leading-tight" x-text="project.title"></p>
+                                                        <p class="text-xs text-gray-400 mt-0.5 capitalize" x-text="project.videoType?.replace('_',' ')"></p>
+                                                    </div>
+                                                    <span x-show="project.isOverdue" class="flex-shrink-0 mt-0.5 w-2 h-2 rounded-full bg-red-500" title="Overdue"></span>
+                                                </div>
+                                            </td>
+                                            <!-- Client -->
+                                            <td class="px-5 py-3.5 text-gray-600 dark:text-gray-300 whitespace-nowrap" x-text="project.clientId?.brandName || project.clientId?.name"></td>
+                                            <!-- Type -->
+                                            <td class="px-5 py-3.5">
+                                                <span class="px-2 py-0.5 rounded text-xs font-medium" :class="getProductionTypeClass(project.productionType)" x-text="formatProductionType(project.productionType)"></span>
+                                            </td>
+                                            <!-- Status -->
+                                            <td class="px-5 py-3.5">
+                                                <span :class="getProductionStatusClass(project.status)" class="px-2.5 py-1 text-xs rounded-full font-medium whitespace-nowrap" x-text="formatProductionStatus(project.status)"></span>
+                                            </td>
+                                            <!-- Team -->
+                                            <td class="px-5 py-3.5">
+                                                <div class="flex -space-x-1">
+                                                    <template x-for="member in [project.director, project.editor, project.producer, project.scriptwriter].filter(Boolean)" :key="member._id">
+                                                        <div class="w-6 h-6 rounded-full bg-indigo-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold" :title="member.firstName + ' ' + member.lastName" x-text="(member.firstName?.[0] || '') + (member.lastName?.[0] || '')"></div>
+                                                    </template>
+                                                    <div x-show="![project.director, project.editor, project.producer, project.scriptwriter].filter(Boolean).length" class="text-xs text-gray-400">—</div>
+                                                </div>
+                                            </td>
+                                            <!-- Due date -->
+                                            <td class="px-5 py-3.5 whitespace-nowrap" :class="project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'delivered' ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-300'" x-text="formatDate(project.dueDate)"></td>
+                                            <!-- SLA -->
+                                            <td class="px-5 py-3.5">
+                                                <div x-show="getSLAPercentage(project) > 0" class="flex items-center gap-2 min-w-[80px]">
+                                                    <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                                        <div :class="getSLABarClass(project)" :style="'width:'+getSLAPercentage(project)+'%'" class="h-full rounded-full transition-all"></div>
+                                                    </div>
+                                                    <span class="text-xs font-medium" :class="getSLATextClass(project)" x-text="getHoursInStatus(project)+'h'"></span>
+                                                </div>
+                                                <span x-show="!getSLAPercentage(project)" class="text-xs text-gray-400">—</span>
+                                            </td>
+                                            <!-- Priority -->
+                                            <td class="px-5 py-3.5">
+                                                <span :class="getPriorityClass(project.priority)" class="px-2 py-0.5 rounded text-xs font-medium capitalize" x-text="project.priority"></span>
+                                            </td>
+                                            <!-- Actions -->
+                                            <td class="px-5 py-3.5 text-right">
+                                                <button @click.stop="viewProduction(project)" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 font-medium text-xs">View</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Empty state -->
+                        <div x-show="productions.length === 0" class="py-16 text-center">
+                            <svg class="mx-auto w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium">No production projects found</p>
+                            <p class="text-xs text-gray-400 mt-1">Try adjusting your filters or create a new production</p>
+                        </div>
                     </div>
                 </div>
 
@@ -2133,25 +2200,25 @@ show_admin_bar(false);
 
         <!-- Create/Edit Production Modal -->
         <div x-show="showProductionModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="fixed inset-0 bg-black opacity-50" @click="showProductionModal = false"></div>
-                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                    <div class="p-6 border-b dark:border-gray-700">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="editingProduction ? 'Edit Production' : 'Create New Production'"></h2>
+            <div class="flex items-center justify-center min-h-screen px-4 py-8">
+                <div class="fixed inset-0 bg-black/60" @click="showProductionModal = false"></div>
+                <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 px-6 py-4 border-b dark:border-gray-700 flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white" x-text="editingProduction ? 'Edit Production' : 'New Production Project'"></h2>
+                        <button type="button" @click="showProductionModal = false" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
                     </div>
-                    <form @submit.prevent="saveProduction()" class="p-6 space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Title *</label>
-                                <input type="text" x-model="productionForm.title" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description *</label>
-                                <textarea x-model="productionForm.description" required rows="3" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                    <form @submit.prevent="saveProduction()" class="p-6 space-y-5">
+                        <!-- Title + Client -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Title <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="productionForm.title" required placeholder="e.g. Salada Summer Campaign" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client *</label>
-                                <select x-model="productionForm.clientId" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client <span class="text-red-500">*</span></label>
+                                <select x-model="productionForm.clientId" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="">Select Client</option>
                                     <template x-for="client in clients" :key="client._id">
                                         <option :value="client._id" x-text="client.brandName || client.name"></option>
@@ -2159,8 +2226,32 @@ show_admin_bar(false);
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Video Type *</label>
-                                <select x-model="productionForm.videoType" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date <span class="text-red-500">*</span></label>
+                                <input type="date" x-model="productionForm.dueDate" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description / Brief <span class="text-red-500">*</span></label>
+                            <textarea x-model="productionForm.description" required rows="3" placeholder="Describe the project goals, style, references…" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
+
+                        <!-- Production Type + Video Type + Priority -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Production Type <span class="text-red-500">*</span></label>
+                                <select x-model="productionForm.productionType" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="videography">Videography</option>
+                                    <option value="photography">Photography</option>
+                                    <option value="editing">Editing Only</option>
+                                    <option value="web_project">Web Project</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Video/Content Type</label>
+                                <select x-model="productionForm.videoType" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="commercial">Commercial</option>
                                     <option value="social">Social Media</option>
                                     <option value="explainer">Explainer</option>
@@ -2169,155 +2260,81 @@ show_admin_bar(false);
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform(s) *</label>
-                                <div class="flex flex-wrap gap-2">
-                                    <template x-for="p in ['youtube', 'instagram', 'facebook', 'linkedin', 'tiktok', 'website', 'tv']" :key="p">
-                                        <label class="inline-flex items-center">
-                                            <input type="checkbox" :value="p" x-model="productionForm.platform" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize" x-text="p"></span>
-                                        </label>
-                                    </template>
-                                </div>
-                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
-                                <select x-model="productionForm.priority" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <select x-model="productionForm.priority" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
                                     <option value="high">High</option>
                                     <option value="urgent">Urgent</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date *</label>
-                                <input type="date" x-model="productionForm.dueDate" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            </div>
+                        </div>
+
+                        <!-- Duration + Drive URL -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
-                                <input type="text" x-model="productionForm.duration" placeholder="e.g., 30 seconds, 2 minutes" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <input type="text" x-model="productionForm.duration" placeholder="e.g. 30s, 2 min" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Drive Backup URL</label>
-                                <input type="url" x-model="productionForm.driveBackupUrl" placeholder="https://drive.google.com/..." class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            </div>
-                            <div class="col-span-2 border-t dark:border-gray-600 pt-4 mt-2">
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Team Assignments</h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <!-- Scriptwriter -->
-                                    <div class="relative" x-data="{ scriptwriterOpen: false, scriptwriterSearch: '' }" @click.away="scriptwriterOpen = false">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scriptwriter</label>
-                                        <div class="relative">
-                                            <input type="text" 
-                                                x-model="scriptwriterSearch" 
-                                                @focus="scriptwriterOpen = true" 
-                                                @input="scriptwriterOpen = true"
-                                                :placeholder="productionForm.scriptwriter ? (teamMembers.find(u => u._id === productionForm.scriptwriter) ? teamMembers.find(u => u._id === productionForm.scriptwriter).firstName + ' ' + teamMembers.find(u => u._id === productionForm.scriptwriter).lastName : 'Unassigned') : 'Unassigned'"
-                                                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-8">
-                                            <button type="button" @click="scriptwriterOpen = !scriptwriterOpen" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            </button>
-                                        </div>
-                                        <div x-show="scriptwriterOpen" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            <div @click="productionForm.scriptwriter = ''; scriptwriterSearch = ''; scriptwriterOpen = false" 
-                                                class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                :class="{'bg-indigo-50 dark:bg-indigo-900/30': !productionForm.scriptwriter}">Unassigned</div>
-                                            <template x-for="u in teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(scriptwriterSearch.toLowerCase()))" :key="u._id">
-                                                <div @click="productionForm.scriptwriter = u._id; scriptwriterSearch = ''; scriptwriterOpen = false" 
-                                                    class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                    :class="{'bg-indigo-50 dark:bg-indigo-900/30': productionForm.scriptwriter === u._id}"
-                                                    x-text="u.firstName + ' ' + u.lastName"></div>
-                                            </template>
-                                            <div x-show="teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(scriptwriterSearch.toLowerCase())).length === 0 && scriptwriterSearch" class="px-4 py-2 text-gray-500 dark:text-gray-400">No team members found</div>
-                                        </div>
-                                    </div>
-                                    <!-- Director -->
-                                    <div class="relative" x-data="{ directorOpen: false, directorSearch: '' }" @click.away="directorOpen = false">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Director</label>
-                                        <div class="relative">
-                                            <input type="text" 
-                                                x-model="directorSearch" 
-                                                @focus="directorOpen = true" 
-                                                @input="directorOpen = true"
-                                                :placeholder="productionForm.director ? (teamMembers.find(u => u._id === productionForm.director) ? teamMembers.find(u => u._id === productionForm.director).firstName + ' ' + teamMembers.find(u => u._id === productionForm.director).lastName : 'Unassigned') : 'Unassigned'"
-                                                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-8">
-                                            <button type="button" @click="directorOpen = !directorOpen" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            </button>
-                                        </div>
-                                        <div x-show="directorOpen" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            <div @click="productionForm.director = ''; directorSearch = ''; directorOpen = false" 
-                                                class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                :class="{'bg-indigo-50 dark:bg-indigo-900/30': !productionForm.director}">Unassigned</div>
-                                            <template x-for="u in teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(directorSearch.toLowerCase()))" :key="u._id">
-                                                <div @click="productionForm.director = u._id; directorSearch = ''; directorOpen = false" 
-                                                    class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                    :class="{'bg-indigo-50 dark:bg-indigo-900/30': productionForm.director === u._id}"
-                                                    x-text="u.firstName + ' ' + u.lastName"></div>
-                                            </template>
-                                            <div x-show="teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(directorSearch.toLowerCase())).length === 0 && directorSearch" class="px-4 py-2 text-gray-500 dark:text-gray-400">No team members found</div>
-                                        </div>
-                                    </div>
-                                    <!-- Editor -->
-                                    <div class="relative" x-data="{ editorOpen: false, editorSearch: '' }" @click.away="editorOpen = false">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Editor</label>
-                                        <div class="relative">
-                                            <input type="text" 
-                                                x-model="editorSearch" 
-                                                @focus="editorOpen = true" 
-                                                @input="editorOpen = true"
-                                                :placeholder="productionForm.editor ? (teamMembers.find(u => u._id === productionForm.editor) ? teamMembers.find(u => u._id === productionForm.editor).firstName + ' ' + teamMembers.find(u => u._id === productionForm.editor).lastName : 'Unassigned') : 'Unassigned'"
-                                                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-8">
-                                            <button type="button" @click="editorOpen = !editorOpen" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            </button>
-                                        </div>
-                                        <div x-show="editorOpen" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            <div @click="productionForm.editor = ''; editorSearch = ''; editorOpen = false" 
-                                                class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                :class="{'bg-indigo-50 dark:bg-indigo-900/30': !productionForm.editor}">Unassigned</div>
-                                            <template x-for="u in teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(editorSearch.toLowerCase()))" :key="u._id">
-                                                <div @click="productionForm.editor = u._id; editorSearch = ''; editorOpen = false" 
-                                                    class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                    :class="{'bg-indigo-50 dark:bg-indigo-900/30': productionForm.editor === u._id}"
-                                                    x-text="u.firstName + ' ' + u.lastName"></div>
-                                            </template>
-                                            <div x-show="teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(editorSearch.toLowerCase())).length === 0 && editorSearch" class="px-4 py-2 text-gray-500 dark:text-gray-400">No team members found</div>
-                                        </div>
-                                    </div>
-                                    <!-- Producer -->
-                                    <div class="relative" x-data="{ producerOpen: false, producerSearch: '' }" @click.away="producerOpen = false">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Producer</label>
-                                        <div class="relative">
-                                            <input type="text" 
-                                                x-model="producerSearch" 
-                                                @focus="producerOpen = true" 
-                                                @input="producerOpen = true"
-                                                :placeholder="productionForm.producer ? (teamMembers.find(u => u._id === productionForm.producer) ? teamMembers.find(u => u._id === productionForm.producer).firstName + ' ' + teamMembers.find(u => u._id === productionForm.producer).lastName : 'Unassigned') : 'Unassigned'"
-                                                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-8">
-                                            <button type="button" @click="producerOpen = !producerOpen" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            </button>
-                                        </div>
-                                        <div x-show="producerOpen" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            <div @click="productionForm.producer = ''; producerSearch = ''; producerOpen = false" 
-                                                class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                :class="{'bg-indigo-50 dark:bg-indigo-900/30': !productionForm.producer}">Unassigned</div>
-                                            <template x-for="u in teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(producerSearch.toLowerCase()))" :key="u._id">
-                                                <div @click="productionForm.producer = u._id; producerSearch = ''; producerOpen = false" 
-                                                    class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
-                                                    :class="{'bg-indigo-50 dark:bg-indigo-900/30': productionForm.producer === u._id}"
-                                                    x-text="u.firstName + ' ' + u.lastName"></div>
-                                            </template>
-                                            <div x-show="teamMembers.filter(m => (m.firstName + ' ' + m.lastName).toLowerCase().includes(producerSearch.toLowerCase())).length === 0 && producerSearch" class="px-4 py-2 text-gray-500 dark:text-gray-400">No team members found</div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <input type="url" x-model="productionForm.driveBackupUrl" placeholder="https://drive.google.com/…" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                         </div>
-                        <div class="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700">
-                            <button type="button" @click="showProductionModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+
+                        <!-- Platform checkboxes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Platform(s)</label>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="p in ['youtube','instagram','facebook','linkedin','tiktok','website','tv']" :key="p">
+                                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm transition-colors"
+                                        :class="productionForm.platform.includes(p) ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-400'">
+                                        <input type="checkbox" :value="p" x-model="productionForm.platform" class="sr-only">
+                                        <span class="capitalize" x-text="p"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Team assignments -->
+                        <div class="border-t dark:border-gray-700 pt-4">
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Team Assignments</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <template x-for="role in [{key:'scriptwriter',label:'Scriptwriter'},{key:'director',label:'Director / Shooter'},{key:'editor',label:'Editor'},{key:'producer',label:'Producer / PM'}]" :key="role.key">
+                                    <div x-data="{ open: false, q: '' }" @click.away="open = false">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" x-text="role.label"></label>
+                                        <div class="relative">
+                                            <button type="button" @click="open = !open"
+                                                class="w-full text-left px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white flex items-center justify-between text-sm">
+                                                <span x-text="productionForm[role.key] ? (teamMembers.find(u => u._id === productionForm[role.key])?.firstName + ' ' + teamMembers.find(u => u._id === productionForm[role.key])?.lastName) : 'Unassigned'" class="truncate"></span>
+                                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            </button>
+                                            <div x-show="open" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-xl max-h-52 flex flex-col">
+                                                <div class="p-2 border-b dark:border-gray-600">
+                                                    <input type="text" x-model="q" placeholder="Search…" class="w-full px-2 py-1 text-sm border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                                                </div>
+                                                <div class="overflow-y-auto">
+                                                    <div @click="productionForm[role.key] = ''; open = false; q = ''"
+                                                        class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-500"
+                                                        :class="{'bg-indigo-50 dark:bg-indigo-900/30': !productionForm[role.key]}">— Unassigned</div>
+                                                    <template x-for="u in teamMembers.filter(m => !q || (m.firstName+' '+m.lastName).toLowerCase().includes(q.toLowerCase()))" :key="u._id">
+                                                        <div @click="productionForm[role.key] = u._id; open = false; q = ''"
+                                                            class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+                                                            :class="{'bg-indigo-50 dark:bg-indigo-900/30 font-medium': productionForm[role.key] === u._id}"
+                                                            x-text="u.firstName + ' ' + u.lastName"></div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2 border-t dark:border-gray-700">
+                            <button type="button" @click="showProductionModal = false" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-300">Cancel</button>
+                            <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
                                 <span x-text="editingProduction ? 'Update Production' : 'Create Production'"></span>
                             </button>
                         </div>
@@ -2326,199 +2343,322 @@ show_admin_bar(false);
             </div>
         </div>
 
-        <!-- View Production Detail Modal -->
-        <div x-show="showProductionDetail" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="fixed inset-0 bg-black opacity-50" @click="showProductionDetail = false"></div>
-                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-                    <div class="p-6 border-b dark:border-gray-700 flex justify-between items-start">
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="selectedProduction?.title"></h2>
-                            <p class="text-sm text-gray-500" x-text="selectedProduction?.clientId?.brandName || selectedProduction?.clientId?.name"></p>
+        <!-- View Production Detail Drawer -->
+        <div x-show="showProductionDetail" x-cloak class="fixed inset-0 z-50 flex">
+            <div class="fixed inset-0 bg-black/50" @click="showProductionDetail = false"></div>
+            <!-- Side drawer -->
+            <div class="relative ml-auto w-full max-w-2xl bg-white dark:bg-gray-900 h-full flex flex-col shadow-2xl overflow-hidden">
+                <!-- Header -->
+                <div class="flex-shrink-0 px-6 py-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span :class="getProductionTypeClass(selectedProduction?.productionType)" class="px-2 py-0.5 rounded text-xs font-medium" x-text="formatProductionType(selectedProduction?.productionType)"></span>
+                                <span :class="getPriorityClass(selectedProduction?.priority)" class="px-2 py-0.5 rounded text-xs font-medium capitalize" x-text="selectedProduction?.priority"></span>
+                                <span x-show="selectedProduction?.isOverdue" class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">Overdue</span>
+                            </div>
+                            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight truncate" x-text="selectedProduction?.title"></h2>
+                            <p class="text-sm text-gray-500 mt-0.5" x-text="selectedProduction?.clientId?.brandName || selectedProduction?.clientId?.name"></p>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <span :class="getProductionStatusClass(selectedProduction?.status)" class="px-3 py-1 text-sm rounded-full" x-text="formatProductionStatus(selectedProduction?.status)"></span>
-                            <button @click="editProduction(selectedProduction)" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Edit">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                            <button @click="editProduction(selectedProduction)" title="Edit" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button @click="deleteProduction(selectedProduction._id)" class="p-2 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 rounded-lg" title="Delete">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <button @click="archiveProduction(selectedProduction._id)" :title="selectedProduction?.isArchived ? 'Unarchive' : 'Archive'" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                             </button>
-                            <button @click="showProductionDetail = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Close">
+                            <button x-show="user?.role === 'admin' || user?.role === 'brand_rep'" @click="deleteProduction(selectedProduction._id)" title="Delete" class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                            <button @click="showProductionDetail = false" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                     </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-4 gap-6 mb-6">
-                            <div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Video Type</p>
-                                <p class="font-medium text-gray-900 dark:text-white capitalize" x-text="selectedProduction?.videoType"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
-                                <p class="font-medium text-gray-900 dark:text-white" x-text="formatDate(selectedProduction?.dueDate)"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Editor</p>
-                                <p class="font-medium text-gray-900 dark:text-white" x-text="selectedProduction?.editor ? selectedProduction.editor.firstName + ' ' + selectedProduction.editor.lastName : 'Unassigned'"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">SLA Status</p>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-20 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                                        <div :class="getSLABarClass(selectedProduction)" :style="'width: ' + getSLAPercentage(selectedProduction) + '%'" class="h-full"></div>
+
+                    <!-- Status pipeline -->
+                    <div class="mt-4 overflow-x-auto">
+                        <div class="flex items-center gap-0 min-w-max">
+                            <template x-for="(s, i) in productionStatusPipeline" :key="s.value">
+                                <div class="flex items-center">
+                                    <div class="flex flex-col items-center gap-1 cursor-pointer group" @click="updateProductionStatus(s.value)">
+                                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                            :class="selectedProduction?.status === s.value
+                                                ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-400 ring-offset-1'
+                                                : getStatusPipelineIndex(selectedProduction?.status) > i
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40'"
+                                            x-text="i + 1"></div>
+                                        <span class="text-[10px] text-center leading-tight whitespace-nowrap"
+                                            :class="selectedProduction?.status === s.value ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-400'"
+                                            x-text="s.label"></span>
                                     </div>
-                                    <span class="text-sm" :class="getSLATextClass(selectedProduction)" x-text="getHoursInStatus(selectedProduction) + 'h'"></span>
+                                    <div x-show="i < productionStatusPipeline.length - 1"
+                                        class="w-5 h-0.5 mt-[-14px] flex-shrink-0"
+                                        :class="getStatusPipelineIndex(selectedProduction?.status) > i ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-600'"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrollable body -->
+                <div class="flex-1 overflow-y-auto">
+                    <!-- Tabs -->
+                    <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6">
+                        <div class="flex gap-1">
+                            <template x-for="tab in ['details','files','comments']" :key="tab">
+                                <button @click="productionDetailTab = tab" type="button"
+                                    class="px-4 py-3 text-sm font-medium border-b-2 transition-colors capitalize"
+                                    :class="productionDetailTab === tab ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+                                    <span x-text="tab"></span>
+                                    <span x-show="tab === 'comments'" class="ml-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-full" x-text="selectedProduction?.comments?.length || 0"></span>
+                                    <span x-show="tab === 'files'" class="ml-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-full" x-text="selectedProduction?.attachments?.length || 0"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- DETAILS TAB -->
+                    <div x-show="productionDetailTab === 'details'" class="p-6 space-y-6">
+                        <!-- Meta grid -->
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Status</p>
+                                <span :class="getProductionStatusClass(selectedProduction?.status)" class="px-2.5 py-1 text-xs rounded-full font-medium" x-text="formatProductionStatus(selectedProduction?.status)"></span>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Due Date</p>
+                                <p class="text-sm font-medium" :class="selectedProduction?.dueDate && new Date(selectedProduction.dueDate) < new Date() && selectedProduction.status !== 'delivered' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'" x-text="formatDate(selectedProduction?.dueDate)"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Video Type</p>
+                                <p class="text-sm text-gray-900 dark:text-white capitalize" x-text="selectedProduction?.videoType?.replace('_',' ')"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Duration</p>
+                                <p class="text-sm text-gray-900 dark:text-white" x-text="selectedProduction?.duration || '—'"></p>
+                            </div>
+                            <div x-show="selectedProduction?.platform?.length">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Platforms</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <template x-for="p in selectedProduction?.platform" :key="p">
+                                        <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs capitalize" x-text="p"></span>
+                                    </template>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="mb-6">
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Description</p>
-                            <p class="text-gray-900 dark:text-white" x-text="selectedProduction?.description"></p>
-                        </div>
-
-                        <!-- Team Section -->
-                        <div class="mb-6 grid grid-cols-4 gap-4">
                             <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Scriptwriter</p>
-                                <p class="text-sm text-gray-900 dark:text-white" x-text="selectedProduction?.scriptwriter ? (selectedProduction.scriptwriter.firstName + ' ' + selectedProduction.scriptwriter.lastName) : 'Unassigned'"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">SLA</p>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 max-w-[80px] h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                        <div :class="getSLABarClass(selectedProduction)" :style="'width:'+getSLAPercentage(selectedProduction)+'%'" class="h-full rounded-full"></div>
+                                    </div>
+                                    <span class="text-sm font-medium" :class="getSLATextClass(selectedProduction)" x-text="getHoursInStatus(selectedProduction)+'h in current stage'"></span>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Director</p>
-                                <p class="text-sm text-gray-900 dark:text-white" x-text="selectedProduction?.director ? (selectedProduction.director.firstName + ' ' + selectedProduction.director.lastName) : 'Unassigned'"></p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Editor</p>
-                                <p class="text-sm text-gray-900 dark:text-white" x-text="selectedProduction?.editor ? (selectedProduction.editor.firstName + ' ' + selectedProduction.editor.lastName) : 'Unassigned'"></p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Producer</p>
-                                <p class="text-sm text-gray-900 dark:text-white" x-text="selectedProduction?.producer ? (selectedProduction.producer.firstName + ' ' + selectedProduction.producer.lastName) : 'Unassigned'"></p>
+                            <div x-show="selectedProduction?.driveBackupUrl" class="col-span-2">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Drive Backup</p>
+                                <a :href="selectedProduction?.driveBackupUrl" target="_blank" rel="noopener" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate block" x-text="selectedProduction?.driveBackupUrl"></a>
                             </div>
                         </div>
 
-                        <!-- Script & Attachments Section -->
-                        <div class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
-                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Script & Files</h3>
-                            
-                            <!-- Attachments List -->
-                            <div x-show="selectedProduction?.attachments?.length > 0" class="mb-4 space-y-2">
-                                <template x-for="attachment in selectedProduction?.attachments" :key="attachment._id">
-                                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                        <div class="flex items-center gap-3">
-                                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                            </svg>
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="attachment.filename"></p>
-                                                <p class="text-xs text-gray-500" x-text="formatDate(attachment.uploadedAt)"></p>
-                                            </div>
+                        <!-- Description -->
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Description / Brief</p>
+                            <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap" x-text="selectedProduction?.description"></p>
+                        </div>
+
+                        <!-- Team -->
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Team</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <template x-for="role in [{key:'scriptwriter',label:'Scriptwriter',icon:'📝'},{key:'director',label:'Director / Shooter',icon:'🎬'},{key:'editor',label:'Editor',icon:'✂️'},{key:'producer',label:'Producer / PM',icon:'🎯'}]" :key="role.key">
+                                    <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/60 border dark:border-gray-700">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0"
+                                            :class="selectedProduction?.[role.key] ? 'bg-indigo-100 dark:bg-indigo-900/40' : 'bg-gray-200 dark:bg-gray-700'">
+                                            <span x-show="selectedProduction?.[role.key]" class="text-sm font-bold text-indigo-700 dark:text-indigo-300" x-text="(selectedProduction?.[role.key]?.firstName?.[0] || '') + (selectedProduction?.[role.key]?.lastName?.[0] || '')"></span>
+                                            <span x-show="!selectedProduction?.[role.key]" class="text-gray-400 text-xs">—</span>
                                         </div>
-                                        <button @click="downloadAttachment(attachment)" class="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Download</button>
+                                        <div class="min-w-0">
+                                            <p class="text-xs text-gray-400 leading-tight" x-text="role.label"></p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="selectedProduction?.[role.key] ? selectedProduction[role.key].firstName + ' ' + selectedProduction[role.key].lastName : 'Unassigned'"></p>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
-
-                            <!-- Upload Script -->
-                            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                                <input type="file" @change="handleProductionFileUpload($event)" accept=".pdf,.doc,.docx,.txt" class="hidden" id="productionFileInput">
-                                <label for="productionFileInput" class="cursor-pointer flex flex-col items-center">
-                                    <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                    </svg>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Click to upload script or drag and drop</p>
-                                    <p class="text-xs text-gray-500 mt-1">PDF, DOC, DOCX, TXT (max 50MB)</p>
-                                </label>
-                            </div>
                         </div>
 
-                        <!-- Status Actions -->
-                        <div class="border-t dark:border-gray-700 pt-6 mt-6">
-                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Status Actions</h3>
-                            <div class="flex flex-wrap gap-3">
+                        <!-- Quick status actions -->
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Move Status</p>
+                            <div class="flex flex-wrap gap-2">
                                 <template x-if="selectedProduction?.status === 'scripting'">
-                                    <button @click="updateProductionStatus('script_review')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit for Review</button>
+                                    <button @click="updateProductionStatus('script_review')" class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">→ Submit Script for Review</button>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'script_review'">
-                                    <div class="flex gap-3">
-                                        <button @click="updateProductionStatus('filming')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve Script</button>
-                                        <button @click="updateProductionStatus('scripting')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Request Changes</button>
+                                    <div class="flex gap-2">
+                                        <button @click="updateProductionStatus('filming')" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">✓ Approve → Filming</button>
+                                        <button @click="updateProductionStatus('scripting')" class="px-3 py-1.5 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700">↩ Back to Scripting</button>
                                     </div>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'filming'">
-                                    <button @click="updateProductionStatus('editing')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Start Editing</button>
+                                    <button @click="updateProductionStatus('editing')" class="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">→ Footage Captured — Start Editing</button>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'editing'">
-                                    <button @click="updateProductionStatus('internal_review')" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Submit for Internal Review</button>
+                                    <button @click="updateProductionStatus('internal_review')" class="px-3 py-1.5 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700">→ Submit for Internal Review</button>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'internal_review'">
-                                    <div class="flex gap-3">
-                                        <button @click="updateProductionStatus('client_review')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Send to Client</button>
-                                        <button @click="updateProductionStatus('revisions')" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Request Revisions</button>
+                                    <div class="flex gap-2">
+                                        <button @click="updateProductionStatus('client_review')" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">→ Send to Client</button>
+                                        <button @click="updateProductionStatus('revisions')" class="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700">↩ Request Revisions</button>
                                     </div>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'revisions'">
-                                    <button @click="updateProductionStatus('internal_review')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Resubmit for Review</button>
+                                    <button @click="updateProductionStatus('internal_review')" class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">→ Resubmit for Internal Review</button>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'client_review'">
-                                    <button @click="updateProductionStatus('approved')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Client Approved</button>
+                                    <div class="flex gap-2">
+                                        <button @click="updateProductionStatus('approved')" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">✓ Client Approved</button>
+                                        <button @click="updateProductionStatus('revisions')" class="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700">↩ Client Wants Changes</button>
+                                    </div>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'approved'">
-                                    <button @click="updateProductionStatus('final_delivery')" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">Prepare Final Delivery</button>
+                                    <button @click="updateProductionStatus('final_delivery')" class="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700">→ Prepare Final Delivery</button>
                                 </template>
                                 <template x-if="selectedProduction?.status === 'final_delivery'">
-                                    <button @click="updateProductionStatus('delivered')" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Mark as Delivered</button>
+                                    <button @click="updateProductionStatus('delivered')" class="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700">✓ Mark as Delivered</button>
+                                </template>
+                                <span x-show="selectedProduction?.status === 'delivered'" class="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm rounded-lg font-medium">✓ Delivered</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FILES TAB -->
+                    <div x-show="productionDetailTab === 'files'" class="p-6 space-y-4">
+                        <!-- Upload area -->
+                        <div class="border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
+                            <input type="file" @change="handleProductionFileUpload($event, 'draft')" accept=".pdf,.doc,.docx,.txt,video/*,image/*" class="hidden" id="productionFileInput">
+                            <label for="productionFileInput" class="cursor-pointer flex flex-col items-center gap-2">
+                                <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Click to upload or drag &amp; drop</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">PDF, DOC, video, or image files (max 500MB)</p>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- Upload type selector -->
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-500">Upload as:</span>
+                            <div class="flex gap-2">
+                                <template x-for="t in ['script','raw_footage','draft','final']" :key="t">
+                                    <button type="button" @click="productionUploadType = t"
+                                        class="px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize"
+                                        :class="productionUploadType === t ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-indigo-400'"
+                                        x-text="t.replace('_',' ')"></button>
                                 </template>
                             </div>
                         </div>
 
-                        <!-- Comments Section with @mentions -->
-                        <div class="border-t dark:border-gray-700 pt-6 mt-6">
-                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Comments</h3>
-                            <div class="space-y-4 mb-4 max-h-60 overflow-y-auto">
-                                <template x-for="comment in selectedProduction?.comments" :key="comment._id">
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <div>
-                                                <span class="font-medium text-gray-900 dark:text-white" x-text="comment.from?.firstName + ' ' + comment.from?.lastName"></span>
-                                                <span x-show="comment.isClientComment" class="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded">Client</span>
-                                            </div>
-                                            <span class="text-xs text-gray-500" x-text="formatDate(comment.createdAt)"></span>
-                                        </div>
-                                        <p class="text-gray-700 dark:text-gray-300" x-text="comment.message"></p>
-                                        <p x-show="comment.timestamp" class="text-xs text-indigo-600 dark:text-indigo-400 mt-1" x-text="'@ ' + comment.timestamp"></p>
+                        <!-- Attachment list -->
+                        <div x-show="selectedProduction?.attachments?.length" class="space-y-2">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-3">Uploaded Files</p>
+                            <template x-for="att in selectedProduction?.attachments" :key="att._id">
+                                <div class="flex items-center gap-3 p-3 rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    <!-- Icon by type -->
+                                    <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                        :class="att.mimetype?.startsWith('video/') ? 'bg-purple-100 dark:bg-purple-900/30' : att.mimetype?.startsWith('image/') ? 'bg-green-100 dark:bg-green-900/30' : 'bg-blue-100 dark:bg-blue-900/30'">
+                                        <svg class="w-5 h-5" :class="att.mimetype?.startsWith('video/') ? 'text-purple-600' : att.mimetype?.startsWith('image/') ? 'text-green-600' : 'text-blue-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <template x-if="att.mimetype?.startsWith('video/')">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                            </template>
+                                            <template x-if="!att.mimetype?.startsWith('video/')">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </template>
+                                        </svg>
                                     </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="att.originalName || att.filename"></p>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-xs text-gray-400" x-text="formatDate(att.uploadedAt)"></span>
+                                            <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs rounded capitalize" x-text="att.type?.replace('_',' ')"></span>
+                                            <span class="text-xs text-gray-400" x-text="att.size ? Math.round(att.size/1024/1024*10)/10 + ' MB' : ''"></span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1 flex-shrink-0">
+                                        <a :href="att.url" target="_blank" rel="noopener" class="p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400" title="Open / Download">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                        </a>
+                                        <button @click="deleteProductionAttachment(att._id)" class="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500" title="Remove">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="!selectedProduction?.attachments?.length" class="text-center py-8 text-gray-400 text-sm">No files uploaded yet</div>
+                    </div>
+
+                    <!-- COMMENTS TAB -->
+                    <div x-show="productionDetailTab === 'comments'" class="flex flex-col h-full">
+                        <div class="flex-1 overflow-y-auto p-6 space-y-3">
+                            <template x-for="comment in selectedProduction?.comments" :key="comment._id">
+                                <div class="flex gap-3">
+                                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
+                                        :class="comment.isClientComment ? 'bg-amber-500' : 'bg-indigo-500'">
+                                        <span x-text="(comment.from?.firstName?.[0] || '') + (comment.from?.lastName?.[0] || '')"></span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="comment.from?.firstName + ' ' + comment.from?.lastName"></span>
+                                            <span x-show="comment.isClientComment" class="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded">Client</span>
+                                            <span x-show="comment.timestamp" class="text-xs text-indigo-500 dark:text-indigo-400 font-mono" x-text="'⏱ '+comment.timestamp"></span>
+                                            <span class="text-xs text-gray-400 ml-auto" x-text="formatDate(comment.createdAt)"></span>
+                                        </div>
+                                        <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-xl rounded-tl-none px-4 py-2.5 break-words">
+                                            <span x-text="comment.message"></span>
+                                        </div>
+                                        <div x-show="comment.mentions?.length" class="mt-1 flex gap-1">
+                                            <template x-for="m in comment.mentions" :key="m._id">
+                                                <span class="text-xs text-indigo-500 dark:text-indigo-400" x-text="'@'+(m.firstName||'')"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="!selectedProduction?.comments?.length" class="text-center py-10 text-gray-400 text-sm">No comments yet — start the conversation</div>
+                        </div>
+
+                        <!-- Comment input -->
+                        <div class="flex-shrink-0 p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 space-y-2">
+                            <!-- Mentions bar -->
+                            <div x-show="selectedMentions.length" class="flex flex-wrap gap-1">
+                                <template x-for="mentionId in selectedMentions" :key="mentionId">
+                                    <span class="flex items-center gap-1 px-2 py-0.5 text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full">
+                                        <span x-text="'@'+getMentionFirstName(mentionId)"></span>
+                                        <button @click="selectedMentions = selectedMentions.filter(id => id !== mentionId)" class="hover:text-indigo-600">&times;</button>
+                                    </span>
                                 </template>
-                                <div x-show="!selectedProduction?.comments?.length" class="text-center text-gray-500 py-4">No comments yet</div>
                             </div>
+                            <!-- Mention dropdown -->
                             <div class="relative">
-                                <textarea 
-                                    x-model="newProductionComment" 
-                                    @input="handleMentionInput($event)"
-                                    placeholder="Add a comment... Use @ to mention someone" 
-                                    rows="3"
-                                    class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                </textarea>
-                                <!-- Mention Dropdown -->
-                                <div x-show="showMentionDropdown" class="absolute z-10 mt-1 w-64 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                    <template x-for="user in filteredUsers" :key="user._id">
-                                        <div @click="selectMention(user)" class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                                            <span class="text-sm text-gray-900 dark:text-white" x-text="user.firstName + ' ' + user.lastName"></span>
-                                            <span class="text-xs text-gray-500 ml-2" x-text="user.role"></span>
+                                <div x-show="showMentionDropdown" class="absolute bottom-full mb-1 left-0 w-64 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-xl shadow-xl max-h-48 overflow-y-auto z-20">
+                                    <template x-for="u in filteredUsers" :key="u._id">
+                                        <div @click="selectMention(u)" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer">
+                                            <div class="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" x-text="(u.firstName?.[0]||'')+(u.lastName?.[0]||'')"></div>
+                                            <span class="text-sm text-gray-900 dark:text-white" x-text="u.firstName + ' ' + u.lastName"></span>
                                         </div>
                                     </template>
                                 </div>
-                                <div class="flex justify-between items-center mt-2">
-                                    <div class="flex flex-wrap gap-1">
-                                        <template x-for="mentionId in selectedMentions" :key="mentionId">
-                                            <span class="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300 rounded-full">
-                                                <span x-text="getMentionFirstName(mentionId)"></span>
-                                            </span>
-                                        </template>
-                                    </div>
-                                    <button @click="addProductionComment()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Send</button>
+                                <div class="flex gap-2">
+                                    <textarea
+                                        x-model="newProductionComment"
+                                        @input="handleMentionInput($event)"
+                                        @keydown.ctrl.enter="addProductionComment()"
+                                        @keydown.meta.enter="addProductionComment()"
+                                        placeholder="Add a comment… use @ to mention • Ctrl+Enter to send"
+                                        rows="2"
+                                        class="flex-1 px-3 py-2 border rounded-xl text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                                    <button @click="addProductionComment()" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 flex-shrink-0 self-end">Send</button>
                                 </div>
                             </div>
                         </div>
@@ -2895,12 +3035,17 @@ show_admin_bar(false);
                 productions: [],
                 productionStatusFilter: '',
                 productionClientFilter: '',
+                productionTypeFilter: '',
+                productionSearch: '',
                 showProductionModal: false,
                 showProductionDetail: false,
+                productionDetailTab: 'details',
+                productionUploadType: 'draft',
                 editingProduction: null,
                 selectedProduction: null,
                 productionForm: {
-                    title: '', description: '', clientId: '', videoType: 'commercial',
+                    title: '', description: '', clientId: '',
+                    productionType: 'videography', videoType: 'commercial',
                     platform: [], priority: 'medium', dueDate: '',
                     scriptwriter: '', director: '', editor: '', producer: '',
                     driveBackupUrl: '', duration: ''
@@ -3001,7 +3146,7 @@ show_admin_bar(false);
                         this.loadTabData();
                     });
                     await this.loadInitialData();
-                    // Deep links from notifications: /workflow?tab=concepts&concept=ID (nested /workflow/concepts/ID 404s on WordPress)
+                    // Deep links from notifications
                     try {
                         const sp = new URLSearchParams(window.location.search);
                         const deepConcept = sp.get('concept');
@@ -3014,6 +3159,12 @@ show_admin_bar(false);
                             this.activeTab = 'contentBank';
                             await this.loadContentBank();
                             await this.viewContentBankItem({ _id: deepContent });
+                        }
+                        const deepProject = sp.get('project');
+                        if (deepProject) {
+                            this.activeTab = 'productions';
+                            await this.loadProductions();
+                            await this.viewProduction({ _id: deepProject });
                         }
                     } catch (e) { console.error('Hub deep link error', e); }
                 },
@@ -3835,95 +3986,106 @@ show_admin_bar(false);
                     catch (error) { console.error('Mark read error:', error); }
                 },
 
-                // Production Workflow Functions
+                // ─── Production Workflow ─────────────────────────────────
                 async loadProductions() {
                     const token = localStorage.getItem('token');
-                    const params = new URLSearchParams();
+                    const params = new URLSearchParams({ limit: 200 });
                     if (this.productionStatusFilter) params.append('status', this.productionStatusFilter);
                     if (this.productionClientFilter) params.append('clientId', this.productionClientFilter);
+                    if (this.productionTypeFilter) params.append('productionType', this.productionTypeFilter);
+                    if (this.productionSearch) params.append('search', this.productionSearch);
                     try {
-                        const response = await fetch(`${API_URL}/production/projects?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (response.ok) { const data = await response.json(); this.productions = data.projects || []; }
-                    } catch (error) { console.error('Load productions error:', error); }
+                        const res = await fetch(`${API_URL}/production/projects?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) { const data = await res.json(); this.productions = data.projects || []; }
+                    } catch (err) { console.error('Load productions error:', err); }
                 },
 
                 openProductionModal() {
                     this.editingProduction = null;
-                    this.productionForm = { title: '', description: '', clientId: '', videoType: 'commercial', platform: [], priority: 'medium', dueDate: '', scriptwriter: '', director: '', editor: '', producer: '', driveBackupUrl: '', duration: '' };
+                    this.productionForm = {
+                        title: '', description: '', clientId: '',
+                        productionType: 'videography', videoType: 'commercial',
+                        platform: [], priority: 'medium', dueDate: '',
+                        scriptwriter: '', director: '', editor: '', producer: '',
+                        driveBackupUrl: '', duration: ''
+                    };
                     this.showProductionModal = true;
                 },
 
                 async saveProduction() {
                     const token = localStorage.getItem('token');
-                    const url = this.editingProduction ? `${API_URL}/production/projects/${this.editingProduction._id}` : `${API_URL}/production/projects`;
-                    const method = this.editingProduction ? 'PUT' : 'POST';
-                    
-                    // Ensure platform is an array
-                    if (!Array.isArray(this.productionForm.platform)) {
-                        this.productionForm.platform = [];
-                    }
-                    
-                    // Validate required fields
                     if (!this.productionForm.title || !this.productionForm.description || !this.productionForm.clientId || !this.productionForm.dueDate) {
-                        this.showToast('Please fill in all required fields', 'error');
-                        return;
+                        this.showToast('Please fill in Title, Description, Client and Due Date', 'error'); return;
                     }
-                    
-                    if (this.productionForm.platform.length === 0) {
-                        this.showToast('Please select at least one platform', 'error');
-                        return;
-                    }
-                    
+                    if (!Array.isArray(this.productionForm.platform)) this.productionForm.platform = [];
+                    const url = this.editingProduction
+                        ? `${API_URL}/production/projects/${this.editingProduction._id}`
+                        : `${API_URL}/production/projects`;
+                    const method = this.editingProduction ? 'PUT' : 'POST';
                     try {
-                        console.log('Sending production data:', this.productionForm);
-                        const response = await fetch(url, { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(this.productionForm) });
-                        if (response.ok) {
+                        const res = await fetch(url, {
+                            method,
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.productionForm)
+                        });
+                        if (res.ok) {
                             this.showProductionModal = false;
                             await this.loadProductions();
-                            this.showToast(this.editingProduction ? 'Production updated successfully' : 'Production created successfully', 'success');
-                        } else { 
-                            const error = await response.json().catch(() => ({ message: 'Unknown error' })); 
-                            console.error('Production save error:', error);
-                            this.showToast(error.message || error.error || 'Failed to save production', 'error'); 
+                            this.showToast(this.editingProduction ? 'Production updated' : 'Production created', 'success');
+                        } else {
+                            const err = await res.json().catch(() => ({}));
+                            this.showToast(err.message || err.error || 'Failed to save production', 'error');
                         }
-                    } catch (error) { 
-                        console.error('Save production error:', error); 
-                        this.showToast('Failed to save production: ' + error.message, 'error'); 
-                    }
+                    } catch (err) { this.showToast('Failed to save production', 'error'); }
                 },
 
                 async viewProduction(project) {
                     const token = localStorage.getItem('token');
                     try {
-                        const response = await fetch(`${API_URL}/production/projects/${project._id}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (response.ok) { const data = await response.json(); this.selectedProduction = data.project; this.showProductionDetail = true; }
-                    } catch (error) { console.error('View production error:', error); }
+                        const res = await fetch(`${API_URL}/production/projects/${project._id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.selectedProduction = data.project;
+                            this.productionDetailTab = 'details';
+                            this.showProductionDetail = true;
+                        }
+                    } catch (err) { console.error('View production error:', err); }
                 },
 
                 async updateProductionStatus(newStatus) {
                     const token = localStorage.getItem('token');
                     try {
-                        const response = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
-                        if (response.ok) { const data = await response.json(); this.selectedProduction = data.project; await this.loadProductions(); }
-                    } catch (error) { console.error('Update production status error:', error); }
+                        const res = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.selectedProduction = data.project;
+                            await this.loadProductions();
+                            this.showToast(`Status → ${this.formatProductionStatus(newStatus)}`, 'success');
+                        }
+                    } catch (err) { console.error('Update production status error:', err); }
                 },
 
                 async addProductionComment() {
                     if (!this.newProductionComment.trim()) return;
                     const token = localStorage.getItem('token');
                     try {
-                        const response = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}/comments`, {
+                        const res = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}/comments`, {
                             method: 'POST',
                             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                             body: JSON.stringify({ message: this.newProductionComment, mentions: this.selectedMentions })
                         });
-                        if (response.ok) {
-                            const data = await response.json();
+                        if (res.ok) {
+                            const data = await res.json();
                             this.selectedProduction = data.project;
                             this.newProductionComment = '';
                             this.selectedMentions = [];
+                            this.showMentionDropdown = false;
                         }
-                    } catch (error) { console.error('Add production comment error:', error); }
+                    } catch (err) { console.error('Add production comment error:', err); }
                 },
 
                 editProduction(production) {
@@ -3932,9 +4094,10 @@ show_admin_bar(false);
                         title: production.title,
                         description: production.description,
                         clientId: production.clientId?._id || production.clientId,
-                        videoType: production.videoType,
+                        productionType: production.productionType || 'videography',
+                        videoType: production.videoType || 'commercial',
                         platform: production.platform || [],
-                        priority: production.priority,
+                        priority: production.priority || 'medium',
                         dueDate: production.dueDate ? production.dueDate.split('T')[0] : '',
                         scriptwriter: production.scriptwriter?._id || production.scriptwriter || '',
                         director: production.director?._id || production.director || '',
@@ -3948,61 +4111,73 @@ show_admin_bar(false);
                 },
 
                 async deleteProduction(productionId) {
-                    if (!confirm('Are you sure you want to delete this production project? This action cannot be undone.')) return;
+                    if (!confirm('Delete this production project? This cannot be undone.')) return;
                     const token = localStorage.getItem('token');
                     try {
-                        const response = await fetch(`${API_URL}/production/projects/${productionId}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (response.ok) {
+                        const res = await fetch(`${API_URL}/production/projects/${productionId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) {
                             this.showProductionDetail = false;
                             await this.loadProductions();
-                            this.showToast('Production deleted successfully', 'success');
+                            this.showToast('Production deleted', 'success');
                         } else {
-                            const error = await response.json().catch(() => ({ message: 'Failed to delete production' }));
-                            this.showToast(error.message || 'Failed to delete production', 'error');
+                            const err = await res.json().catch(() => ({}));
+                            this.showToast(err.message || 'Failed to delete production', 'error');
                         }
-                    } catch (error) {
-                        console.error('Delete production error:', error);
-                        this.showToast('Failed to delete production', 'error');
-                    }
+                    } catch (err) { this.showToast('Failed to delete production', 'error'); }
+                },
+
+                async archiveProduction(productionId) {
+                    const token = localStorage.getItem('token');
+                    try {
+                        const res = await fetch(`${API_URL}/production/projects/${productionId}/archive`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (this.selectedProduction?._id === productionId) this.selectedProduction.isArchived = data.isArchived;
+                            await this.loadProductions();
+                            this.showToast(data.isArchived ? 'Project archived' : 'Project restored', 'success');
+                        }
+                    } catch (err) { console.error('Archive production error:', err); }
                 },
 
                 async handleProductionFileUpload(event) {
                     const file = event?.target?.files?.[0];
                     if (!file) return;
-                    
-                    const maxSize = 50 * 1024 * 1024; // 50MB
-                    if (file.size > maxSize) {
-                        this.showToast('File size must be less than 50MB', 'error');
-                        return;
-                    }
-                    
                     const token = localStorage.getItem('token');
                     const formData = new FormData();
                     formData.append('file', file);
-                    
+                    formData.append('type', this.productionUploadType || 'draft');
                     try {
-                        const response = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}/attachments`, {
+                        const res = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}/attachments`, {
                             method: 'POST',
                             headers: { 'Authorization': `Bearer ${token}` },
                             body: formData
                         });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
+                        if (res.ok) {
+                            const data = await res.json();
                             this.selectedProduction = data.project;
-                            this.showToast('File uploaded successfully', 'success');
+                            this.showToast('File uploaded', 'success');
                             event.target.value = '';
                         } else {
-                            const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-                            this.showToast(error.message || 'Failed to upload file', 'error');
+                            const err = await res.json().catch(() => ({}));
+                            this.showToast(err.message || 'Upload failed', 'error');
                         }
-                    } catch (error) {
-                        console.error('File upload error:', error);
-                        this.showToast('Failed to upload file', 'error');
-                    }
+                    } catch (err) { this.showToast('Upload failed', 'error'); }
+                },
+
+                async deleteProductionAttachment(attachmentId) {
+                    if (!confirm('Remove this file?')) return;
+                    const token = localStorage.getItem('token');
+                    try {
+                        const res = await fetch(`${API_URL}/production/projects/${this.selectedProduction._id}/attachments/${attachmentId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.selectedProduction = data.project;
+                            this.showToast('File removed', 'success');
+                        }
+                    } catch (err) { this.showToast('Failed to remove file', 'error'); }
                 },
 
                 handleMentionInput(event) {
@@ -4010,11 +4185,10 @@ show_admin_bar(false);
                     const cursorPos = event.target.selectionStart;
                     const textBeforeCursor = text.substring(0, cursorPos);
                     const match = textBeforeCursor.match(/@(\w*)$/);
-                    
                     if (match) {
                         this.showMentionDropdown = true;
                         const query = match[1].toLowerCase();
-                        this.filteredUsers = this.getMentionCandidates().filter(u => 
+                        this.filteredUsers = this.getMentionCandidates().filter(u =>
                             (u.firstName + ' ' + u.lastName).toLowerCase().includes(query)
                         );
                     } else {
@@ -4023,82 +4197,102 @@ show_admin_bar(false);
                 },
 
                 selectMention(user) {
-                    if (!this.selectedMentions.includes(user._id)) {
-                        this.selectedMentions.push(user._id);
-                    }
+                    if (!this.selectedMentions.includes(user._id)) this.selectedMentions.push(user._id);
                     const textarea = document.querySelector('textarea[x-model="newProductionComment"]');
                     if (textarea) {
                         const text = this.newProductionComment;
                         const cursorPos = textarea.selectionStart;
-                        const textBeforeCursor = text.substring(0, cursorPos);
-                        const match = textBeforeCursor.match(/@(\w*)$/);
+                        const before = text.substring(0, cursorPos);
+                        const match = before.match(/@(\w*)$/);
                         if (match) {
-                            const beforeMention = textBeforeCursor.substring(0, match.index);
-                            const afterCursor = text.substring(cursorPos);
-                            this.newProductionComment = beforeMention + '@' + user.firstName + ' ' + user.lastName + ' ' + afterCursor;
+                            const afterMention = before.substring(0, match.index);
+                            this.newProductionComment = afterMention + '@' + user.firstName + ' ' + user.lastName + ' ' + text.substring(cursorPos);
                         }
                     }
                     this.showMentionDropdown = false;
                 },
 
+                // Status pipeline for the detail view progress bar
+                productionStatusPipeline: [
+                    { value: 'scripting', label: 'Script' },
+                    { value: 'script_review', label: 'Review' },
+                    { value: 'filming', label: 'Film' },
+                    { value: 'editing', label: 'Edit' },
+                    { value: 'internal_review', label: 'Internal' },
+                    { value: 'client_review', label: 'Client' },
+                    { value: 'revisions', label: 'Revise' },
+                    { value: 'approved', label: 'Approved' },
+                    { value: 'final_delivery', label: 'Deliver' },
+                    { value: 'delivered', label: 'Done' }
+                ],
+
+                getStatusPipelineIndex(status) {
+                    return this.productionStatusPipeline.findIndex(s => s.value === status);
+                },
+
+                // Stats strip data
+                productionStatsStrip: [
+                    { label: 'All Active', status: '', color: 'text-gray-900 dark:text-white' },
+                    { label: 'In Production', status: 'filming', color: 'text-purple-600 dark:text-purple-400' },
+                    { label: 'Editing', status: 'editing', color: 'text-indigo-600 dark:text-indigo-400' },
+                    { label: 'Client Review', status: 'client_review', color: 'text-yellow-600 dark:text-yellow-400' },
+                    { label: 'Overdue', status: '', color: 'text-red-600 dark:text-red-400' }
+                ],
+
                 formatProductionStatus(status) {
-                    const statusMap = {
-                        'scripting': 'Scripting',
-                        'script_review': 'Script Review',
-                        'filming': 'Filming',
-                        'editing': 'Editing',
-                        'internal_review': 'Internal Review',
-                        'client_review': 'Client Review',
-                        'revisions': 'Revisions',
-                        'approved': 'Approved',
-                        'final_delivery': 'Final Delivery',
-                        'delivered': 'Delivered'
-                    };
-                    return statusMap[status] || status;
+                    const m = { scripting:'Scripting', script_review:'Script Review', filming:'Filming', editing:'Editing', internal_review:'Internal Review', client_review:'Client Review', revisions:'Revisions', approved:'Approved', final_delivery:'Final Delivery', delivered:'Delivered' };
+                    return m[status] || status;
                 },
 
                 getProductionStatusClass(status) {
-                    const classes = {
-                        'scripting': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                        'script_review': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-                        'filming': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-                        'editing': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
-                        'internal_review': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
-                        'client_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                        'revisions': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-                        'approved': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                        'final_delivery': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
-                        'delivered': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'
+                    const m = {
+                        scripting: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                        script_review: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+                        filming: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+                        editing: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
+                        internal_review: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+                        client_review: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+                        revisions: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+                        approved: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+                        final_delivery: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
+                        delivered: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
                     };
-                    return classes[status] || classes.scripting;
+                    return m[status] || m.scripting;
+                },
+
+                formatProductionType(type) {
+                    const m = { videography:'Video', photography:'Photo', editing:'Edit Only', web_project:'Web', other:'Other' };
+                    return m[type] || type || 'Video';
+                },
+
+                getProductionTypeClass(type) {
+                    const m = { videography:'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300', photography:'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', editing:'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300', web_project:'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', other:'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' };
+                    return m[type] || m.other;
                 },
 
                 getHoursInStatus(project) {
                     if (!project?.statusChangedAt) return 0;
-                    const now = new Date();
-                    const changed = new Date(project.statusChangedAt);
-                    const diffMs = now - changed;
-                    return Math.floor(diffMs / (1000 * 60 * 60));
+                    return Math.floor((new Date() - new Date(project.statusChangedAt)) / 3600000);
                 },
 
                 getSLAPercentage(project) {
                     const hours = this.getHoursInStatus(project);
-                    const slaGoal = project?.slaGoals?.[project.status];
-                    if (!slaGoal) return 0;
-                    return Math.min(100, (hours / slaGoal) * 100);
+                    const goal = project?.slaGoals?.[project?.status];
+                    if (!goal) return 0;
+                    return Math.min(100, Math.round((hours / goal) * 100));
                 },
 
                 getSLABarClass(project) {
-                    const percentage = this.getSLAPercentage(project);
-                    if (percentage >= 100) return 'bg-red-500';
-                    if (percentage >= 80) return 'bg-yellow-500';
+                    const p = this.getSLAPercentage(project);
+                    if (p >= 100) return 'bg-red-500';
+                    if (p >= 80) return 'bg-amber-400';
                     return 'bg-green-500';
                 },
 
                 getSLATextClass(project) {
-                    const percentage = this.getSLAPercentage(project);
-                    if (percentage >= 100) return 'text-red-600 dark:text-red-400 font-semibold';
-                    if (percentage >= 80) return 'text-yellow-600 dark:text-yellow-400';
+                    const p = this.getSLAPercentage(project);
+                    if (p >= 100) return 'text-red-600 dark:text-red-400 font-bold';
+                    if (p >= 80) return 'text-amber-600 dark:text-amber-400 font-medium';
                     return 'text-green-600 dark:text-green-400';
                 },
 

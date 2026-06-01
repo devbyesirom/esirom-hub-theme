@@ -1,5 +1,26 @@
 [
   {
+    "id": 11,
+    "title": "Production Workflow Rebuild",
+    "version": "2.0.0",
+    "description": "The Production section has been completely rebuilt from the ground up for the Multimedia team. A redesigned detail drawer, visual status pipeline, production type tracking, fixed notifications, video/image file uploads, team role avatars, and full progress score integration.",
+    "date": "2026-06-01",
+    "highlights": [
+      "New side-drawer detail view with status pipeline progress bar",
+      "Production Type field (Videography, Photography, Edit Only, Web) — now feeds Team Progress scores correctly",
+      "Tabbed detail view: Details / Files / Comments",
+      "File uploads now support video, images, PDFs, docs (up to 500 MB)",
+      "File list shows type badge, size, and direct open/delete actions",
+      "Stats strip on the production list with click-to-filter",
+      "Search bar + Production Type filter added",
+      "Delivered status added to filter",
+      "Full notification pipeline — all status changes, mentions, and revisions now trigger emails via createNotification",
+      "Team Progress (multimedia) now respects multimediaRole field (videographer / photographer / editor / all)",
+      "Archive/restore production projects",
+      "Ctrl+Enter to send comments, @ mention autocomplete"
+    ]
+  },
+  {
     "id": 10,
     "title": "Google Sign-In & Login Refresh",
     "version": "1.9.0",
