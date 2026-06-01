@@ -1,5 +1,18 @@
 [
   {
+    "id": 10,
+    "title": "Google Sign-In & Login Refresh",
+    "version": "1.9.0",
+    "description": "Sign in with Google — staff use @esirom.com accounts linked to their profile; clients can match existing emails or register as new users. The login page has been redesigned with Google as the primary option and a cleaner two-column layout.",
+    "date": "2026-06-01",
+    "highlights": [
+      "Continue with Google on the login page",
+      "Staff: @esirom.com Google accounts linked to existing profiles",
+      "Clients: Google email must match on-file accounts; new users can register via Google",
+      "Redesigned login card with logo header and improved layout"
+    ]
+  },
+  {
     "id": 9,
     "title": "Password Reset & Security Enhancements",
     "version": "1.8.0",

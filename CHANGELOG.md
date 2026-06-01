@@ -5,6 +5,16 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-06-01
+
+### Added
+- Google Sign-In on the login page (staff @esirom.com, client email matching, new client registration via Google)
+- OAuth callback handling on login page (`token`, `error`, `success` query params)
+
+### Changed
+- Login page layout: two-column design, Google button as primary sign-in, logo in card header
+- Theme version bumped to 1.9.0; What's New entry for Google sign-in
+
 ## [1.4.0] - 2025-10-02
 
 ### Added
