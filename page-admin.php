@@ -159,6 +159,22 @@ show_admin_bar(false);
                     </button>
                 </div>
 
+                <!-- Google Chat workflow digest (admin test) -->
+                <div class="mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Google Space — Workflow Digest</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Posts the daily overdue / due today / due soon summary to your AgencyHUB workflow Space. Runs automatically at 8:30 AM Mon–Fri.</p>
+                        </div>
+                        <button @click="testWorkflowDigest()"
+                                :disabled="workflowDigestLoading"
+                                class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                            <span x-show="!workflowDigestLoading">Send Test Digest Now</span>
+                            <span x-show="workflowDigestLoading">Sending…</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Users Table -->
                 <div class="bg-white shadow rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -1156,6 +1172,7 @@ show_admin_bar(false);
                 pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 showUserModal: false,
                 showClientModal: false,
+                workflowDigestLoading: false,
                 showCustomizeModal: false,
                 showBulkAddModal: false,
                 showApprovalModal: false,
@@ -1764,6 +1781,30 @@ show_admin_bar(false);
                     } catch (error) {
                         console.error('Error syncing all brands:', error);
                         this.showToast('Error syncing all brands', 'error', 5000);
+                    }
+                },
+
+                async testWorkflowDigest() {
+                    if (!confirm('Send the workflow digest to the Google Space now? (Overdue, due today, due in 3 days)')) return;
+                    this.workflowDigestLoading = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/test-workflow-digest`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (response.ok && data.success) {
+                            this.showToast('Workflow digest sent to Google Space — check AgencyHUB: Workflow Notifications', 'success', 7000);
+                        } else if (response.status === 401) {
+                            this.showToast('Session expired — log in again as admin', 'error', 5000);
+                        } else {
+                            this.showToast(data.message || `Failed (${response.status})`, 'error', 6000);
+                        }
+                    } catch (error) {
+                        console.error('testWorkflowDigest:', error);
+                        this.showToast('Could not reach the API — check Admin → API URL settings', 'error', 6000);
+                    } finally {
+                        this.workflowDigestLoading = false;
                     }
                 },
 
