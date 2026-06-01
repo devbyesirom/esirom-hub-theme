@@ -13,6 +13,9 @@ if (!defined('ABSPATH')) {
 
 // Hide WordPress admin bar on this page
 show_admin_bar(false);
+
+$register_page = get_page_by_path('register');
+$register_url = $register_page ? get_permalink($register_page) : home_url('/register/');
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?> class="h-full">
@@ -153,6 +156,25 @@ show_admin_bar(false);
                                     </svg>
                                 </button>
                             </form>
+
+                            <!-- Sign up -->
+                            <div class="pt-5 mt-5 border-t border-gray-100">
+                                <p class="text-sm text-center text-gray-600">
+                                    New to Agency Hub?
+                                </p>
+                                <a
+                                    href="<?php echo esc_url($register_url); ?>"
+                                    class="mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 border border-indigo-200 rounded-lg text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                                >
+                                    <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                    </svg>
+                                    Create an account
+                                </a>
+                                <p class="mt-2 text-xs text-center text-gray-500 leading-relaxed">
+                                    For <span class="font-medium text-gray-600">clients</span> and <span class="font-medium text-gray-600">Esirom staff</span>. Your request is reviewed before access is granted — or use Google above for a faster sign-up.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
