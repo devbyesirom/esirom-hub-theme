@@ -47,10 +47,10 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
     </div>
 </div>
 
-<div x-show="authChecked && user" x-cloak class="flex h-screen overflow-hidden">
+<div x-show="authChecked && user" x-cloak class="hub-app-shell flex flex-col md:flex-row">
 
     <!-- Sidebar -->
-    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
         <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
             <?php esirom_hub_staff_sidebar_nav('inventory', 'site', false); ?>
@@ -61,28 +61,25 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
     </aside>
 
     <!-- Main -->
-    <main class="flex-1 overflow-y-auto">
+    <main class="hub-app-main">
         <!-- Header -->
-        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-10">
+        <header class="bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 px-4 sm:px-6 py-4 sticky top-0 z-10 shadow-sm">
             <div class="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                    <h1 class="text-xl font-bold flex items-center gap-2">
-                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        Inventory
-                    </h1>
-                    <p class="text-xs text-gray-500 mt-0.5">Agency equipment — check out gear for shoots &amp; events</p>
+                <div class="min-w-0">
+                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Inventory</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Agency equipment — check out gear for shoots &amp; events</p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <button x-show="canManage" @click="openEquipmentModal()" class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">+ Add Equipment</button>
-                    <button @click="openBookingModal()" class="px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">Request Booking</button>
+                    <button x-show="canManage" @click="openEquipmentModal()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700">+ Add Equipment</button>
+                    <button @click="openBookingModal()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700">Request Booking</button>
                 </div>
             </div>
 
             <!-- Tabs -->
-            <div class="flex gap-1 mt-4 flex-wrap">
+            <div class="flex gap-1 mt-3 flex-wrap">
                 <template x-for="t in tabs" :key="t.id">
                     <button @click="tab = t.id; loadTab()"
-                            class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all relative"
+                            class="px-3 py-1.5 text-xs font-semibold rounded-xl transition-all relative"
                             :class="tab === t.id ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
                             x-text="t.label">
                     </button>
@@ -91,9 +88,9 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
                       class="ml-1 px-2 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full self-center"
                       x-text="stats.pendingApprovals + ' pending'"></span>
             </div>
-        </div>
+        </header>
 
-        <div class="p-6 space-y-6">
+        <div class="hub-page-content p-4 sm:p-6 space-y-6">
 
             <!-- Loading -->
             <div x-show="loading" class="flex justify-center py-20">

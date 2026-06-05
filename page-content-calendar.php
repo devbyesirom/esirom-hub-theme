@@ -58,7 +58,7 @@ show_admin_bar(false);
     </style>
 </head>
 <body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0">
-    <div x-data="calendarApp()" x-init="init()" class="flex h-full flex-col md:flex-row">
+    <div x-data="calendarApp()" x-init="init()" class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
         <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
             <div class="flex items-center justify-between">
@@ -81,7 +81,7 @@ show_admin_bar(false);
         </div>
 
         <!-- Sidebar -->
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
             <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
                 <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
                     <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
@@ -135,17 +135,20 @@ show_admin_bar(false);
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto mt-14 md:mt-0">
+        <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
             <!-- Top Bar -->
-            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Content Calendar</h1>
+            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
+                <div class="flex items-center gap-4 flex-wrap min-w-0">
+                    <div class="min-w-0">
+                        <h1 class="text-lg font-bold text-gray-900 dark:text-white">Content Calendar</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="monthYearLabel"></p>
+                    </div>
                     <!-- Client Selector -->
                     <template x-if="viewMode !== 'client'">
                         <div class="relative" x-data="{ clientDropdownOpen: false }">
-                            <button @click="clientDropdownOpen = !clientDropdownOpen" class="flex items-center space-x-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                                <svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                <span class="text-sm font-medium text-indigo-700 dark:text-indigo-300" x-text="selectedClientName || 'Select Brand'"></span>
+                            <button @click="clientDropdownOpen = !clientDropdownOpen" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-100 dark:border-indigo-800/50">
+                                <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-300" x-text="selectedClientName || 'Select Brand'"></span>
                                 <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="clientDropdownOpen" @click.away="clientDropdownOpen = false" x-cloak class="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
@@ -159,24 +162,23 @@ show_admin_bar(false);
                         </div>
                     </template>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center gap-2">
                     <!-- Month Navigation -->
-                    <div class="flex items-center gap-2">
-                        <button @click="prevMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    <div class="flex items-center gap-1">
+                        <button @click="prevMonth()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <span class="text-lg font-semibold text-gray-900 dark:text-white min-w-[150px] text-center" x-text="monthYearLabel"></span>
-                        <button @click="nextMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        <button @click="nextMonth()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
-                        <button @click="goToToday()" class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Today</button>
+                        <button @click="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">Today</button>
                     </div>
                     <!-- Theme Toggle -->
-                    <button @click="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button @click="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <svg x-show="theme === 'light'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                         </svg>
-                        <svg x-show="theme === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg x-show="theme === 'dark'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                     </button>
@@ -207,7 +209,7 @@ show_admin_bar(false);
             </header>
 
         <!-- Calendar Grid -->
-        <div class="px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6">
+        <div class="hub-page-content px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
                 <!-- Day Headers -->
                 <div class="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">

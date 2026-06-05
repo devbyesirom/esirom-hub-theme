@@ -1,5 +1,18 @@
 [
   {
+    "id": 17,
+    "title": "Unified Page Headers & Scroll Fix",
+    "version": "2.2.5",
+    "description": "Consistent compact headers across all Hub pages and fixed bottom content clipping on scroll.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Workflow, Insights, Calendar, Inventory, Progress, and Admin headers match Agency Overview sizing",
+      "Fixed scroll clipping at the bottom of Workflow and other long pages",
+      "Compact title (text-lg), subtitle (text-xs), and rounded-xl action buttons throughout"
+    ],
+    "type": "update"
+  },
+  {
     "id": 16,
     "title": "Sidebar Navigation Polish",
     "version": "2.2.4",

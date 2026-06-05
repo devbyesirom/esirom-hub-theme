@@ -69,9 +69,9 @@ show_admin_bar(false);
     <?php wp_head(); ?>
 </head>
 <body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white" x-data="adminPanel" x-init="init(); loadData()">
-    <div class="flex h-full">
+    <div class="hub-app-shell flex">
         <!-- Sidebar -->
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex flex-col">
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex flex-col">
             <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
                 <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
                     <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
@@ -118,9 +118,9 @@ show_admin_bar(false);
         </aside>
 
         <!-- Main content -->
-        <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-            <header class="flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm">
-                <h1 class="text-xl font-semibold" x-text="pageTitle"></h1>
+        <main class="hub-app-main bg-gray-50 dark:bg-gray-900">
+            <header class="flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4">
+                <h1 class="text-lg font-bold text-gray-900 dark:text-white" x-text="pageTitle"></h1>
                 <div class="flex items-center gap-2">
                     <!-- User Dropdown -->
                     <div x-data="{ dropdownOpen: false }" class="relative">
@@ -148,7 +148,7 @@ show_admin_bar(false);
                 </div>
             </header>
 
-            <div class="px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-4 sm:pb-6 lg:pb-8">
+            <div class="hub-page-content px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-4 sm:pb-6 lg:pb-8">
             
             <!-- Users Tab -->
             <div x-show="activeTab === 'users'" x-cloak>

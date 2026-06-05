@@ -153,7 +153,7 @@ show_admin_bar(false);
     <?php esirom_hub_wp_head_reset(); ?>
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="agencyOverview()" x-init="init()">
-    <div class="flex h-full flex-col md:flex-row">
+    <div class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
         <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
             <div class="flex items-center justify-between">
@@ -198,7 +198,7 @@ show_admin_bar(false);
             </div>
         </div>
 
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
             <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
                 <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
                     <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
@@ -251,7 +251,7 @@ show_admin_bar(false);
             </div>
         </aside>
 
-        <main class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto mt-14 md:mt-0">
+        <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
             <!-- Header / Command Bar -->
             <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
                 <!-- Left: title + period picker -->
@@ -341,7 +341,7 @@ show_admin_bar(false);
             </div>
 
             <!-- Main Content -->
-            <div x-show="!loading" x-cloak class="px-4 sm:px-6 lg:px-8 pt-5 pb-8 space-y-5">
+            <div x-show="!loading" x-cloak class="hub-page-content px-4 sm:px-6 lg:px-8 pt-5 pb-8 space-y-5">
 
                 <!-- ── Summary Stats ── -->
                 <div class="ov-card-appear">

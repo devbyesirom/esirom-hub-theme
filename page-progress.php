@@ -54,10 +54,10 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
     </div>
 </div>
 
-<div x-show="authChecked && user" x-cloak class="flex h-screen overflow-hidden">
+<div x-show="authChecked && user" x-cloak class="hub-app-shell flex flex-col md:flex-row">
 
     <!-- Sidebar -->
-    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
 
         <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
@@ -97,15 +97,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
     </aside>
 
     <!-- Main -->
-    <main class="flex-1 overflow-y-auto">
+    <main class="hub-app-main">
 
         <!-- Top bar -->
-        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    My Progress
-                </h1>
+        <header class="bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10 shadow-sm">
+            <div class="min-w-0">
+                <h1 class="text-lg font-bold text-gray-900 dark:text-white">My Progress</h1>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="periodLabel"></p>
             </div>
 
@@ -122,14 +119,14 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 </div>
 
                 <!-- Year picker -->
-                <select x-model="selectedYear" @change="loadData()" class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <select x-model="selectedYear" @change="loadData()" class="text-xs border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
                     <template x-for="y in yearOptions" :key="y">
                         <option :value="y" x-text="y"></option>
                     </template>
                 </select>
 
                 <!-- Month picker (month mode only) -->
-                <select x-show="periodType === 'month'" x-model.number="selectedMonth" @change="loadData()" class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <select x-show="periodType === 'month'" x-model.number="selectedMonth" @change="loadData()" class="text-xs border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
                     <template x-for="(name, idx) in monthNames" :key="idx">
                         <option :value="idx" x-text="name"></option>
                     </template>
@@ -151,9 +148,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 </button>
             </div>
-        </div>
+        </header>
 
-        <div class="p-6 space-y-6">
+        <div class="hub-page-content p-4 sm:p-6 space-y-6">
 
             <!-- Loading state -->
             <div x-show="loading" class="flex items-center justify-center py-24">
