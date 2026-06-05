@@ -32,9 +32,10 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         .ring-score { transition: stroke-dashoffset 0.8s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        <?php esirom_hub_layout_styles(); ?>
     </style>
 </head>
-<body class="h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100" x-data="progressApp()" x-init="init()">
+<body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="progressApp()" x-init="init()">
 
 <!-- Auth guard -->
 <div x-show="!authChecked" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
@@ -713,5 +714,6 @@ function progressApp() {
 </script>
 
 <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
+<?php esirom_hub_staff_mobile_nav('progress'); ?>
 </body>
 </html>

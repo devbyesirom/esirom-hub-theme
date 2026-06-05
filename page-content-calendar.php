@@ -649,6 +649,7 @@ show_admin_bar(false);
     </template>
 
     <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
+    <?php esirom_hub_staff_mobile_nav('content_calendar'); ?>
 </div>
 </body>
 </html>

@@ -29,9 +29,10 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
         body { font-family: 'Inter', sans-serif; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .inv-fade { animation: fadeIn 0.25s ease forwards; }
+        <?php esirom_hub_layout_styles(); ?>
     </style>
 </head>
-<body class="h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100" x-data="inventoryApp()" x-init="init()">
+<body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="inventoryApp()" x-init="init()">
 
 <div x-show="!authChecked" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
     <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -569,5 +570,7 @@ function inventoryApp() {
     };
 }
 </script>
+
+<?php esirom_hub_staff_mobile_nav('inventory'); ?>
 </body>
 </html>

@@ -26,6 +26,20 @@ function esirom_hub_setup() {
 add_action('after_setup_theme', 'esirom_hub_setup');
 
 /**
+ * Resolve a Hub page URL by slug, with fallback when the WP page is not created yet.
+ */
+function esirom_hub_page_url($slug) {
+    $page = get_page_by_path($slug);
+    if ($page && !is_wp_error($page)) {
+        $url = get_permalink($page);
+        if ($url) {
+            return $url;
+        }
+    }
+    return home_url('/' . trim($slug, '/'));
+}
+
+/**
  * Render shared staff sidebar navigation (admin / brand_rep).
  */
 function esirom_hub_staff_sidebar_nav($active = '', $context = 'site', $alpine_labels = false) {
@@ -42,6 +56,14 @@ function esirom_hub_staff_sidebar_footer($context = 'site', $alpine_labels = fal
     $hub_nav_context = $context;
     $hub_nav_alpine_labels = $alpine_labels;
     include get_template_directory() . '/inc/hub-staff-sidebar-footer.php';
+}
+
+/**
+ * Render shared staff mobile bottom navigation.
+ */
+function esirom_hub_staff_mobile_nav($active = '') {
+    $hub_mobile_active = $active;
+    include get_template_directory() . '/inc/hub-staff-mobile-nav.php';
 }
 
 /**

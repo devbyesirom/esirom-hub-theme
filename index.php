@@ -46,7 +46,7 @@ get_header();
                 <li>Configure your API URL in <a href="<?php echo esc_url(admin_url('themes.php?page=esirom-hub-settings')); ?>" class="text-blue-600 hover:underline">Hub Settings</a></li>
                 <li>Create a page with the "Login" template for user authentication</li>
                 <li>Create a page with the "Dashboard" template for the main hub interface</li>
-                <li>Create pages for "Workflow", "Content Calendar", and "Overview" templates</li>
+                <li>Create pages for "Workflow", "Content Calendar", "Overview", "Inventory", and "My Progress" templates</li>
                 <li>Make sure your backend API is running (see backend documentation)</li>
             </ol>
             
