@@ -1,5 +1,21 @@
 [
   {
+    "id": 13,
+    "title": "Equipment Inventory",
+    "version": "2.2.0",
+    "description": "New Inventory section for the agency team. Track cameras, lenses, lighting, and all production gear. Staff can request bookings for shoots and client events; managers approve via Hub notifications and email.",
+    "date": "2026-06-01",
+    "highlights": [
+      "Inventory page in sidebar — staff only, clients cannot access",
+      "Equipment dashboard: total, available, checked out, needs servicing counts",
+      "Add/edit equipment with name, model, serial number, category, condition status",
+      "Staff request bookings for shoots/events with pickup and return dates",
+      "Managers/admins approve or decline — email + Hub + Google Space notifications",
+      "Check out on shoot day, check in when returned"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 12,
     "title": "Content Bank Integration & Progress Clarity",
     "version": "2.1.0",
