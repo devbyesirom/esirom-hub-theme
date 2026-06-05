@@ -642,7 +642,7 @@ show_admin_bar(false);
                                         </div>
                                     </div>
                                 </div>
-                                <div class="p-4 space-y-2 overflow-y-auto max-h-80">
+                                <div class="p-4 space-y-2 overflow-y-auto max-h-96">
                                     <template x-for="w in workloadByAssignee" :key="w.assignee?._id">
                                         <div @click="filterConceptsByAssignee(w.assignee?._id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40 px-3 py-2.5 -mx-2 rounded-xl transition-colors">
                                             <div class="flex items-center justify-between mb-1.5">

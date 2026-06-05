@@ -1,5 +1,19 @@
 [
   {
+    "id": 18,
+    "title": "Hide Inactive Users & Brands",
+    "version": "2.2.6",
+    "description": "Inactive users and clients are hidden across the Hub. Admin panel restyled and full-width.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Inactive users no longer appear in workload, team stats, or assignee lists",
+      "Inactive clients/brands hidden from Overview, Workflow, Calendar, and dropdowns",
+      "Admin Panel shows all records (including inactive) for management",
+      "Admin layout matches compact header style and uses full screen width"
+    ],
+    "type": "update"
+  },
+  {
     "id": 17,
     "title": "Unified Page Headers & Scroll Fix",
     "version": "2.2.5",
