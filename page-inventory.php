@@ -5,6 +5,8 @@
  */
 if (!defined('ABSPATH')) exit;
 
+show_admin_bar(false);
+
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
 $login_url = esc_url(get_permalink(get_page_by_path('login')));
 $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
@@ -48,17 +50,12 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
 <div x-show="authChecked && user" x-cloak class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div class="flex items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            </div>
-            <div><p class="text-xs font-bold">Agency Hub</p><p class="text-[10px] text-gray-500">by esirom</p></div>
-        </div>
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+        <?php esirom_hub_staff_sidebar_header(false); ?>
         <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
             <?php esirom_hub_staff_sidebar_nav('inventory', 'site', false); ?>
         </nav>
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
             <?php esirom_hub_staff_sidebar_footer('site', false); ?>
         </div>
     </aside>
@@ -329,6 +326,7 @@ function inventoryApp() {
     return {
         authChecked: false,
         user: null,
+        isSidebarOpen: true,
         loading: false,
         tab: 'dashboard',
         stats: {},
@@ -553,6 +551,12 @@ function inventoryApp() {
         showToast(message, type = 'success') {
             this.toast = { show: true, message, type };
             setTimeout(() => { this.toast.show = false; }, 4000);
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = LOGIN_URL;
         },
 
         cap(s) { return String(s || '').replace(/\b\w/g, c => c.toUpperCase()).replace(/_/g, ' '); },

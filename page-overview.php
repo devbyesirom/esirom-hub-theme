@@ -150,6 +150,7 @@ show_admin_bar(false);
         }
     </style>
     <?php wp_head(); ?>
+    <?php esirom_hub_wp_head_reset(); ?>
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="agencyOverview()" x-init="init()">
     <div class="flex h-full flex-col md:flex-row">
@@ -247,10 +248,6 @@ show_admin_bar(false);
             </nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('site', false); ?>
-                <a @click.prevent="logout()" href="#" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-                    <span class="ml-4 nav-text">Logout</span>
-                </a>
             </div>
         </aside>
 

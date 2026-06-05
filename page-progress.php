@@ -5,6 +5,8 @@
 
 if (!defined('ABSPATH')) exit;
 
+show_admin_bar(false);
+
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
 ?>
 <!DOCTYPE html>
@@ -55,36 +57,28 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 <div x-show="authChecked && user" x-cloak class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div class="flex items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            </div>
-            <div>
-                <p class="text-xs font-bold text-gray-900 dark:text-white">Agency Hub</p>
-                <p class="text-[10px] text-gray-500">by esirom</p>
-            </div>
-        </div>
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+        <?php esirom_hub_staff_sidebar_header(false); ?>
 
         <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
             <?php esirom_hub_staff_sidebar_nav('progress', 'site', false); ?>
         </nav>
 
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-            <?php esirom_hub_staff_sidebar_footer('site', false); ?>
+        <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
+            <?php esirom_hub_staff_sidebar_footer('site', false, false); ?>
             <!-- User dropdown -->
-            <div x-data="{ dropdownOpen: false }" class="relative">
+            <div x-data="{ dropdownOpen: false }" class="relative mt-1">
                 <button @click="dropdownOpen = !dropdownOpen"
-                        class="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left">
-                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0"
+                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left">
+                    <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                          x-text="((user?.firstName || '?')[0] + (user?.lastName || '')[0]).toUpperCase()"></div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 nav-text">
                         <p class="text-sm font-medium text-gray-900 dark:text-white truncate"
                            x-text="(user?.firstName || '') + ' ' + (user?.lastName || '')"></p>
                         <p class="text-xs text-gray-500 capitalize"
                            x-text="user?.role?.replace('_', ' ') || ''"></p>
                     </div>
-                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 nav-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
@@ -546,6 +540,7 @@ function progressApp() {
     return {
         authChecked: false,
         user: null,
+        isSidebarOpen: true,
         viewMode: localStorage.getItem('viewMode') || 'admin',
         showPwModal: false,
         pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',

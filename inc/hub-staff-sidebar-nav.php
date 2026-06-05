@@ -157,13 +157,13 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
     <div class="border-t border-gray-100 dark:border-gray-700/60 my-1"></div>
 
     <!-- ── Standalone items ───────────────────────────────────────────────── -->
-    <a href="<?php echo $hub_progress_url; ?>" class="<?php echo esc_attr($hub_item_class('progress')); ?> px-3 py-2.5 text-sm">
+    <a href="<?php echo $hub_progress_url; ?>" class="<?php echo esc_attr($hub_item_class('progress')); ?>">
         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         <span class="nav-text"<?php echo $hub_label_attrs; ?>>My Progress</span>
     </a>
 
-    <a href="<?php echo $hub_inventory_url; ?>" class="<?php echo esc_attr($hub_item_class('inventory')); ?> px-3 py-2.5 text-sm">
-        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    <a href="<?php echo $hub_inventory_url; ?>" class="<?php echo esc_attr($hub_item_class('inventory')); ?>">
+        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625-10.928a1.125 1.125 0 00-1.124-.99h-4.5a1.125 1.125 0 00-1.124.99L12.25 7.5M3.75 7.5h16.5M4.5 7.5v10.125c0 .621.504 1.125 1.125 1.125h13.5c.621 0 1.125-.504 1.125-1.125V7.5M9.75 11.25h4.5"/></svg>
         <span class="nav-text"<?php echo $hub_label_attrs; ?>>Inventory</span>
     </a>
 

@@ -1,5 +1,19 @@
 [
   {
+    "id": 16,
+    "title": "Sidebar Navigation Polish",
+    "version": "2.2.4",
+    "description": "Consistent sidebar sizing, branding, and layout across all Hub pages.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Update KPIs, Admin Panel, and Logout match compact nav item size",
+      "Inventory and My Progress use the Agency Hub logo in the sidebar header",
+      "Fixed extra top spacing on Overview and Insights pages",
+      "Collapsible sidebar on Inventory and My Progress pages"
+    ],
+    "type": "update"
+  },
+  {
     "id": 15,
     "title": "Grouped Sidebar Navigation",
     "version": "2.2.3",

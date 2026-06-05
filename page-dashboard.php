@@ -141,6 +141,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         <?php esirom_hub_layout_styles(); ?>
     </style>
     <?php wp_head(); ?>
+    <?php esirom_hub_wp_head_reset(); ?>
     <script>
         // Remove any stray checkboxes on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -282,10 +283,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             </nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('dashboard', false); ?>
-                <a @click.prevent="logout()" href="#" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-                    <span class="ml-4 nav-text">Logout</span>
-                </a>
             </div>
         </aside>
 

@@ -131,10 +131,6 @@ show_admin_bar(false);
             </nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('site', true); ?>
-                <a @click.prevent="logout()" href="#" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span class="ml-4 nav-text" x-show="isSidebarOpen">Logout</span>
-                </a>
             </div>
         </aside>
 

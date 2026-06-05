@@ -45,7 +45,7 @@ $hub_mobile_label_class = function ($key) use ($hub_mobile_active) {
             <span class="<?php echo esc_attr($hub_mobile_label_class('dashboard')); ?>">Insights</span>
         </a>
         <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_inventory_url); ?>" class="<?php echo esc_attr($hub_mobile_class('inventory')); ?>">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625-10.928a1.125 1.125 0 00-1.124-.99h-4.5a1.125 1.125 0 00-1.124.99L12.25 7.5M3.75 7.5h16.5M4.5 7.5v10.125c0 .621.504 1.125 1.125 1.125h13.5c.621 0 1.125-.504 1.125-1.125V7.5M9.75 11.25h4.5"/></svg>
             <span class="<?php echo esc_attr($hub_mobile_label_class('inventory')); ?>">Inventory</span>
         </a>
         <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_progress_url); ?>" class="<?php echo esc_attr($hub_mobile_class('progress')); ?>">

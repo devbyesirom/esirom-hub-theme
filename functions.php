@@ -50,12 +50,28 @@ function esirom_hub_staff_sidebar_nav($active = '', $context = 'site', $alpine_l
 }
 
 /**
- * Render shared staff sidebar footer (Update KPIs, Admin Panel).
+ * Render shared staff sidebar header (logo + collapse toggle).
  */
-function esirom_hub_staff_sidebar_footer($context = 'site', $alpine_labels = false) {
+function esirom_hub_staff_sidebar_header($alpine_labels = false) {
+    $hub_nav_alpine_labels = $alpine_labels;
+    include get_template_directory() . '/inc/hub-staff-sidebar-header.php';
+}
+
+/**
+ * Render shared staff sidebar footer (Update KPIs, Admin Panel, Logout).
+ */
+function esirom_hub_staff_sidebar_footer($context = 'site', $alpine_labels = false, $show_logout = true) {
     $hub_nav_context = $context;
     $hub_nav_alpine_labels = $alpine_labels;
+    $hub_footer_show_logout = $show_logout;
     include get_template_directory() . '/inc/hub-staff-sidebar-footer.php';
+}
+
+/**
+ * Reset WP admin bar offset after wp_head() on Hub page templates.
+ */
+function esirom_hub_wp_head_reset() {
+    echo '<style id="hub-wp-head-reset">#wpadminbar{display:none!important}html{margin-top:0!important;padding-top:0!important}html.admin-bar{margin-top:0!important}body.admin-bar{margin-top:0!important;padding-top:0!important}</style>';
 }
 
 /**
@@ -212,8 +228,21 @@ add_filter('body_class', 'esirom_hub_body_classes');
  * Remove admin bar for hub pages
  */
 function esirom_hub_remove_admin_bar() {
-    if (is_page_template('page-login.php') || is_page_template('page-dashboard.php')) {
-        show_admin_bar(false);
+    $hub_templates = array(
+        'page-login.php',
+        'page-dashboard.php',
+        'page-workflow.php',
+        'page-overview.php',
+        'page-content-calendar.php',
+        'page-inventory.php',
+        'page-progress.php',
+        'page-admin.php',
+    );
+    foreach ($hub_templates as $template) {
+        if (is_page_template($template)) {
+            show_admin_bar(false);
+            return;
+        }
     }
 }
 add_action('template_redirect', 'esirom_hub_remove_admin_bar');
