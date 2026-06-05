@@ -1,5 +1,20 @@
 [
   {
+    "id": 15,
+    "title": "Grouped Sidebar Navigation",
+    "version": "2.2.3",
+    "description": "Sidebar navigation is now organized into collapsible groups to save space as the platform grows.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Workflow group: Workflow + Agency Overview",
+      "Insights group: Insights + Reports (+ Event Coverage)",
+      "Published Posts group: Published Posts + Content Calendar",
+      "My Progress and Inventory remain standalone top-level items",
+      "Groups remember open/closed state; auto-expand when you're on a child page"
+    ],
+    "type": "update"
+  },
+  {
     "id": 14,
     "title": "Theme Screenshot",
     "version": "2.2.1",
