@@ -1,5 +1,16 @@
 [
   {
+    "id": 14,
+    "title": "Theme Screenshot",
+    "version": "2.2.1",
+    "description": "Added theme screenshot thumbnail for WordPress Appearance and Updates screens.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Theme now includes screenshot.png — shows in WP theme picker and update list"
+    ],
+    "type": "update"
+  },
+  {
     "id": 13,
     "title": "Equipment Inventory",
     "version": "2.2.0",
