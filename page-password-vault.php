@@ -114,24 +114,26 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
             <div class="space-y-3" x-show="!loading && groups.length > 0" x-cloak>
                 <template x-for="group in groups" :key="group.key">
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-                        <button type="button" @click="toggleGroup(group.key)" class="w-full px-4 py-4 flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
-                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="expanded[group.key] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <h2 class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></h2>
-                                    <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.total + ' accounts'"></span>
-                                    <span x-show="group.active > 0" class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" x-text="group.active + ' active'"></span>
-                                    <span x-show="group.overdue > 0" class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" x-text="group.overdue + ' overdue'"></span>
+                        <div class="flex items-center gap-2 px-4 py-4">
+                            <button type="button" @click="toggleGroup(group.key)" class="flex-1 min-w-0 flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors rounded-lg -m-1 p-1">
+                                <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="expanded[group.key] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <h2 class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></h2>
+                                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.total + ' accounts'"></span>
+                                        <span x-show="group.active > 0" class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" x-text="group.active + ' active'"></span>
+                                        <span x-show="group.overdue > 0" class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" x-text="group.overdue + ' overdue'"></span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-0.5" x-show="group.clientName" x-text="group.clientName"></p>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-0.5" x-show="group.clientName" x-text="group.clientName"></p>
+                            </button>
+                            <div x-show="isAdmin" class="flex flex-wrap gap-1 shrink-0">
+                                <button type="button" @click="bulkGroup(group, { status: 'active' })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg hover:bg-green-700">Activate</button>
+                                <button type="button" @click="bulkGroup(group, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-[11px] bg-gray-600 text-white rounded-lg hover:bg-gray-700">Archive</button>
                             </div>
-                            <div x-show="isAdmin" class="flex flex-wrap gap-1 shrink-0" @click.stop>
-                                <button @click="bulkGroup(group, { status: 'active' })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg">Activate</button>
-                                <button @click="bulkGroup(group, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-[11px] bg-gray-600 text-white rounded-lg">Archive</button>
-                            </div>
-                        </button>
+                        </div>
 
-                        <div x-show="expanded[group.key]" x-cloak class="border-t border-gray-100 dark:border-gray-700 divide-y dark:divide-gray-700">
+                        <div x-show="expanded[group.key]" class="border-t border-gray-100 dark:border-gray-700 divide-y dark:divide-gray-700">
                             <template x-for="account in group.accounts" :key="account._id">
                                 <div class="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <div class="flex-1 min-w-0">
@@ -143,8 +145,8 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                                         <p class="text-xs font-mono text-gray-500 mt-1 truncate" x-text="account.username || 'No username'"></p>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <button @click="viewAccount(account)" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">View</button>
-                                        <button x-show="isStaff" @click="editAccount(account)" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Edit</button>
+                                        <button type="button" @click="viewAccount(account)" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">View</button>
+                                        <button type="button" x-show="isStaff" @click="editAccount(account)" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Edit</button>
                                     </div>
                                 </div>
                             </template>
@@ -300,7 +302,7 @@ function passwordVaultApp() {
         },
 
         toggleGroup(key) {
-            this.expanded[key] = !this.expanded[key];
+            this.expanded = { ...this.expanded, [key]: !this.expanded[key] };
         },
 
         async loadGrouped() {
@@ -411,13 +413,19 @@ function passwordVaultApp() {
         },
 
         async bulkGroup(group, payload) {
-            const res = await fetch(`${API_URL}/credentials/bulk/status`, {
-                method: 'POST', headers: this.headers(),
-                body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label, ...payload })
-            });
-            const data = await res.json();
-            if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); }
-            else this.notify(data.message || 'Update failed', 'error');
+            const action = payload.status === 'archived' ? 'archive' : 'activate';
+            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} all ${group.total} account${group.total === 1 ? '' : 's'} in "${group.label}"?`)) return;
+            try {
+                const res = await fetch(`${API_URL}/credentials/bulk/status`, {
+                    method: 'POST', headers: this.headers(),
+                    body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label, ...payload })
+                });
+                const data = await res.json();
+                if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); }
+                else this.notify(data.message || 'Update failed', 'error');
+            } catch (e) {
+                this.notify('Update failed', 'error');
+            }
         },
 
         async viewAccount(account) {
