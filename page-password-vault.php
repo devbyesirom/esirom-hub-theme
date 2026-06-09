@@ -50,7 +50,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
     <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
         <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-            <a x-show="user.role === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank" class="flex items-center px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <a x-show="user?.role === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank" class="flex items-center px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 Content Bank
             </a>
@@ -73,7 +73,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Brand accounts grouped by client — click a brand to view all logins</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <span x-show="overdueCount > 0 && user.role !== 'client'" class="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" x-text="overdueCount + ' need verification'"></span>
+                    <span x-show="overdueCount > 0 && user?.role !== 'client'" class="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" x-text="overdueCount + ' need verification'"></span>
                     <label x-show="isAdmin" class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-semibold cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600">
                         Import CSV
                         <input type="file" accept=".csv,text/csv" @change="importCsv($event)" class="hidden">
@@ -161,13 +161,13 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
     <div class="bg-white dark:bg-gray-800 w-full sm:max-w-lg sm:rounded-xl rounded-t-xl shadow-2xl max-h-[92vh] overflow-hidden" @click.stop>
         <div class="px-5 py-4 border-b dark:border-gray-700 flex items-center justify-between">
             <div>
-                <h3 class="font-bold text-gray-900 dark:text-white" x-text="viewMode ? 'Account Details' : (form._id ? 'Edit Account' : 'Add Account')"></h3>
+                <h3 class="font-bold text-gray-900 dark:text-white" x-text="accountModalView ? 'Account Details' : (form._id ? 'Edit Account' : 'Add Account')"></h3>
                 <p class="text-xs text-gray-500" x-text="selected?.accountName || ''"></p>
             </div>
             <button @click="closeModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
         </div>
         <div class="p-5 overflow-y-auto max-h-[calc(92vh-130px)] space-y-4">
-            <template x-if="viewMode && selected">
+            <template x-if="accountModalView && selected">
                 <div class="space-y-4">
                     <div>
                         <p class="text-xs text-gray-500 mb-1">Username</p>
@@ -199,7 +199,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                     <div x-show="selected.notes"><p class="text-xs text-gray-500">Notes</p><p class="text-sm whitespace-pre-wrap" x-text="selected.notes"></p></div>
                 </div>
             </template>
-            <template x-if="!viewMode">
+            <template x-if="!accountModalView">
                 <div class="space-y-3">
                     <input type="text" x-model="form.groupName" placeholder="Brand / Group" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <input type="text" x-model="form.accountName" placeholder="Account name *" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -229,13 +229,13 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
         </div>
         <div class="px-5 py-4 border-t dark:border-gray-700 flex justify-between gap-2">
             <div class="flex gap-2">
-                <button x-show="viewMode && isStaff" @click="verifyAccount()" class="px-3 py-2 text-sm bg-green-600 text-white rounded-lg">Mark Verified</button>
-                <button x-show="viewMode && isStaff" @click="viewMode = false" class="px-3 py-2 text-sm border rounded-lg dark:border-gray-600">Edit</button>
+                <button x-show="accountModalView && isStaff" @click="verifyAccount()" class="px-3 py-2 text-sm bg-green-600 text-white rounded-lg">Mark Verified</button>
+                <button x-show="accountModalView && isStaff" @click="accountModalView = false" class="px-3 py-2 text-sm border rounded-lg dark:border-gray-600">Edit</button>
                 <button x-show="isAdmin && selected?._id" @click="deleteAccount(selected)" class="px-3 py-2 text-sm text-red-600">Delete</button>
             </div>
             <div class="flex gap-2 ml-auto">
                 <button @click="closeModal()" class="px-3 py-2 text-sm text-gray-500">Close</button>
-                <button x-show="!viewMode" @click="saveAccount()" class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg">Save</button>
+                <button x-show="!accountModalView" @click="saveAccount()" class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg">Save</button>
             </div>
         </div>
     </div>
@@ -258,7 +258,8 @@ function passwordVaultApp() {
         categoryFilter: '',
         overdueCount: 0,
         showModal: false,
-        viewMode: true,
+        viewMode: localStorage.getItem('viewMode') || 'admin',
+        accountModalView: true,
         showPassword: false,
         selected: null,
         form: {},
@@ -280,6 +281,13 @@ function passwordVaultApp() {
                 const data = await res.json();
                 this.user = data.user;
                 this.allowed = ['admin', 'brand_rep', 'client'].includes(this.user?.role);
+                if (this.user?.role === 'client') {
+                    this.viewMode = 'client';
+                } else if (this.user?.role === 'admin') {
+                    this.viewMode = localStorage.getItem('viewMode') || 'admin';
+                } else {
+                    this.viewMode = 'admin';
+                }
                 if (this.allowed) {
                     if (this.isAdmin) await this.normalizeGroups(true);
                     await this.loadGrouped();
@@ -303,11 +311,24 @@ function passwordVaultApp() {
             if (this.categoryFilter) params.append('category', this.categoryFilter);
             try {
                 const res = await fetch(`${API_URL}/credentials/grouped?${params}`, { headers: this.headers() });
-                const data = await res.json();
-                if (data.success) {
+                let data = {};
+                try { data = await res.json(); } catch (e) { /* ignore */ }
+
+                if (res.ok && data.success) {
                     this.groups = data.groups || [];
                     this.overdueCount = data.counts?.overdueVerification || 0;
+                    return;
                 }
+
+                const fallback = await fetch(`${API_URL}/credentials?${params}`, { headers: this.headers() });
+                const flat = await fallback.json();
+                if (flat.success) {
+                    this.groups = this.groupCredentialsClient(flat.data || []);
+                    this.overdueCount = flat.counts?.overdueVerification || 0;
+                    return;
+                }
+
+                this.notify(flat.message || data.message || 'Failed to load credentials', 'error');
             } catch (e) {
                 this.notify('Failed to load credentials', 'error');
             } finally {
@@ -315,9 +336,75 @@ function passwordVaultApp() {
             }
         },
 
+        groupCredentialsClient(items = []) {
+            const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+            const inferPrefix = (accountName = '') => {
+                const trimmed = String(accountName || '').trim();
+                const paren = trimmed.match(/^(.+?)\s*\([^)]+\)\s*$/i);
+                if (paren) return paren[1].trim();
+                const dash = trimmed.match(/^(.+?)\s*[-–—]\s+/);
+                if (dash) return dash[1].trim();
+                return trimmed;
+            };
+            const grouped = new Map();
+
+            items.forEach((item) => {
+                const clientRef = item.clientId;
+                const clientId = clientRef?._id || clientRef || null;
+                const clientName = clientRef?.brandName || clientRef?.name || null;
+                let key, label, groupName;
+
+                if (clientId && clientName) {
+                    key = `client:${clientId}`;
+                    label = clientName;
+                    groupName = item.groupName?.trim() || clientName;
+                } else if (item.groupName?.trim()) {
+                    label = item.groupName.trim();
+                    key = `group:${normalize(label)}`;
+                    groupName = label;
+                } else {
+                    label = inferPrefix(item.accountName) || 'Other Accounts';
+                    key = label === 'Other Accounts' ? 'ungrouped' : `group:${normalize(label)}`;
+                    groupName = label === 'Other Accounts' ? '' : label;
+                }
+
+                if (!grouped.has(key)) {
+                    grouped.set(key, {
+                        key,
+                        label,
+                        groupName,
+                        clientId,
+                        clientName,
+                        total: 0,
+                        active: 0,
+                        archived: 0,
+                        visibleToBrandReps: 0,
+                        overdue: 0,
+                        accounts: []
+                    });
+                }
+
+                const bucket = grouped.get(key);
+                bucket.total += 1;
+                if (item.status === 'active') bucket.active += 1;
+                if (item.status === 'archived') bucket.archived += 1;
+                if (item.visibleToBrandReps) bucket.visibleToBrandReps += 1;
+                if (item.verification?.overdue) bucket.overdue += 1;
+                bucket.accounts.push(item);
+            });
+
+            return [...grouped.values()]
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map((group) => ({
+                    ...group,
+                    accounts: group.accounts.sort((a, b) => (a.accountName || '').localeCompare(b.accountName || ''))
+                }));
+        },
+
         async normalizeGroups(silent = false) {
             try {
                 const res = await fetch(`${API_URL}/credentials/normalize-groups`, { method: 'POST', headers: this.headers(), body: '{}' });
+                if (res.status === 404) return;
                 const data = await res.json();
                 if (data.success && !silent && data.updated > 0) this.notify(data.message, 'success');
             } catch (e) { /* ignore */ }
@@ -338,18 +425,18 @@ function passwordVaultApp() {
             const data = await res.json();
             if (data.success) {
                 this.selected = data.data;
-                this.viewMode = true;
+                this.accountModalView = true;
                 this.showPassword = false;
                 this.showModal = true;
             }
         },
 
-        editAccount(account) { this.viewAccount(account).then(() => { this.viewMode = false; this.form = { ...this.selected, password: '' }; }); },
+        editAccount(account) { this.viewAccount(account).then(() => { this.accountModalView = false; this.form = { ...this.selected, password: '' }; }); },
 
         openModal() {
             this.form = { groupName: '', accountName: '', category: 'social_media', platform: '', username: '', password: '', twoFactorNotes: '', recoveryEmail: '', recoveryPhone: '', url: '', notes: '', status: 'archived', visibleToBrandReps: false };
             this.selected = null;
-            this.viewMode = false;
+            this.accountModalView = false;
             this.showModal = true;
         },
 
@@ -402,7 +489,13 @@ function passwordVaultApp() {
         formatCategory(c) { return (c || 'other').replace(/_/g, ' '); },
         verificationClass(item) { return item?.verification?.overdue ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'; },
         verificationLabel(item) { return item?.verification?.overdue ? 'Overdue' : 'Current'; },
-        notify(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => { this.toast.show = false; }, 3500); }
+        notify(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => { this.toast.show = false; }, 3500); },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = LOGIN_URL;
+        }
     };
 }
 </script>
