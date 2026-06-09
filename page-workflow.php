@@ -3176,6 +3176,8 @@ show_admin_bar(false);
                 credentialCategoryFilter: '',
                 credentialClientFilter: '',
                 credentialOverdueCount: 0,
+                showCredentialGroupsPanel: false,
+                credentialGroups: [],
                 showCredentialModal: false,
                 credentialViewMode: true,
                 selectedCredential: null,
@@ -4866,6 +4868,75 @@ show_admin_bar(false);
                     }
                 },
 
+                async loadCredentialGroups() {
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/credentials/groups`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.credentialGroups = data.data || [];
+                        }
+                    } catch (error) {
+                        console.error('Load credential groups error:', error);
+                    }
+                },
+
+                async bulkUpdateCredentialGroup(groupName, payload) {
+                    if (!groupName) {
+                        this.showToast('Group name is required', 'error');
+                        return;
+                    }
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/credentials/bulk/status`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ groupName, ...payload })
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            await this.loadCredentials();
+                            if (this.showCredentialGroupsPanel) await this.loadCredentialGroups();
+                            this.showToast(data.message || 'Group updated', 'success');
+                        } else {
+                            this.showToast(data.message || 'Failed to update group', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Bulk update credential group error:', error);
+                        this.showToast('Failed to update group', 'error');
+                    }
+                },
+
+                async rematchCredentialClients(onlyUnlinked = true) {
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/credentials/rematch-clients`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ onlyUnlinked })
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            await this.loadCredentials();
+                            if (this.showCredentialGroupsPanel) await this.loadCredentialGroups();
+                            this.showToast(data.message || 'Clients rematched', 'success');
+                        } else {
+                            this.showToast(data.message || 'Rematch failed', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Rematch credential clients error:', error);
+                        this.showToast('Failed to rematch clients', 'error');
+                    }
+                },
+
                 openCredentialModal() {
                     this.resetCredentialForm();
                     this.selectedCredential = null;
@@ -5052,7 +5123,9 @@ show_admin_bar(false);
                         const data = await response.json();
                         if (response.ok) {
                             await this.loadCredentials();
-                            this.showToast(data.message || 'CSV imported successfully', 'success');
+                            if (this.showCredentialGroupsPanel) await this.loadCredentialGroups();
+                            const matchInfo = data.matched != null ? ` (${data.matched} linked, ${data.unmatched} unlinked)` : '';
+                            this.showToast((data.message || 'CSV imported successfully') + matchInfo, 'success');
                         } else {
                             this.showToast(data.message || 'Import failed', 'error');
                         }

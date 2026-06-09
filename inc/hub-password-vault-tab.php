@@ -50,11 +50,73 @@ if (!defined('ABSPATH')) {
                 Import CSV
                 <input type="file" accept=".csv,text/csv" @change="importCredentialsCsv($event)" class="hidden">
             </label>
+            <button x-show="user.role === 'admin'" @click="showCredentialGroupsPanel = !showCredentialGroupsPanel; if (showCredentialGroupsPanel) loadCredentialGroups()" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                Manage Groups
+            </button>
+            <button x-show="user.role === 'admin'" @click="rematchCredentialClients()" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                Auto-Link Clients
+            </button>
             <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openCredentialModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Add Account
             </button>
         </div>
+    </div>
+
+    <!-- Group Management Panel (Admin) -->
+    <div x-show="user.role === 'admin' && showCredentialGroupsPanel" x-cloak class="mb-5 bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700 overflow-hidden">
+        <div class="px-4 py-3 border-b dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h3 class="font-semibold text-gray-900 dark:text-white">Bulk Group Management</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Activate, archive, link clients, or share with brand reps by group</p>
+            </div>
+            <button @click="loadCredentialGroups()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Refresh</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[900px]">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Group</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Accounts</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Linked Client</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Suggested Match</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y dark:divide-gray-700">
+                    <template x-for="group in credentialGroups" :key="group.groupName || 'ungrouped'">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white" x-text="group.groupName || '(No group)'"></td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                                <span x-text="group.total"></span>
+                                <span class="text-xs text-gray-400"> · </span>
+                                <span class="text-green-600 dark:text-green-400" x-text="group.active + ' active'"></span>
+                                <span class="text-xs text-gray-400"> · </span>
+                                <span class="text-gray-500" x-text="group.archived + ' archived'"></span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300" x-text="group.clientName || '—'"></td>
+                            <td class="px-4 py-3 text-sm">
+                                <template x-if="group.suggestedClientName && !group.clientName">
+                                    <button @click="bulkUpdateCredentialGroup(group.groupName, { clientId: group.suggestedClientId })" class="text-indigo-600 dark:text-indigo-400 hover:underline text-left">
+                                        <span x-text="group.suggestedClientName"></span>
+                                        <span class="text-xs text-gray-400" x-text="' (' + Math.round((group.matchScore || 0) * 100) + '%)'"></span>
+                                    </button>
+                                </template>
+                                <span x-show="!group.suggestedClientName || group.clientName" class="text-gray-400">—</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button @click="bulkUpdateCredentialGroup(group.groupName, { status: 'active' })" class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">Activate</button>
+                                    <button @click="bulkUpdateCredentialGroup(group.groupName, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700">Archive</button>
+                                    <button @click="bulkUpdateCredentialGroup(group.groupName, { status: 'active', visibleToBrandReps: true })" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">Active + Reps</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+        <div x-show="credentialGroups.length === 0" class="p-6 text-center text-sm text-gray-500">No groups yet. Import a CSV or add accounts to get started.</div>
     </div>
 
     <!-- Credentials Table -->

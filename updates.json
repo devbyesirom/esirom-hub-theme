@@ -1,5 +1,19 @@
 [
   {
+    "id": 21,
+    "title": "Password Vault Bulk Group Management",
+    "version": "2.2.9",
+    "description": "Bulk activate/archive credential groups, improved client auto-matching, and one-click Hub client linking.",
+    "date": "2026-06-09",
+    "highlights": [
+      "Manage Groups panel: bulk activate, archive, or enable for brand reps",
+      "Auto-Link Clients matches CSV groups to Hub brands with fuzzy name matching",
+      "Suggested client matches shown per group with confidence score",
+      "CSV import now reports how many accounts were linked to clients"
+    ],
+    "type": "update"
+  },
+  {
     "id": 20,
     "title": "Password Vault in Workflow",
     "version": "2.2.8",
