@@ -1,5 +1,20 @@
 [
   {
+    "id": 20,
+    "title": "Password Vault in Workflow",
+    "version": "2.2.8",
+    "description": "Secure password manager for brand accounts with role-based access, categories, and 90-day recovery verification.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Password Vault tab in Workflow Manager with encrypted credential storage",
+      "Admin controls active/archived status and brand rep visibility per account",
+      "Categories for social media, email, analytics, design tools, and more",
+      "90-day recovery email, phone, and 2FA verification reminders",
+      "Clients can view and copy their own brand passwords; CSV import for admins"
+    ],
+    "type": "update"
+  },
+  {
     "id": 19,
     "title": "Content Bank Carousel Gallery",
     "version": "2.2.7",
