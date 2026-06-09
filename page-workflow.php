@@ -1198,6 +1198,12 @@ show_admin_bar(false);
                                     <template x-if="getDesignPreview(item)">
                                         <img :src="getDesignPreview(item)" :alt="item.title" class="w-full h-full object-cover" />
                                     </template>
+                                    <template x-if="getDesignPreviews(item).length > 1">
+                                        <div class="absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold bg-black/60 text-white rounded-full shadow-lg flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            <span x-text="getDesignPreviews(item).length"></span>
+                                        </div>
+                                    </template>
                                     <template x-if="!getDesignPreview(item)">
                                         <div class="flex items-center justify-center h-full">
                                             <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2769,22 +2775,56 @@ show_admin_bar(false);
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Image/Media Preview -->
                             <div>
-                                <template x-if="getDesignPreview(selectedContentBankItem)">
-                                    <div class="relative">
-                                        <img :src="getDesignPreview(selectedContentBankItem)" :alt="selectedContentBankItem?.title" @click="lightboxImage = getDesignPreview(selectedContentBankItem)" class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity" />
+                                <template x-if="getDesignPreviews(selectedContentBankItem).length > 0">
+                                    <div class="relative select-none"
+                                         @touchstart="contentBankTouchStartX = $event.changedTouches[0].screenX"
+                                         @touchend="handleContentBankCarouselSwipe($event)">
+                                        <template x-for="(slideUrl, slideIndex) in getDesignPreviews(selectedContentBankItem)" :key="slideUrl + '-' + slideIndex">
+                                            <img x-show="contentBankCarouselIndex === slideIndex"
+                                                 :src="slideUrl"
+                                                 :alt="selectedContentBankItem?.title + ' slide ' + (slideIndex + 1)"
+                                                 @click="openLightbox(getDesignPreviews(selectedContentBankItem), slideIndex)"
+                                                 class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                 x-transition:enter="transition ease-out duration-200"
+                                                 x-transition:enter-start="opacity-0"
+                                                 x-transition:enter-end="opacity-100" />
+                                        </template>
+
+                                        <template x-if="getDesignPreviews(selectedContentBankItem).length > 1">
+                                            <button type="button"
+                                                    @click.stop="contentBankCarouselPrev()"
+                                                    class="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                            </button>
+                                            <button type="button"
+                                                    @click.stop="contentBankCarouselNext()"
+                                                    class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </button>
+                                            <div class="absolute top-3 right-3 px-2.5 py-1 text-xs font-medium bg-black/50 text-white rounded-full" x-text="(contentBankCarouselIndex + 1) + ' / ' + getDesignPreviews(selectedContentBankItem).length"></div>
+                                            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                                                <template x-for="(slideUrl, dotIndex) in getDesignPreviews(selectedContentBankItem)" :key="'dot-' + dotIndex">
+                                                    <button type="button"
+                                                            @click.stop="contentBankCarouselIndex = dotIndex"
+                                                            class="w-2 h-2 rounded-full transition-all"
+                                                            :class="contentBankCarouselIndex === dotIndex ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/80'"></button>
+                                                </template>
+                                            </div>
+                                        </template>
+
                                         <div class="absolute bottom-3 right-3 flex items-center gap-2">
-                                            <button @click="downloadAttachment({ url: getDesignPreview(selectedContentBankItem), originalName: (selectedContentBankItem?.title || 'download') + '.png' })" class="px-3 py-1.5 bg-black/50 hover:bg-black/70 text-white text-xs rounded-lg flex items-center gap-1">
+                                            <button @click.stop="downloadAttachment({ url: getDesignPreviews(selectedContentBankItem)[contentBankCarouselIndex], originalName: (selectedContentBankItem?.title || 'download') + '-' + (contentBankCarouselIndex + 1) + '.png' })" class="px-3 py-1.5 bg-black/50 hover:bg-black/70 text-white text-xs rounded-lg flex items-center gap-1">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                                 Download
                                             </button>
-                                            <button @click="lightboxImage = getDesignPreview(selectedContentBankItem)" class="px-3 py-1.5 bg-black/50 hover:bg-black/70 text-white text-xs rounded-lg flex items-center gap-1">
+                                            <button @click.stop="openLightbox(getDesignPreviews(selectedContentBankItem), contentBankCarouselIndex)" class="px-3 py-1.5 bg-black/50 hover:bg-black/70 text-white text-xs rounded-lg flex items-center gap-1">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                                                 View Full Size
                                             </button>
                                         </div>
                                     </div>
                                 </template>
-                                <template x-if="!getDesignPreview(selectedContentBankItem)">
+                                <template x-if="getDesignPreviews(selectedContentBankItem).length === 0">
                                     <div class="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                         <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -2794,19 +2834,23 @@ show_admin_bar(false);
                                 
                                 <!-- Upload/Replace Media (Admin & Brand Rep only) -->
                                 <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="mt-4">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload/Replace Final Media</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <span x-show="selectedContentBankItem?.contentType === 'carousel'">Add Carousel Slide</span>
+                                        <span x-show="selectedContentBankItem?.contentType !== 'carousel'">Upload/Replace Final Media</span>
+                                    </label>
                                     <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 transition-colors"
                                          :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': contentBankDragOver}"
                                          @dragover.prevent="contentBankDragOver = true"
                                          @dragleave.prevent="contentBankDragOver = false"
                                          @drop.prevent="contentBankDragOver = false; handleContentBankMediaDrop($event)">
-                                        <input type="file" @change="handleContentBankMediaUpload($event)" accept="image/*,video/*" class="hidden" :id="'contentBankMedia-' + selectedContentBankItem?._id">
+                                        <input type="file" @change="handleContentBankMediaUpload($event)" accept="image/*,video/*" multiple class="hidden" :id="'contentBankMedia-' + selectedContentBankItem?._id">
                                         <label :for="'contentBankMedia-' + selectedContentBankItem?._id" class="cursor-pointer flex flex-col items-center">
                                             <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                             </svg>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">Drag and drop or click to upload</p>
-                                            <p class="text-xs text-gray-500 mt-1">Images or videos</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400" x-show="selectedContentBankItem?.contentType === 'carousel'">Drag and drop or click to add slides</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400" x-show="selectedContentBankItem?.contentType !== 'carousel'">Drag and drop or click to upload</p>
+                                            <p class="text-xs text-gray-500 mt-1">Images or videos<span x-show="selectedContentBankItem?.contentType === 'carousel'"> — select multiple for carousel</span></p>
                                         </label>
                                     </div>
                                 </div>
@@ -2960,10 +3004,19 @@ show_admin_bar(false);
         </div>
 
         <!-- Fullscreen Image Lightbox -->
-        <div x-show="lightboxImage" x-cloak @click="lightboxImage = null" @keydown.escape.window="lightboxImage = null" class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 cursor-pointer" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-            <button @click="lightboxImage = null" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
+        <div x-show="lightboxImage" x-cloak @click="closeLightbox()" @keydown.escape.window="closeLightbox()" @keydown.arrow-left.window="lightboxPrev()" @keydown.arrow-right.window="lightboxNext()" class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 cursor-pointer" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <button @click="closeLightbox()" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
+            <template x-if="lightboxGallery.length > 1">
+                <button type="button" @click.stop="lightboxPrev()" class="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button type="button" @click.stop="lightboxNext()" class="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 text-sm bg-black/50 text-white rounded-full z-10" x-text="(lightboxIndex + 1) + ' / ' + lightboxGallery.length"></div>
+            </template>
             <img :src="lightboxImage" @click.stop class="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" alt="Full size reference image" />
         </div>
     </div>
@@ -3045,6 +3098,10 @@ show_admin_bar(false);
                 referenceImagePreviews: ['', ''],
                 dragOverIndex: null,
                 lightboxImage: null,
+                lightboxGallery: [],
+                lightboxIndex: 0,
+                contentBankCarouselIndex: 0,
+                contentBankTouchStartX: 0,
                 conceptForm: {
                     title: '', description: '', caption: '', clientId: '', contentType: '', platform: [],
                     priority: 'medium', dueDate: '', assignedTo: '', referenceLink: '',
@@ -4337,18 +4394,76 @@ show_admin_bar(false);
                 },
 
                 // Content Bank Functions
-                getDesignPreview(item) {
+                getDesignAttachments(item) {
                     const attachments = item?.attachments || [];
-                    if (!Array.isArray(attachments) || attachments.length === 0) return null;
-                    const designs = attachments.filter(a => {
+                    if (!Array.isArray(attachments) || attachments.length === 0) return [];
+                    return attachments.filter(a => {
                         const isDesignKind = a?.kind === 'design';
                         const isImage = (a?.mimetype || '').startsWith('image/');
+                        const isVideo = (a?.mimetype || '').startsWith('video/');
                         const notReference = a?.kind !== 'reference';
-                        return isImage && (isDesignKind || notReference);
-                    });
-                    if (designs.length === 0) return null;
-                    const latest = designs.sort((a, b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0))[0];
-                    return latest?.url || null;
+                        return (isImage || isVideo) && (isDesignKind || notReference);
+                    }).sort((a, b) => new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0));
+                },
+
+                getDesignPreviews(item) {
+                    return this.getDesignAttachments(item).map(a => a?.url || '').filter(Boolean);
+                },
+
+                getDesignPreview(item) {
+                    const previews = this.getDesignPreviews(item);
+                    return previews.length > 0 ? previews[0] : null;
+                },
+
+                contentBankCarouselPrev() {
+                    const slides = this.getDesignPreviews(this.selectedContentBankItem);
+                    if (slides.length <= 1) return;
+                    this.contentBankCarouselIndex = (this.contentBankCarouselIndex - 1 + slides.length) % slides.length;
+                },
+
+                contentBankCarouselNext() {
+                    const slides = this.getDesignPreviews(this.selectedContentBankItem);
+                    if (slides.length <= 1) return;
+                    this.contentBankCarouselIndex = (this.contentBankCarouselIndex + 1) % slides.length;
+                },
+
+                handleContentBankCarouselSwipe(event) {
+                    const slides = this.getDesignPreviews(this.selectedContentBankItem);
+                    if (slides.length <= 1) return;
+                    const diff = event.changedTouches[0].screenX - this.contentBankTouchStartX;
+                    if (Math.abs(diff) < 40) return;
+                    if (diff > 0) this.contentBankCarouselPrev();
+                    else this.contentBankCarouselNext();
+                },
+
+                openLightbox(urlOrGallery, startIndex = 0) {
+                    if (Array.isArray(urlOrGallery) && urlOrGallery.length > 0) {
+                        this.lightboxGallery = urlOrGallery;
+                        this.lightboxIndex = Math.max(0, Math.min(startIndex, urlOrGallery.length - 1));
+                        this.lightboxImage = urlOrGallery[this.lightboxIndex];
+                        return;
+                    }
+                    this.lightboxGallery = [];
+                    this.lightboxIndex = 0;
+                    this.lightboxImage = urlOrGallery || null;
+                },
+
+                closeLightbox() {
+                    this.lightboxImage = null;
+                    this.lightboxGallery = [];
+                    this.lightboxIndex = 0;
+                },
+
+                lightboxPrev() {
+                    if (this.lightboxGallery.length <= 1) return;
+                    this.lightboxIndex = (this.lightboxIndex - 1 + this.lightboxGallery.length) % this.lightboxGallery.length;
+                    this.lightboxImage = this.lightboxGallery[this.lightboxIndex];
+                },
+
+                lightboxNext() {
+                    if (this.lightboxGallery.length <= 1) return;
+                    this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxGallery.length;
+                    this.lightboxImage = this.lightboxGallery[this.lightboxIndex];
                 },
 
                 async loadContentBank() {
@@ -4379,7 +4494,8 @@ show_admin_bar(false);
                         const response = await fetch(`${API_URL}/content-bank/${item._id}`, { headers: { 'Authorization': `Bearer ${token}` } });
                         if (response.ok) { 
                             const data = await response.json(); 
-                            this.selectedContentBankItem = data.concept; 
+                            this.selectedContentBankItem = data.concept;
+                            this.contentBankCarouselIndex = 0;
                             this.editingContentBankItem = false;
                             this.showContentBankDetail = true; 
                         }
@@ -4480,64 +4596,72 @@ show_admin_bar(false);
                     } catch (error) { console.error('Delete content bank item error:', error); this.showToast('Failed to delete content', 'error'); }
                 },
 
-                async handleContentBankMediaUpload(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    
+                async uploadContentBankMediaFile(file) {
                     const token = localStorage.getItem('token');
                     const formData = new FormData();
                     formData.append('file', file);
-                    
+                    const isCarousel = this.selectedContentBankItem?.contentType === 'carousel';
+                    const uploadUrl = `${API_URL}/content-bank/${this.selectedContentBankItem._id}/upload-media${isCarousel ? '' : '?replace=true'}`;
+
+                    const response = await fetch(uploadUrl, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ message: 'Failed to upload media' }));
+                        throw new Error(error.message || 'Failed to upload media');
+                    }
+
+                    const data = await response.json();
+                    this.selectedContentBankItem = data.concept;
+                },
+
+                async handleContentBankMediaUpload(event) {
+                    const files = Array.from(event.target.files || []);
+                    if (files.length === 0) return;
+
+                    const validFiles = files.filter(file => file.type.startsWith('image/') || file.type.startsWith('video/'));
+                    if (validFiles.length === 0) {
+                        this.showToast('Please upload an image or video file', 'error');
+                        event.target.value = '';
+                        return;
+                    }
+
                     try {
-                        const response = await fetch(`${API_URL}/content-bank/${this.selectedContentBankItem._id}/upload-media`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.selectedContentBankItem = data.concept;
-                            await this.loadContentBank();
-                            this.showToast('Media uploaded successfully', 'success');
-                        } else {
-                            const error = await response.json();
-                            this.showToast(error.message || 'Failed to upload media', 'error');
+                        for (const file of validFiles) {
+                            await this.uploadContentBankMediaFile(file);
                         }
-                    } catch (error) { console.error('Upload media error:', error); this.showToast('Failed to upload media', 'error'); }
+                        await this.loadContentBank();
+                        this.showToast(validFiles.length > 1 ? `${validFiles.length} slides uploaded successfully` : 'Media uploaded successfully', 'success');
+                    } catch (error) {
+                        console.error('Upload media error:', error);
+                        this.showToast(error.message || 'Failed to upload media', 'error');
+                    }
                     event.target.value = '';
                 },
 
                 async handleContentBankMediaDrop(event) {
-                    const files = event.dataTransfer.files;
+                    const files = Array.from(event.dataTransfer.files || []);
                     if (files.length === 0) return;
-                    const file = files[0];
-                    
-                    // Validate file type
-                    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+
+                    const validFiles = files.filter(file => file.type.startsWith('image/') || file.type.startsWith('video/'));
+                    if (validFiles.length === 0) {
                         this.showToast('Please upload an image or video file', 'error');
                         return;
                     }
-                    
-                    const token = localStorage.getItem('token');
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    
+
                     try {
-                        const response = await fetch(`${API_URL}/content-bank/${this.selectedContentBankItem._id}/upload-media`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.selectedContentBankItem = data.concept;
-                            await this.loadContentBank();
-                            this.showToast('Media uploaded successfully', 'success');
-                        } else {
-                            const error = await response.json();
-                            this.showToast(error.message || 'Failed to upload media', 'error');
+                        for (const file of validFiles) {
+                            await this.uploadContentBankMediaFile(file);
                         }
-                    } catch (error) { console.error('Upload media error:', error); this.showToast('Failed to upload media', 'error'); }
+                        await this.loadContentBank();
+                        this.showToast(validFiles.length > 1 ? `${validFiles.length} slides uploaded successfully` : 'Media uploaded successfully', 'success');
+                    } catch (error) {
+                        console.error('Upload media error:', error);
+                        this.showToast(error.message || 'Failed to upload media', 'error');
+                    }
                 },
 
                 async uploadManualContent() {

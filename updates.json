@@ -1,5 +1,19 @@
 [
   {
+    "id": 19,
+    "title": "Content Bank Carousel Gallery",
+    "version": "2.2.7",
+    "description": "Clients can now review all carousel slides in the Content Bank, not just the first image.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Instagram-style carousel viewer with arrows, dots, and swipe in Content Bank detail",
+      "Grid cards show slide count badge for multi-image posts",
+      "Full-size lightbox supports navigating between carousel slides",
+      "Carousel uploads append slides instead of replacing previous images"
+    ],
+    "type": "update"
+  },
+  {
     "id": 18,
     "title": "Hide Inactive Users & Brands",
     "version": "2.2.6",
