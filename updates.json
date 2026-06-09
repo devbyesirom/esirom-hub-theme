@@ -1,5 +1,19 @@
 [
   {
+    "id": 22,
+    "title": "Password Vault Standalone Page",
+    "version": "2.3.0",
+    "description": "Password Vault moved to its own page under Workflow nav with grouped brand accordion layout.",
+    "date": "2026-06-09",
+    "highlights": [
+      "Password Vault is now a standalone page in the sidebar under Workflow (like Agency Overview)",
+      "Brands grouped in expandable cards — click Betco Premier Ltd to see IG, YT, etc.",
+      "No horizontal scrolling — mobile-friendly stacked layout",
+      "Auto-fix groups on load links accounts sharing the same brand name"
+    ],
+    "type": "update"
+  },
+  {
     "id": 21,
     "title": "Password Vault Bulk Group Management",
     "version": "2.2.9",

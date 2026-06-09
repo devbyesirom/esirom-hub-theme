@@ -236,6 +236,7 @@ function esirom_hub_remove_admin_bar() {
         'page-content-calendar.php',
         'page-inventory.php',
         'page-progress.php',
+        'page-password-vault.php',
         'page-admin.php',
     );
     foreach ($hub_templates as $template) {

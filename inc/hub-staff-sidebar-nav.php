@@ -4,7 +4,7 @@
  * Grouped into collapsible sections to save vertical space.
  *
  * Expects:
- *   $hub_nav_active   string  workflow|overview|insights|reports|event_coverage|published_posts|content_calendar|progress|inventory
+ *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|progress|inventory
  *   $hub_nav_context  string  site|dashboard
  *   $hub_nav_alpine_labels bool
  */
@@ -23,6 +23,7 @@ $hub_overview_url = esc_url(esirom_hub_page_url('overview'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
 $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
+$hub_password_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 
 $hub_is_dashboard = ($hub_nav_context === 'dashboard');
 $hub_label_attrs = $hub_nav_alpine_labels ? ' x-show="isSidebarOpen"' : '';
@@ -66,9 +67,9 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
 <div <?php echo $hub_staff_show; ?> class="space-y-2">
 
     <!-- ── Workflow ─────────────────────────────────────────────────────── -->
-    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_workflow', ['workflow', 'overview']); ?> }"
+    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_workflow', ['workflow', 'overview', 'password_vault']); ?> }"
          x-init="$watch('open', v => localStorage.setItem('hubNav_workflow', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['workflow', 'overview'])); ?>">
+        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['workflow', 'overview', 'password_vault'])); ?>">
             <span<?php echo $hub_label_attrs; ?>>Workflow</span>
             <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
@@ -81,6 +82,11 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
             <a href="<?php echo $hub_overview_url; ?>" class="<?php echo esc_attr($hub_sub_class('overview')); ?>">
                 <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Agency Overview</span>
+            </a>
+            <a href="<?php echo ($hub_nav_active === 'password_vault' && !$hub_is_dashboard) ? '#' : $hub_password_vault_url; ?>"
+               class="<?php echo esc_attr($hub_sub_class('password_vault')); ?>">
+                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                <span class="nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
             </a>
         </div>
     </div>

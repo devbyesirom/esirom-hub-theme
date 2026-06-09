@@ -193,7 +193,7 @@ show_admin_bar(false);
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     <span class="ml-4 nav-text" x-show="isSidebarOpen">Content Bank</span>
                 </a>
-                <a x-show="user.role === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=passwords" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" :class="activeTab === 'passwords' ? 'bg-indigo-500 text-white' : ''">
+                <a x-show="user.role === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('password-vault'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     <span class="ml-4 nav-text" x-show="isSidebarOpen">Password Vault</span>
                 </a>
@@ -370,10 +370,6 @@ show_admin_bar(false);
                         <button type="button" role="tab" :aria-selected="activeTab === 'planner'" x-show="viewMode !== 'client'" @click="navigateTab('planner')" :class="activeTab === 'planner' ? 'bg-white dark:bg-gray-800 shadow text-indigo-700 dark:text-indigo-200' : 'text-gray-600 dark:text-gray-400'" class="wf-tab shrink-0 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
                             <span class="hidden sm:inline">Planner</span>
-                        </button>
-                        <button type="button" role="tab" :aria-selected="activeTab === 'passwords'" x-show="viewMode !== 'client' || user.role === 'client'" @click="navigateTab('passwords')" :class="activeTab === 'passwords' ? 'bg-white dark:bg-gray-800 shadow text-indigo-700 dark:text-indigo-200' : 'text-gray-600 dark:text-gray-400'" class="wf-tab shrink-0 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            <span class="hidden sm:inline">Passwords</span>
                         </button>
                         <button type="button" role="tab" :aria-selected="activeTab === 'feed'" @click="navigateTab('feed')" :class="activeTab === 'feed' ? 'bg-white dark:bg-gray-800 shadow text-indigo-700 dark:text-indigo-200' : 'text-gray-600 dark:text-gray-400'" class="wf-tab shrink-0 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap relative flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
@@ -1628,8 +1624,6 @@ show_admin_bar(false);
                         </div>
                     </div>
                 </div>
-
-                <?php require_once get_template_directory() . '/inc/hub-password-vault-tab.php'; ?>
 
         </main>
 
@@ -3170,35 +3164,6 @@ show_admin_bar(false);
 
                 conceptDragOver: false,
                 contentBankDragOver: false,
-                credentials: [],
-                credentialSearch: '',
-                credentialStatusFilter: '',
-                credentialCategoryFilter: '',
-                credentialClientFilter: '',
-                credentialOverdueCount: 0,
-                showCredentialGroupsPanel: false,
-                credentialGroups: [],
-                showCredentialModal: false,
-                credentialViewMode: true,
-                selectedCredential: null,
-                revealedPassword: false,
-                credentialForm: {
-                    _id: '',
-                    groupName: '',
-                    clientId: '',
-                    accountName: '',
-                    category: 'social_media',
-                    platform: '',
-                    username: '',
-                    password: '',
-                    twoFactorNotes: '',
-                    recoveryEmail: '',
-                    recoveryPhone: '',
-                    url: '',
-                    notes: '',
-                    status: 'archived',
-                    visibleToBrandReps: false
-                },
                 showManualUploadModal: false,
                 manualUploadForm: {
                     clientId: '',
@@ -3247,13 +3212,9 @@ show_admin_bar(false);
                     const savedViewClient = localStorage.getItem('selectedViewClient');
                     if (savedViewClient) this.selectedViewClient = savedViewClient;
                     this.syncActiveTabFromLocation();
-                    // Client view defaults to Content Bank; real clients may also use Password Vault
+                    // Client view defaults to Content Bank
                     if (this.viewMode === 'client') {
-                        if (this.user?.role === 'client') {
-                            if (!['feed', 'passwords', 'contentBank'].includes(this.activeTab)) {
-                                this.activeTab = 'contentBank';
-                            }
-                        } else if (this.activeTab !== 'feed') {
+                        if (this.activeTab !== 'feed') {
                             this.activeTab = 'contentBank';
                         }
                         this.contentBankStatusFilter = 'pending';
@@ -3261,14 +3222,8 @@ show_admin_bar(false);
                     // Handle browser back/forward (read ?tab= and legacy /workflow/.../ paths)
                     window.addEventListener('popstate', () => {
                         this.syncActiveTabFromLocation();
-                        if (this.viewMode === 'client') {
-                            if (this.user?.role === 'client') {
-                                if (!['feed', 'passwords', 'contentBank'].includes(this.activeTab)) {
-                                    this.activeTab = 'contentBank';
-                                }
-                            } else if (this.activeTab !== 'feed') {
-                                this.activeTab = 'contentBank';
-                            }
+                        if (this.viewMode === 'client' && this.activeTab !== 'feed') {
+                            this.activeTab = 'contentBank';
                         }
                         this.loadTabData();
                     });
@@ -3344,7 +3299,7 @@ show_admin_bar(false);
                 syncActiveTabFromLocation() {
                     const sp = new URLSearchParams(window.location.search);
                     const t = sp.get('tab');
-                    const fromQuery = { dashboard: 'dashboard', concepts: 'concepts', productions: 'productions', contentBank: 'contentBank', tasks: 'tasks', planner: 'planner', feed: 'feed', passwords: 'passwords' };
+                    const fromQuery = { dashboard: 'dashboard', concepts: 'concepts', productions: 'productions', contentBank: 'contentBank', tasks: 'tasks', planner: 'planner', feed: 'feed' };
                     if (t && fromQuery[t]) {
                         this.activeTab = fromQuery[t];
                         return;
@@ -3381,7 +3336,6 @@ show_admin_bar(false);
                     else if (this.activeTab === 'productions') this.loadProductions();
                     else if (this.activeTab === 'planner') this.loadPlans();
                     else if (this.activeTab === 'feed') this.loadFeed();
-                    else if (this.activeTab === 'passwords') this.loadCredentials();
                 },
 
                 showToast(message, type = 'info', duration = 3000) {
@@ -3447,7 +3401,6 @@ show_admin_bar(false);
                         if (this.activeTab === 'contentBank') await this.loadContentBank();
                         if (this.activeTab === 'planner') await this.loadPlans();
                         if (this.activeTab === 'feed') await this.loadFeed();
-                        if (this.activeTab === 'passwords') await this.loadCredentials();
                         // Load last feed check from localStorage and check for unread items
                         this.lastFeedCheck = localStorage.getItem('lastFeedCheck');
                         await this.checkUnreadFeed();
@@ -4798,344 +4751,6 @@ show_admin_bar(false);
                     return c[status] || c.pending;
                 },
 
-                // Password Vault
-                resetCredentialForm() {
-                    this.credentialForm = {
-                        _id: '',
-                        groupName: '',
-                        clientId: '',
-                        accountName: '',
-                        category: 'social_media',
-                        platform: '',
-                        username: '',
-                        password: '',
-                        twoFactorNotes: '',
-                        recoveryEmail: '',
-                        recoveryPhone: '',
-                        url: '',
-                        notes: '',
-                        status: 'archived',
-                        visibleToBrandReps: false
-                    };
-                },
-
-                formatCredentialCategory(category) {
-                    return (category || 'other').replace(/_/g, ' ');
-                },
-
-                getCredentialVerificationClass(item, asBlock = false) {
-                    const overdue = item?.verification?.overdue;
-                    if (asBlock) {
-                        return overdue
-                            ? 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300'
-                            : 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300';
-                    }
-                    return overdue
-                        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                        : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-                },
-
-                getCredentialVerificationLabel(item, asSentence = false) {
-                    if (!item?.verification) return asSentence ? 'Verification status unknown' : 'Unknown';
-                    if (item.verification.overdue) {
-                        return asSentence ? 'Recovery details overdue — please verify now' : 'Overdue';
-                    }
-                    const days = item.verification.dueInDays;
-                    if (days <= 14) {
-                        return asSentence ? `Due in ${days} day${days === 1 ? '' : 's'}` : `Due in ${days}d`;
-                    }
-                    return asSentence ? `Verified — next check in ${days} days` : 'Current';
-                },
-
-                async loadCredentials() {
-                    const token = localStorage.getItem('token');
-                    const params = new URLSearchParams();
-                    if (this.credentialSearch) params.append('search', this.credentialSearch);
-                    if (this.credentialStatusFilter) params.append('status', this.credentialStatusFilter);
-                    if (this.credentialCategoryFilter) params.append('category', this.credentialCategoryFilter);
-                    if (this.credentialClientFilter) params.append('clientId', this.credentialClientFilter);
-                    try {
-                        const response = await fetch(`${API_URL}/credentials?${params}`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.credentials = data.data || [];
-                            this.credentialOverdueCount = data.counts?.overdueVerification || 0;
-                        }
-                    } catch (error) {
-                        console.error('Load credentials error:', error);
-                    }
-                },
-
-                async loadCredentialGroups() {
-                    const token = localStorage.getItem('token');
-                    try {
-                        const response = await fetch(`${API_URL}/credentials/groups`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.credentialGroups = data.data || [];
-                        }
-                    } catch (error) {
-                        console.error('Load credential groups error:', error);
-                    }
-                },
-
-                async bulkUpdateCredentialGroup(groupName, payload) {
-                    if (!groupName) {
-                        this.showToast('Group name is required', 'error');
-                        return;
-                    }
-                    const token = localStorage.getItem('token');
-                    try {
-                        const response = await fetch(`${API_URL}/credentials/bulk/status`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ groupName, ...payload })
-                        });
-                        const data = await response.json();
-                        if (response.ok) {
-                            await this.loadCredentials();
-                            if (this.showCredentialGroupsPanel) await this.loadCredentialGroups();
-                            this.showToast(data.message || 'Group updated', 'success');
-                        } else {
-                            this.showToast(data.message || 'Failed to update group', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Bulk update credential group error:', error);
-                        this.showToast('Failed to update group', 'error');
-                    }
-                },
-
-                async rematchCredentialClients(onlyUnlinked = true) {
-                    const token = localStorage.getItem('token');
-                    try {
-                        const response = await fetch(`${API_URL}/credentials/rematch-clients`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ onlyUnlinked })
-                        });
-                        const data = await response.json();
-                        if (response.ok) {
-                            await this.loadCredentials();
-                            if (this.showCredentialGroupsPanel) await this.loadCredentialGroups();
-                            this.showToast(data.message || 'Clients rematched', 'success');
-                        } else {
-                            this.showToast(data.message || 'Rematch failed', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Rematch credential clients error:', error);
-                        this.showToast('Failed to rematch clients', 'error');
-                    }
-                },
-
-                openCredentialModal() {
-                    this.resetCredentialForm();
-                    this.selectedCredential = null;
-                    this.credentialViewMode = false;
-                    this.revealedPassword = false;
-                    this.showCredentialModal = true;
-                },
-
-                closeCredentialModal() {
-                    this.showCredentialModal = false;
-                    this.selectedCredential = null;
-                    this.revealedPassword = false;
-                    this.resetCredentialForm();
-                },
-
-                async fetchCredentialDetails(id) {
-                    const token = localStorage.getItem('token');
-                    const response = await fetch(`${API_URL}/credentials/${id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (!response.ok) {
-                        const error = await response.json().catch(() => ({ message: 'Failed to load credential' }));
-                        throw new Error(error.message || 'Failed to load credential');
-                    }
-                    const data = await response.json();
-                    return data.data;
-                },
-
-                async viewCredential(item) {
-                    try {
-                        this.selectedCredential = await this.fetchCredentialDetails(item._id);
-                        this.credentialViewMode = true;
-                        this.revealedPassword = false;
-                        this.showCredentialModal = true;
-                    } catch (error) {
-                        this.showToast(error.message || 'Failed to load credential', 'error');
-                    }
-                },
-
-                async editCredential(item) {
-                    try {
-                        const detail = await this.fetchCredentialDetails(item._id);
-                        this.selectedCredential = detail;
-                        this.credentialForm = {
-                            _id: detail._id,
-                            groupName: detail.groupName || '',
-                            clientId: detail.clientId?._id || detail.clientId || '',
-                            accountName: detail.accountName || '',
-                            category: detail.category || 'other',
-                            platform: detail.platform || '',
-                            username: detail.username || '',
-                            password: '',
-                            twoFactorNotes: detail.twoFactorNotes || '',
-                            recoveryEmail: detail.recoveryEmail || '',
-                            recoveryPhone: detail.recoveryPhone || '',
-                            url: detail.url || '',
-                            notes: detail.notes || '',
-                            status: detail.status || 'archived',
-                            visibleToBrandReps: Boolean(detail.visibleToBrandReps)
-                        };
-                        this.credentialViewMode = false;
-                        this.revealedPassword = false;
-                        this.showCredentialModal = true;
-                    } catch (error) {
-                        this.showToast(error.message || 'Failed to load credential', 'error');
-                    }
-                },
-
-                async saveCredential() {
-                    if (!this.credentialForm.accountName?.trim()) {
-                        this.showToast('Account name is required', 'error');
-                        return;
-                    }
-
-                    const token = localStorage.getItem('token');
-                    const payload = { ...this.credentialForm };
-                    delete payload._id;
-                    if (!payload.clientId) payload.clientId = null;
-
-                    try {
-                        const isEdit = Boolean(this.credentialForm._id);
-                        const response = await fetch(`${API_URL}/credentials${isEdit ? '/' + this.credentialForm._id : ''}`, {
-                            method: isEdit ? 'PUT' : 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        if (response.ok) {
-                            await this.loadCredentials();
-                            this.showToast(isEdit ? 'Account updated' : 'Account added', 'success');
-                            this.closeCredentialModal();
-                        } else {
-                            const error = await response.json().catch(() => ({ message: 'Save failed' }));
-                            this.showToast(error.message || 'Failed to save account', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Save credential error:', error);
-                        this.showToast('Failed to save account', 'error');
-                    }
-                },
-
-                async deleteCredential(item) {
-                    if (!confirm(`Delete "${item.accountName}"? This cannot be undone.`)) return;
-                    const token = localStorage.getItem('token');
-                    try {
-                        const response = await fetch(`${API_URL}/credentials/${item._id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (response.ok) {
-                            await this.loadCredentials();
-                            this.showToast('Account deleted', 'success');
-                        } else {
-                            const error = await response.json().catch(() => ({ message: 'Delete failed' }));
-                            this.showToast(error.message || 'Failed to delete account', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Delete credential error:', error);
-                        this.showToast('Failed to delete account', 'error');
-                    }
-                },
-
-                async verifyCredential() {
-                    if (!this.selectedCredential?._id) return;
-                    const token = localStorage.getItem('token');
-                    try {
-                        const response = await fetch(`${API_URL}/credentials/${this.selectedCredential._id}/verify`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                recoveryEmail: this.selectedCredential.recoveryEmail,
-                                recoveryPhone: this.selectedCredential.recoveryPhone,
-                                twoFactorNotes: this.selectedCredential.twoFactorNotes
-                            })
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.selectedCredential = data.data;
-                            await this.loadCredentials();
-                            this.showToast('Recovery details marked as verified', 'success');
-                        } else {
-                            const error = await response.json().catch(() => ({ message: 'Verification failed' }));
-                            this.showToast(error.message || 'Failed to verify account', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Verify credential error:', error);
-                        this.showToast('Failed to verify account', 'error');
-                    }
-                },
-
-                toggleRevealPassword() {
-                    this.revealedPassword = !this.revealedPassword;
-                },
-
-                async copyCredentialValue(value) {
-                    if (!value) return;
-                    try {
-                        await navigator.clipboard.writeText(String(value));
-                        this.showToast('Copied to clipboard', 'success');
-                    } catch (error) {
-                        this.showToast('Could not copy to clipboard', 'error');
-                    }
-                },
-
-                async importCredentialsCsv(event) {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
-                    const token = localStorage.getItem('token');
-                    try {
-                        const csv = await file.text();
-                        const response = await fetch(`${API_URL}/credentials/import/csv`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ csv })
-                        });
-                        const data = await response.json();
-                        if (response.ok) {
-                            await this.loadCredentials();
-                            if (this.showCredentialGroupsPanel) await this.loadCredentialGroups();
-                            const matchInfo = data.matched != null ? ` (${data.matched} linked, ${data.unmatched} unlinked)` : '';
-                            this.showToast((data.message || 'CSV imported successfully') + matchInfo, 'success');
-                        } else {
-                            this.showToast(data.message || 'Import failed', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Import credentials error:', error);
-                        this.showToast('Failed to import CSV', 'error');
-                    }
-                    event.target.value = '';
-                },
-
                 switchViewMode(mode) {
                     this.viewMode = mode;
                     localStorage.setItem('viewMode', mode);
@@ -5150,20 +4765,14 @@ show_admin_bar(false);
                         localStorage.removeItem('selectedViewClient');
                     }
                     
-                    // Client view defaults to Content Bank unless real client is on Password Vault
                     if (mode === 'client') {
-                        if (this.user?.role === 'client' && this.activeTab === 'passwords') {
-                            // keep current tab
-                        } else {
-                            this.activeTab = 'contentBank';
-                        }
+                        this.activeTab = 'contentBank';
                     }
                     
                     this.loadInitialData();
                     this.loadConcepts();
                     this.loadContentBank();
                     this.loadProductions();
-                    if (this.activeTab === 'passwords') this.loadCredentials();
                 },
 
                 applyTheme() { if (this.theme === 'dark') { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } },
