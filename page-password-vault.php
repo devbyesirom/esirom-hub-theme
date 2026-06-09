@@ -63,7 +63,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 class="text-lg font-bold text-gray-900 dark:text-white">Password Vault</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Brand accounts grouped by client — click a brand to view all logins</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="isClientView ? 'Your brand login details — click to view and copy' : 'Brand accounts grouped by client — click a brand to view all logins'"></p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <span x-show="overdueCount > 0 && user?.role !== 'client'" class="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" x-text="overdueCount + ' need verification'"></span>
@@ -102,6 +102,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
             <div x-show="!loading && groups.length === 0" x-cloak class="py-16 text-center text-gray-500">
                 <p class="font-medium">No credentials found</p>
                 <p class="text-sm mt-1" x-show="isAdmin">Import your CSV or add accounts manually.</p>
+                <p class="text-sm mt-1" x-show="isClientView && !isAdmin">No active accounts are linked to your brand yet. Contact your account manager if you need access.</p>
             </div>
 
             <div class="space-y-3" x-show="!loading && groups.length > 0" x-cloak>
@@ -252,6 +253,7 @@ function passwordVaultApp() {
         statusFilter: '',
         categoryFilter: '',
         overdueCount: 0,
+        selectedViewClient: localStorage.getItem('selectedViewClient') || '',
         showModal: false,
         viewMode: localStorage.getItem('viewMode') || 'admin',
         accountModalView: true,
@@ -260,8 +262,68 @@ function passwordVaultApp() {
         form: {},
         toast: { show: false, message: '', type: 'success' },
 
-        get isAdmin() { return this.user?.role === 'admin'; },
-        get isStaff() { return ['admin', 'brand_rep'].includes(this.user?.role); },
+        get isAdmin() { return this.user?.role === 'admin' && this.viewMode !== 'client'; },
+        get isStaff() { return this.user?.role === 'admin' || (this.user?.role === 'brand_rep' && this.viewMode !== 'client'); },
+        get isClientView() { return this.user?.role === 'client' || this.viewMode === 'client'; },
+
+        userClientIds() {
+            const ids = [];
+            const add = (ref) => {
+                if (!ref) return;
+                const id = ref?._id || ref;
+                if (id) ids.push(String(id));
+            };
+            add(this.user?.clientId);
+            (this.user?.clientIds || []).forEach(add);
+            return [...new Set(ids)];
+        },
+
+        get scopedClientIds() {
+            if (this.user?.role === 'admin' && this.viewMode === 'client' && this.selectedViewClient) {
+                return [String(this.selectedViewClient)];
+            }
+            if (this.user?.role === 'client') return this.userClientIds();
+            return [];
+        },
+
+        queryParams() {
+            const params = new URLSearchParams();
+            if (this.search) params.append('search', this.search);
+            if (this.statusFilter) params.append('status', this.statusFilter);
+            if (this.categoryFilter) params.append('category', this.categoryFilter);
+            if (this.user?.role === 'admin' && this.viewMode !== 'admin') {
+                params.append('viewAs', this.viewMode);
+                if (this.viewMode === 'client' && this.selectedViewClient) {
+                    params.append('viewAsClientId', this.selectedViewClient);
+                }
+            }
+            return params;
+        },
+
+        applyClientScope(groups = []) {
+            if (!this.isClientView) return groups;
+            const allowed = this.scopedClientIds.length ? this.scopedClientIds : this.userClientIds();
+            if (!allowed.length) return [];
+            return groups
+                .map((group) => {
+                    const accounts = (group.accounts || []).filter((account) => {
+                        const accountClientId = account.clientId?._id || account.clientId;
+                        return accountClientId && allowed.includes(String(accountClientId));
+                    });
+                    if (!accounts.length) return null;
+                    const groupClientId = group.clientId ? String(group.clientId) : (group.key?.startsWith('client:') ? group.key.slice(7) : null);
+                    if (groupClientId && !allowed.includes(groupClientId)) return null;
+                    return {
+                        ...group,
+                        accounts,
+                        total: accounts.length,
+                        active: accounts.filter((a) => a.status === 'active').length,
+                        archived: accounts.filter((a) => a.status === 'archived').length,
+                        overdue: accounts.filter((a) => a.verification?.overdue).length
+                    };
+                })
+                .filter(Boolean);
+        },
 
         headers() {
             return { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' };
@@ -300,26 +362,23 @@ function passwordVaultApp() {
 
         async loadGrouped() {
             this.loading = true;
-            const params = new URLSearchParams();
-            if (this.search) params.append('search', this.search);
-            if (this.statusFilter) params.append('status', this.statusFilter);
-            if (this.categoryFilter) params.append('category', this.categoryFilter);
+            const params = this.queryParams();
             try {
                 const res = await fetch(`${API_URL}/credentials/grouped?${params}`, { headers: this.headers() });
                 let data = {};
                 try { data = await res.json(); } catch (e) { /* ignore */ }
 
                 if (res.ok && data.success) {
-                    this.groups = data.groups || [];
-                    this.overdueCount = data.counts?.overdueVerification || 0;
+                    this.groups = this.applyClientScope(data.groups || []);
+                    this.overdueCount = this.groups.reduce((sum, group) => sum + (group.overdue || 0), 0);
                     return;
                 }
 
                 const fallback = await fetch(`${API_URL}/credentials?${params}`, { headers: this.headers() });
                 const flat = await fallback.json();
                 if (flat.success) {
-                    this.groups = this.groupCredentialsClient(flat.data || []);
-                    this.overdueCount = flat.counts?.overdueVerification || 0;
+                    this.groups = this.applyClientScope(this.groupCredentialsClient(flat.data || []));
+                    this.overdueCount = this.groups.reduce((sum, group) => sum + (group.overdue || 0), 0);
                     return;
                 }
 
