@@ -50,14 +50,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
     <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
         <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-            <a x-show="user?.role === 'client'" href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank" class="flex items-center px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                Content Bank
-            </a>
-            <a href="<?php echo $vault_url; ?>" class="flex items-center px-3 py-2 rounded-lg text-sm bg-indigo-500 text-white font-medium">
-                <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                Password Vault
-            </a>
+            <?php esirom_hub_client_sidebar_nav('password_vault', 'site', false); ?>
             <?php esirom_hub_staff_sidebar_nav('password_vault', 'site', false); ?>
         </nav>
         <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
@@ -507,5 +500,11 @@ function passwordVaultApp() {
     };
 }
 </script>
+
+<nav class="hub-mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40">
+    <div class="flex justify-around items-center h-16 overflow-x-auto">
+        <?php esirom_hub_client_mobile_nav('site'); ?>
+    </div>
+</nav>
 </body>
 </html>

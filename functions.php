@@ -83,6 +83,24 @@ function esirom_hub_staff_mobile_nav($active = '') {
 }
 
 /**
+ * Render shared client sidebar navigation (viewMode === 'client').
+ */
+function esirom_hub_client_sidebar_nav($active = '', $context = 'site', $alpine_labels = false) {
+    $hub_client_nav_active = $active;
+    $hub_client_nav_context = $context;
+    $hub_nav_alpine_labels = $alpine_labels;
+    include get_template_directory() . '/inc/hub-client-sidebar-nav.php';
+}
+
+/**
+ * Render shared client mobile bottom navigation (viewMode === 'client').
+ */
+function esirom_hub_client_mobile_nav($context = 'site') {
+    $hub_client_nav_context = $context;
+    include get_template_directory() . '/inc/hub-client-mobile-nav.php';
+}
+
+/**
  * Inline CSS: hide mobile bottom nav on desktop (prevents grey bar on wide screens).
  */
 function esirom_hub_layout_styles() {
