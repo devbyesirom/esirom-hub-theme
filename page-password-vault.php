@@ -125,6 +125,9 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                             <div x-show="isAdmin" class="flex flex-wrap gap-1 shrink-0">
                                 <button type="button" @click="bulkGroup(group, { status: 'active' })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg hover:bg-green-700">Activate</button>
                                 <button type="button" @click="bulkGroup(group, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-[11px] bg-gray-600 text-white rounded-lg hover:bg-gray-700">Archive</button>
+                                <button type="button" @click="openRenameGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Rename</button>
+                                <button type="button" @click="openMoveGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Move to…</button>
+                                <button type="button" @click="deleteGroup(group)" class="px-2 py-1 text-[11px] bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
                             </div>
                         </div>
 
@@ -143,6 +146,8 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                                     <div class="flex items-center gap-2 shrink-0">
                                         <button type="button" @click="viewAccount(account)" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">View</button>
                                         <button type="button" x-show="isStaff" @click="editAccount(account)" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Edit</button>
+                                        <button type="button" x-show="isAdmin" @click="openMoveAccount(account, group)" class="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40">Move</button>
+                                        <button type="button" x-show="isAdmin" @click="deleteAccount(account)" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 dark:border-red-900/40 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
                                     </div>
                                 </div>
                             </template>
@@ -240,6 +245,38 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
     </div>
 </div>
 
+<!-- Group action modal (rename / move) -->
+<div x-show="showGroupModal" x-cloak class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50" @keydown.escape.window="closeGroupModal()">
+    <div class="bg-white dark:bg-gray-800 w-full sm:max-w-md sm:rounded-xl rounded-t-xl shadow-2xl" @click.stop>
+        <div class="px-5 py-4 border-b dark:border-gray-700">
+            <h3 class="font-bold text-gray-900 dark:text-white" x-text="groupModalTitle"></h3>
+            <p class="text-xs text-gray-500 mt-1" x-text="groupModalSubtitle"></p>
+        </div>
+        <div class="p-5 space-y-3">
+            <template x-if="groupModalMode === 'rename'">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">New brand / group name</label>
+                    <input type="text" x-model="groupModalForm.newGroupName" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Brand name">
+                </div>
+            </template>
+            <template x-if="groupModalMode === 'move'">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Move to group</label>
+                    <input type="text" x-model="groupModalForm.targetGroupName" list="vault-group-names" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Existing or new group name">
+                    <p class="text-[11px] text-gray-400 mt-1">Pick an existing brand or type a new group name.</p>
+                </div>
+            </template>
+            <datalist id="vault-group-names">
+                <option x-for="name in groupNameOptions" :key="name" :value="name"></option>
+            </datalist>
+        </div>
+        <div class="px-5 py-4 border-t dark:border-gray-700 flex justify-end gap-2">
+            <button type="button" @click="closeGroupModal()" class="px-3 py-2 text-sm text-gray-500">Cancel</button>
+            <button type="button" @click="submitGroupModal()" class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" x-text="groupModalMode === 'rename' ? 'Rename' : 'Move'"></button>
+        </div>
+    </div>
+</div>
+
 <div x-show="toast.show" x-cloak class="fixed bottom-20 md:bottom-6 right-4 z-[60] px-4 py-3 rounded-xl shadow-lg text-sm text-white" :class="toast.type === 'error' ? 'bg-red-600' : 'bg-gray-900'" x-text="toast.message"></div>
 
 <script>
@@ -258,6 +295,14 @@ function passwordVaultApp() {
         overdueCount: 0,
         selectedViewClient: localStorage.getItem('selectedViewClient') || '',
         showModal: false,
+        showGroupModal: false,
+        groupModalMode: 'rename',
+        groupModalTitle: '',
+        groupModalSubtitle: '',
+        groupModalTarget: null,
+        groupModalAccount: null,
+        groupModalForm: { newGroupName: '', targetGroupName: '' },
+        groupNameOptions: [],
         viewMode: localStorage.getItem('viewMode') || 'admin',
         accountModalView: true,
         showPassword: false,
@@ -373,7 +418,10 @@ function passwordVaultApp() {
                     this.viewMode = 'admin';
                 }
                 if (this.allowed) {
-                    if (this.isAdmin) await this.normalizeGroups(true);
+                    if (this.isAdmin) {
+                        await this.normalizeGroups(true);
+                        await this.loadGroupNameOptions();
+                    }
                     await this.loadGrouped();
                 }
             } catch (e) {
@@ -504,10 +552,108 @@ function passwordVaultApp() {
                     body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label, ...payload })
                 });
                 const data = await res.json();
-                if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); }
+                if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); await this.loadGroupNameOptions(); }
                 else this.notify(data.message || 'Update failed', 'error');
             } catch (e) {
                 this.notify('Update failed', 'error');
+            }
+        },
+
+        async loadGroupNameOptions() {
+            try {
+                const res = await fetch(`${API_URL}/credentials/groups`, { headers: this.headers() });
+                const data = await res.json();
+                if (data.success) {
+                    this.groupNameOptions = [...new Set((data.data || []).map((g) => g.groupName || g.label).filter(Boolean))].sort();
+                }
+            } catch (e) { /* ignore */ }
+        },
+
+        openRenameGroup(group) {
+            this.groupModalMode = 'rename';
+            this.groupModalTitle = 'Rename brand';
+            this.groupModalSubtitle = `Rename all accounts in "${group.label}"`;
+            this.groupModalTarget = group;
+            this.groupModalAccount = null;
+            this.groupModalForm = { newGroupName: group.label || '', targetGroupName: '' };
+            this.showGroupModal = true;
+        },
+
+        openMoveGroup(group) {
+            this.groupModalMode = 'move';
+            this.groupModalTitle = 'Move brand to group';
+            this.groupModalSubtitle = `Move all ${group.total} account${group.total === 1 ? '' : 's'} from "${group.label}"`;
+            this.groupModalTarget = group;
+            this.groupModalAccount = null;
+            this.groupModalForm = { newGroupName: '', targetGroupName: '' };
+            this.showGroupModal = true;
+        },
+
+        openMoveAccount(account, group) {
+            this.groupModalMode = 'move';
+            this.groupModalTitle = 'Move account to group';
+            this.groupModalSubtitle = account.accountName;
+            this.groupModalTarget = group;
+            this.groupModalAccount = account;
+            this.groupModalForm = { newGroupName: '', targetGroupName: group?.label || '' };
+            this.showGroupModal = true;
+        },
+
+        closeGroupModal() {
+            this.showGroupModal = false;
+            this.groupModalTarget = null;
+            this.groupModalAccount = null;
+        },
+
+        async submitGroupModal() {
+            try {
+                if (this.groupModalMode === 'rename') {
+                    const newGroupName = this.groupModalForm.newGroupName?.trim();
+                    if (!newGroupName) { this.notify('Enter a group name', 'error'); return; }
+                    const group = this.groupModalTarget;
+                    const res = await fetch(`${API_URL}/credentials/bulk/rename`, {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label, newGroupName })
+                    });
+                    const data = await res.json();
+                    if (data.success) { this.notify(data.message, 'success'); this.closeGroupModal(); await this.loadGrouped(); await this.loadGroupNameOptions(); }
+                    else this.notify(data.message || 'Rename failed', 'error');
+                    return;
+                }
+
+                const targetGroupName = this.groupModalForm.targetGroupName?.trim();
+                if (!targetGroupName) { this.notify('Enter a target group', 'error'); return; }
+                const group = this.groupModalTarget;
+                const payload = { targetGroupName };
+                if (this.groupModalAccount?._id) {
+                    payload.accountIds = [this.groupModalAccount._id];
+                } else if (group) {
+                    payload.groupKey = group.key;
+                    payload.groupName = group.groupName || group.label;
+                }
+                const res = await fetch(`${API_URL}/credentials/bulk/move`, {
+                    method: 'POST', headers: this.headers(), body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) { this.notify(data.message, 'success'); this.closeGroupModal(); await this.loadGrouped(); await this.loadGroupNameOptions(); }
+                else this.notify(data.message || 'Move failed', 'error');
+            } catch (e) {
+                this.notify('Action failed', 'error');
+            }
+        },
+
+        async deleteGroup(group) {
+            if (!confirm(`Permanently delete "${group.label}" and all ${group.total} account${group.total === 1 ? '' : 's'}? This cannot be undone.`)) return;
+            try {
+                const res = await fetch(`${API_URL}/credentials/bulk/delete`, {
+                    method: 'POST', headers: this.headers(),
+                    body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label })
+                });
+                const data = await res.json();
+                if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); await this.loadGroupNameOptions(); }
+                else this.notify(data.message || 'Delete failed', 'error');
+            } catch (e) {
+                this.notify('Delete failed', 'error');
             }
         },
 
@@ -546,10 +692,11 @@ function passwordVaultApp() {
         },
 
         async deleteAccount(item) {
-            if (!confirm(`Delete "${item.accountName}"?`)) return;
+            if (!confirm(`Delete "${item.accountName}" permanently?`)) return;
             const res = await fetch(`${API_URL}/credentials/${item._id}`, { method: 'DELETE', headers: this.headers() });
             const data = await res.json();
-            if (data.success) { this.notify('Deleted', 'success'); this.closeModal(); await this.loadGrouped(); }
+            if (data.success) { this.notify('Deleted', 'success'); this.closeModal(); await this.loadGrouped(); await this.loadGroupNameOptions(); }
+            else this.notify(data.message || 'Delete failed', 'error');
         },
 
         async verifyAccount() {
