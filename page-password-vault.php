@@ -116,6 +116,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                                         <h2 class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></h2>
                                         <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.total + ' accounts'"></span>
                                         <span x-show="group.active > 0" class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" x-text="group.active + ' active'"></span>
+                                        <span x-show="group.archived > 0" class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300" x-text="group.archived + ' archived'"></span>
                                         <span x-show="group.overdue > 0" class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" x-text="group.overdue + ' overdue'"></span>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-0.5" x-show="group.clientName" x-text="group.clientName"></p>
@@ -134,6 +135,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                                         <div class="flex flex-wrap items-center gap-2">
                                             <p class="font-medium text-sm text-gray-900 dark:text-white" x-text="account.accountName"></p>
                                             <span class="text-xs capitalize text-gray-500" x-text="account.platform || formatCategory(account.category)"></span>
+                                            <span :class="statusClass(account.status)" class="px-2 py-0.5 text-[10px] rounded-full font-medium" x-text="statusLabel(account.status)"></span>
                                             <span :class="verificationClass(account)" class="px-2 py-0.5 text-[10px] rounded-full" x-text="verificationLabel(account)"></span>
                                         </div>
                                         <p class="text-xs font-mono text-gray-500 mt-1 truncate" x-text="account.username || 'No username'"></p>
@@ -159,6 +161,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
             <div>
                 <h3 class="font-bold text-gray-900 dark:text-white" x-text="accountModalView ? 'Account Details' : (form._id ? 'Edit Account' : 'Add Account')"></h3>
                 <p class="text-xs text-gray-500" x-text="selected?.accountName || ''"></p>
+                <span x-show="selected?.status" :class="statusClass(selected?.status)" class="inline-block mt-1 px-2 py-0.5 text-[10px] rounded-full font-medium" x-text="statusLabel(selected?.status)"></span>
             </div>
             <button @click="closeModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
         </div>
@@ -250,7 +253,7 @@ function passwordVaultApp() {
         groups: [],
         expanded: {},
         search: '',
-        statusFilter: '',
+        statusFilter: 'active',
         categoryFilter: '',
         overdueCount: 0,
         selectedViewClient: localStorage.getItem('selectedViewClient') || '',
@@ -296,8 +299,29 @@ function passwordVaultApp() {
                 if (this.viewMode === 'client' && this.selectedViewClient) {
                     params.append('viewAsClientId', this.selectedViewClient);
                 }
+            } else if (this.user?.role === 'brand_rep') {
+                // brand reps always load active-only; enforced server-side
             }
             return params;
+        },
+
+        filterGroupsByStatus(groups = []) {
+            if (!this.statusFilter) return groups;
+            const want = this.statusFilter;
+            return groups
+                .map((group) => {
+                    const accounts = (group.accounts || []).filter((a) => a.status === want);
+                    if (!accounts.length) return null;
+                    return {
+                        ...group,
+                        accounts,
+                        total: accounts.length,
+                        active: accounts.filter((a) => a.status === 'active').length,
+                        archived: accounts.filter((a) => a.status === 'archived').length,
+                        overdue: accounts.filter((a) => a.verification?.overdue).length
+                    };
+                })
+                .filter(Boolean);
         },
 
         applyClientScope(groups = []) {
@@ -340,6 +364,9 @@ function passwordVaultApp() {
                 this.allowed = ['admin', 'brand_rep', 'client'].includes(this.user?.role);
                 if (this.user?.role === 'client') {
                     this.viewMode = 'client';
+                } else if (this.user?.role === 'brand_rep') {
+                    this.viewMode = 'admin';
+                    this.statusFilter = 'active';
                 } else if (this.user?.role === 'admin') {
                     this.viewMode = localStorage.getItem('viewMode') || 'admin';
                 } else {
@@ -369,7 +396,9 @@ function passwordVaultApp() {
                 try { data = await res.json(); } catch (e) { /* ignore */ }
 
                 if (res.ok && data.success) {
-                    this.groups = this.applyClientScope(data.groups || []);
+                    let groups = this.applyClientScope(data.groups || []);
+                    groups = this.filterGroupsByStatus(groups);
+                    this.groups = groups;
                     this.overdueCount = this.groups.reduce((sum, group) => sum + (group.overdue || 0), 0);
                     return;
                 }
@@ -377,7 +406,9 @@ function passwordVaultApp() {
                 const fallback = await fetch(`${API_URL}/credentials?${params}`, { headers: this.headers() });
                 const flat = await fallback.json();
                 if (flat.success) {
-                    this.groups = this.applyClientScope(this.groupCredentialsClient(flat.data || []));
+                    let groups = this.applyClientScope(this.groupCredentialsClient(flat.data || []));
+                    groups = this.filterGroupsByStatus(groups);
+                    this.groups = groups;
                     this.overdueCount = this.groups.reduce((sum, group) => sum + (group.overdue || 0), 0);
                     return;
                 }
@@ -547,6 +578,12 @@ function passwordVaultApp() {
         },
 
         formatCategory(c) { return (c || 'other').replace(/_/g, ' '); },
+        statusClass(status) {
+            return status === 'archived'
+                ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+        },
+        statusLabel(status) { return status === 'archived' ? 'Archived' : 'Active'; },
         verificationClass(item) { return item?.verification?.overdue ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'; },
         verificationLabel(item) { return item?.verification?.overdue ? 'Overdue' : 'Current'; },
         notify(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => { this.toast.show = false; }, 3500); },
