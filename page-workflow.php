@@ -837,10 +837,18 @@ show_admin_bar(false);
                             <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-hidden" @click="viewConcept(concept)">
                                 <!-- Design Preview -->
                                 <div class="relative h-80 bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                                    <template x-if="getLatestDesignImage(concept)">
+                                    <template x-if="getLatestDesignImage(concept) && !isVideoConcept(concept)">
                                         <img :src="getLatestDesignImage(concept)" :alt="concept.title" class="w-full h-full object-cover" />
                                     </template>
-                                    <template x-if="!getLatestDesignImage(concept)">
+                                    <template x-if="isVideoConcept(concept) && concept.youtubeLink">
+                                        <img :src="getYoutubeThumbnail(concept.youtubeLink)" :alt="concept.title" class="w-full h-full object-cover" />
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                            <div class="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
+                                                <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!getLatestDesignImage(concept) && !(isVideoConcept(concept) && concept.youtubeLink)">
                                         <div class="flex items-center justify-center h-full">
                                             <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -1170,13 +1178,21 @@ show_admin_bar(false);
                                     <template x-if="getDesignPreview(item)">
                                         <img :src="getDesignPreview(item)" :alt="item.title" class="w-full h-full object-cover" />
                                     </template>
+                                    <template x-if="!getDesignPreview(item) && isVideoConcept(item) && item.youtubeLink">
+                                        <img :src="getYoutubeThumbnail(item.youtubeLink)" :alt="item.title" class="w-full h-full object-cover" />
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                            <div class="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
+                                                <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            </div>
+                                        </div>
+                                    </template>
                                     <template x-if="getDesignPreviews(item).length > 1">
                                         <div class="absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold bg-black/60 text-white rounded-full shadow-lg flex items-center gap-1">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                             <span x-text="getDesignPreviews(item).length"></span>
                                         </div>
                                     </template>
-                                    <template x-if="!getDesignPreview(item)">
+                                    <template x-if="!getDesignPreview(item) && !(isVideoConcept(item) && item.youtubeLink)">
                                         <div class="flex items-center justify-center h-full">
                                             <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -1656,6 +1672,34 @@ show_admin_bar(false);
             </div>
         </div>
 
+        <!-- Concept Type Picker -->
+        <div x-show="showConceptTypePicker" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 bg-black opacity-50" @click="showConceptTypePicker = false"></div>
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">New Concept</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">What type of content is this concept for?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button type="button" @click="startConceptForm('graphic')" class="group p-5 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all text-left">
+                            <div class="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Graphic</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Static posts, carousels, stories — designer uploads final images for review</p>
+                        </button>
+                        <button type="button" @click="startConceptForm('video')" class="group p-5 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-red-500 dark:hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all text-left">
+                            <div class="w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Video</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Reels, IG videos, YouTube — add a reference link, then submit a YouTube link for client approval</p>
+                        </button>
+                    </div>
+                    <button type="button" @click="showConceptTypePicker = false" class="mt-6 w-full px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-600 dark:text-gray-300">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Create/Edit Concept Modal -->
         <div x-show="showConceptModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4">
@@ -1663,6 +1707,8 @@ show_admin_bar(false);
                 <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                     <div class="p-6 border-b dark:border-gray-700">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="editingConcept ? 'Edit Concept' : 'Create New Concept'"></h2>
+                        <p x-show="conceptMediaType === 'graphic'" class="text-xs text-indigo-600 dark:text-indigo-400 mt-1 font-medium">Graphic concept — upload final designs for review</p>
+                        <p x-show="conceptMediaType === 'video'" class="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">Video concept — submit a YouTube link for client approval</p>
                     </div>
                     <form @submit.prevent="saveConcept()" class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-4">
@@ -1686,7 +1732,7 @@ show_admin_bar(false);
                                 </div>
                                 <textarea x-model="conceptForm.caption" rows="3" :style="`color:${conceptForm.briefDetails.captionColor || '#6B7280'}`" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" placeholder="The caption/text that will be posted with this content..."></textarea>
                             </div>
-                            <div class="col-span-2">
+                            <div class="col-span-2" x-show="conceptMediaType === 'graphic'">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference Images (up to 2)</label>
                                 <div class="flex items-start gap-4">
                                     <!-- Reference Image 1 -->
@@ -1734,10 +1780,38 @@ show_admin_bar(false);
                                 </div>
                                 <p class="mt-2 text-xs text-gray-500">PNG/JPG up to 10MB each. Useful for carousel posts or multiple references.</p>
                             </div>
+                            <div class="col-span-2" x-show="conceptMediaType === 'video'">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inspiration Images (optional, up to 2)</label>
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-1">
+                                        <div class="w-full h-24 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-2 cursor-pointer transition-colors"
+                                            :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 0}"
+                                            @dragover.prevent="dragOverIndex = 0" @dragleave.prevent="dragOverIndex = null" @drop.prevent="handleReferenceDrop($event, 0)" @click="$refs.refInput0.click()">
+                                            <template x-if="referenceImagePreviews[0]"><img :src="referenceImagePreviews[0]" alt="Inspiration 1" class="w-full h-full object-cover" /></template>
+                                            <template x-if="!referenceImagePreviews[0]"><div class="text-xs text-gray-500 text-center px-2">Image 1<br><span class="text-gray-400">Drop or click</span></div></template>
+                                        </div>
+                                        <input type="file" accept="image/*" @change="handleReferenceImage($event, 0)" x-ref="refInput0" class="hidden" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="w-full h-24 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-2 cursor-pointer transition-colors"
+                                            :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 1}"
+                                            @dragover.prevent="dragOverIndex = 1" @dragleave.prevent="dragOverIndex = null" @drop.prevent="handleReferenceDrop($event, 1)" @click="$refs.refInput1.click()">
+                                            <template x-if="referenceImagePreviews[1]"><img :src="referenceImagePreviews[1]" alt="Inspiration 2" class="w-full h-full object-cover" /></template>
+                                            <template x-if="!referenceImagePreviews[1]"><div class="text-xs text-gray-500 text-center px-2">Image 2<br><span class="text-gray-400">Drop or click</span></div></template>
+                                        </div>
+                                        <input type="file" accept="image/*" @change="handleReferenceImage($event, 1)" x-ref="refInput1" class="hidden" />
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-xs text-gray-500">Optional mood board or frame references for the video team.</p>
+                            </div>
                             <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference Link</label>
-                                <input type="url" x-model="conceptForm.referenceLink" placeholder="https://example.com/animation-reference" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                                <p class="mt-1 text-xs text-gray-500">For animations/motion graphics, paste a link to the reference video or animation.</p>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <span x-show="conceptMediaType === 'video'">Reference / Inspiration Link</span>
+                                    <span x-show="conceptMediaType !== 'video'">Reference Link</span>
+                                </label>
+                                <input type="url" x-model="conceptForm.referenceLink" :placeholder="conceptMediaType === 'video' ? 'https://youtube.com/watch?v=... or mood board link' : 'https://example.com/animation-reference'" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                <p class="mt-1 text-xs text-gray-500" x-show="conceptMediaType === 'video'">Link to a reference video, competitor reel, or inspiration for the concept brief.</p>
+                                <p class="mt-1 text-xs text-gray-500" x-show="conceptMediaType !== 'video'">For animations/motion graphics, paste a link to the reference video or animation.</p>
                             </div>
                             <!-- Brand Searchable Dropdown -->
                             <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
@@ -1764,8 +1838,8 @@ show_admin_bar(false);
                                 </div>
                                 <input type="hidden" x-model="conceptForm.clientId" required>
                             </div>
-                            <!-- Content Type Searchable Dropdown -->
-                            <div class="relative" x-data="{ open: false, search: '', types: [{value: 'graphic', label: 'Graphic'}, {value: 'motion_graphic', label: 'Motion Graphic'}, {value: 'video', label: 'Video'}, {value: 'carousel', label: 'Carousel'}, {value: 'story', label: 'Story'}, {value: 'reel', label: 'Reel'}] }" @click.away="open = false">
+                            <!-- Content Type -->
+                            <div class="relative" x-data="{ open: false, search: '', types: conceptMediaType === 'video' ? [{value: 'video', label: 'Video'}, {value: 'reel', label: 'Reel / IG Video'}] : [{value: 'graphic', label: 'Graphic'}, {value: 'carousel', label: 'Carousel'}, {value: 'story', label: 'Story'}, {value: 'motion_graphic', label: 'Motion Graphic'}] }" @click.away="open = false">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content Type *</label>
                                 <div class="relative">
                                     <input type="text" 
@@ -1909,12 +1983,17 @@ show_admin_bar(false);
                 <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                     <div class="p-6 border-b dark:border-gray-700">
                         <div class="flex gap-6 items-start">
-                            <template x-if="getLatestDesignImage(selectedConcept)">
+                            <template x-if="getLatestDesignImage(selectedConcept) && !isVideoConcept(selectedConcept)">
                                 <button @click="lightboxImage = getLatestDesignImage(selectedConcept)" class="shrink-0 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg">
                                     <img :src="getLatestDesignImage(selectedConcept)" class="w-48 h-48 rounded-lg object-cover border border-gray-200 dark:border-gray-600" alt="Latest design" @error="$event.target.style.display='none'" />
                                 </button>
                             </template>
-                            <template x-if="!getLatestDesignImage(selectedConcept)">
+                            <template x-if="isVideoConcept(selectedConcept) && selectedConcept?.youtubeLink">
+                                <div class="w-48 h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shrink-0 bg-black">
+                                    <img :src="getYoutubeThumbnail(selectedConcept.youtubeLink)" class="w-full h-full object-cover" alt="Video preview" />
+                                </div>
+                            </template>
+                            <template x-if="!getLatestDesignImage(selectedConcept) && !(isVideoConcept(selectedConcept) && selectedConcept?.youtubeLink)">
                                 <div class="w-48 h-48 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shrink-0 flex items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
@@ -1997,11 +2076,12 @@ show_admin_bar(false);
                             </div>
                         </div>
 
-                        <!-- Uploaded Designs Section -->
+                        <!-- Uploaded Designs / Video Review Section -->
                         <div x-show="['in_progress', 'needs_revision', 'rejected', 'pending_review'].includes(selectedConcept?.status)" class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
                             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
-                                <span x-show="selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected'">Upload New Design (Replace Previous)</span>
-                                <span x-show="selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected'">Uploaded Designs</span>
+                                <span x-show="isVideoConcept(selectedConcept)">Video for Review</span>
+                                <span x-show="!isVideoConcept(selectedConcept) && (selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected')">Upload New Design (Replace Previous)</span>
+                                <span x-show="!isVideoConcept(selectedConcept) && selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected'">Uploaded Designs</span>
                             </h3>
                             
                             <!-- Revision Notice -->
@@ -2017,8 +2097,8 @@ show_admin_bar(false);
                                 </div>
                             </div>
                             
-                            <!-- Designs List -->
-                            <div x-show="selectedConcept?.attachments?.length > 0" class="mb-4 space-y-2">
+                            <!-- Graphic: Designs List -->
+                            <div x-show="!isVideoConcept(selectedConcept) && selectedConcept?.attachments?.length > 0" class="mb-4 space-y-2">
                                 <template x-for="attachment in selectedConcept?.attachments" :key="attachment._id">
                                     <div x-show="attachment?.kind === 'design' || (!attachment?.kind && !attachment?.mimetype?.startsWith('image/'))" class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                         <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -2040,8 +2120,8 @@ show_admin_bar(false);
                                 </template>
                             </div>
 
-                            <!-- Upload Design -->
-                            <div class="border-2 border-dashed rounded-lg p-4 transition-colors"
+                            <!-- Graphic: Upload Design -->
+                            <div x-show="!isVideoConcept(selectedConcept)" class="border-2 border-dashed rounded-lg p-4 transition-colors"
                                  :class="conceptDragOver ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-300 dark:border-gray-600'"
                                  @dragover.prevent="conceptDragOver = true"
                                  @dragleave.prevent="conceptDragOver = false"
@@ -2059,8 +2139,48 @@ show_admin_bar(false);
                                 </label>
                             </div>
 
-                            <!-- Google Drive Link for PSD/Source Files -->
-                            <div class="mt-4">
+                            <!-- Video: YouTube Link for Review -->
+                            <div x-show="isVideoConcept(selectedConcept)" class="space-y-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Paste the YouTube link to the final video or reel for brand rep / client review.</p>
+                                <div x-show="selectedConcept?.youtubeLink" class="aspect-video rounded-lg overflow-hidden bg-black mb-2">
+                                    <iframe :src="getYoutubeEmbedUrl(selectedConcept.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                </div>
+                                <div x-show="selectedConcept?.youtubeLink" class="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                    <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    <a :href="selectedConcept?.youtubeLink" target="_blank" rel="noopener noreferrer" class="text-sm text-green-700 dark:text-green-400 hover:underline truncate flex-1" x-text="selectedConcept?.youtubeLink"></a>
+                                    <button @click="selectedConcept.youtubeLink = ''; saveYoutubeLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
+                                </div>
+                                <div x-show="!selectedConcept?.youtubeLink">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        YouTube / Video Link <span class="text-red-500">*</span>
+                                    </label>
+                                    <p class="text-xs text-red-500 mb-2">Required before submitting for review</p>
+                                    <div class="flex gap-2">
+                                        <input type="url" x-model="youtubeLinkInput" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                        <button @click="saveYoutubeLink(selectedConcept)" :disabled="!youtubeLinkInput" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors">Save</button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unlisted YouTube links work well for client review before posting to IG.</p>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <span class="flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 5.97h6.56l-3.43-5.97L7.71 3.5zm1.14 0l6.56 11.5H21.97l-6.56-11.5H8.85zm6.56 12.5L12 22h12l-3.43-5.97H15.41z"/></svg>
+                                            Project Files Link (optional)
+                                        </span>
+                                    </label>
+                                    <div x-show="selectedConcept?.videoDriveLink" class="flex items-center gap-2 mb-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                        <a :href="selectedConcept?.videoDriveLink" target="_blank" rel="noopener noreferrer" class="text-sm text-green-700 dark:text-green-400 hover:underline truncate flex-1" x-text="selectedConcept?.videoDriveLink"></a>
+                                        <button @click="selectedConcept.videoDriveLink = ''; saveVideoDriveLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
+                                    </div>
+                                    <div x-show="!selectedConcept?.videoDriveLink" class="flex gap-2">
+                                        <input type="url" x-model="videoDriveLinkInput" placeholder="https://drive.google.com/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                        <button @click="saveVideoDriveLink(selectedConcept)" :disabled="!videoDriveLinkInput" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm rounded-lg">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Graphic: Google Drive Link for PSD/Source Files -->
+                            <div x-show="!isVideoConcept(selectedConcept)" class="mt-4">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     <span class="flex items-center gap-2">
                                         <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 5.97h6.56l-3.43-5.97L7.71 3.5zm1.14 0l6.56 11.5H21.97l-6.56-11.5H8.85zm6.56 12.5L12 22h12l-3.43-5.97H15.41z"/></svg>
@@ -2093,7 +2213,7 @@ show_admin_bar(false);
                                     <button @click="updateConceptStatus('in_progress')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Start Working</button>
                                 </template>
                                 <template x-if="selectedConcept?.status === 'in_progress' || selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected'">
-                                    <button @click="if(!selectedConcept?.driveLink){ showToast('Please add the Google Drive link for PSD/source files before submitting', 'error'); return; } updateConceptStatus('pending_review')" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Submit for Review</button>
+                                    <button @click="submitConceptForReview()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Submit for Review</button>
                                 </template>
                                 <template x-if="selectedConcept?.status === 'pending_review'">
                                     <div class="flex gap-3">
@@ -2747,6 +2867,15 @@ show_admin_bar(false);
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Image/Media Preview -->
                             <div>
+                                <template x-if="isVideoConcept(selectedContentBankItem) && selectedContentBankItem?.youtubeLink">
+                                    <div class="aspect-video rounded-lg overflow-hidden bg-black">
+                                        <iframe :src="getYoutubeEmbedUrl(selectedContentBankItem.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                    </div>
+                                    <a :href="selectedContentBankItem.youtubeLink" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 text-sm text-red-600 dark:text-red-400 hover:underline">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                                        Open on YouTube
+                                    </a>
+                                </template>
                                 <template x-if="getDesignPreviews(selectedContentBankItem).length > 0">
                                     <div class="relative select-none"
                                          @touchstart="contentBankTouchStartX = $event.changedTouches[0].screenX"
@@ -2796,7 +2925,7 @@ show_admin_bar(false);
                                         </div>
                                     </div>
                                 </template>
-                                <template x-if="getDesignPreviews(selectedContentBankItem).length === 0">
+                                <template x-if="getDesignPreviews(selectedContentBankItem).length === 0 && !(isVideoConcept(selectedContentBankItem) && selectedContentBankItem?.youtubeLink)">
                                     <div class="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                         <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -2805,7 +2934,7 @@ show_admin_bar(false);
                                 </template>
                                 
                                 <!-- Upload/Replace Media (Admin & Brand Rep only) -->
-                                <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="mt-4">
+                                <div x-show="(user.role === 'admin' || user.role === 'brand_rep') && !isVideoConcept(selectedContentBankItem)" class="mt-4">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         <span x-show="selectedContentBankItem?.contentType === 'carousel'">Add Carousel Slide</span>
                                         <span x-show="selectedContentBankItem?.contentType !== 'carousel'">Upload/Replace Final Media</span>
@@ -2824,6 +2953,14 @@ show_admin_bar(false);
                                             <p class="text-sm text-gray-600 dark:text-gray-400" x-show="selectedContentBankItem?.contentType !== 'carousel'">Drag and drop or click to upload</p>
                                             <p class="text-xs text-gray-500 mt-1">Images or videos<span x-show="selectedContentBankItem?.contentType === 'carousel'"> — select multiple for carousel</span></p>
                                         </label>
+                                    </div>
+                                </div>
+                                <!-- Video: update YouTube link -->
+                                <div x-show="(user.role === 'admin' || user.role === 'brand_rep') && isVideoConcept(selectedContentBankItem)" class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube / Video Link</label>
+                                    <div class="flex gap-2">
+                                        <input type="url" x-model="youtubeLinkInput" :placeholder="selectedContentBankItem?.youtubeLink || 'https://youtube.com/watch?v=...'" class="flex-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" />
+                                        <button type="button" @click="saveYoutubeLink(selectedContentBankItem, true)" :disabled="!youtubeLinkInput && !selectedContentBankItem?.youtubeLink" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:bg-gray-300">Save</button>
                                     </div>
                                 </div>
                             </div>
@@ -3057,11 +3194,15 @@ show_admin_bar(false);
                 taskStatusFilter: '',
                 taskPriorityFilter: '',
                 showConceptModal: false,
+                showConceptTypePicker: false,
+                conceptMediaType: '',
                 showConceptDetail: false,
                 showTaskModal: false,
                 editingConcept: null,
                 selectedConcept: null,
                 driveLinkInput: '',
+                youtubeLinkInput: '',
+                videoDriveLinkInput: '',
                 newFeedback: '',
                 selectedConceptMentions: [],
                 showConceptMentionDropdown: false,
@@ -3440,13 +3581,20 @@ show_admin_bar(false);
 
                 openConceptModal() {
                     this.editingConcept = null;
+                    this.conceptMediaType = '';
+                    this.showConceptTypePicker = true;
+                },
+
+                startConceptForm(mediaType) {
+                    this.conceptMediaType = mediaType;
+                    this.editingConcept = null;
                     this.conceptForm = {
                         title: '',
                         description: '',
                         caption: '',
                         clientId: '',
-                        contentType: '',
-                        platform: [],
+                        contentType: mediaType === 'video' ? 'video' : 'graphic',
+                        platform: mediaType === 'video' ? ['instagram'] : [],
                         priority: 'medium',
                         dueDate: '',
                         assignedTo: '',
@@ -3454,11 +3602,53 @@ show_admin_bar(false);
                         briefDetails: { keyMessage: '', callToAction: '', additionalNotes: '', descriptionColor: '#111827', captionColor: '#6B7280' }
                     };
                     this.clearAllReferenceImages();
+                    this.showConceptTypePicker = false;
                     this.showConceptModal = true;
+                },
+
+                isVideoConcept(concept) {
+                    const type = concept?.contentType || this.conceptForm?.contentType;
+                    return ['video', 'reel'].includes(type);
+                },
+
+                getYoutubeVideoId(url) {
+                    if (!url) return '';
+                    try {
+                        const u = new URL(url);
+                        if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('/')[0];
+                        if (u.searchParams.get('v')) return u.searchParams.get('v');
+                        if (u.pathname.includes('/embed/')) return u.pathname.split('/embed/')[1].split('/')[0];
+                        if (u.pathname.includes('/shorts/')) return u.pathname.split('/shorts/')[1].split('/')[0];
+                    } catch (e) { /* ignore */ }
+                    return '';
+                },
+
+                getYoutubeEmbedUrl(url) {
+                    const id = this.getYoutubeVideoId(url);
+                    return id ? `https://www.youtube.com/embed/${id}` : '';
+                },
+
+                getYoutubeThumbnail(url) {
+                    const id = this.getYoutubeVideoId(url);
+                    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+                },
+
+                submitConceptForReview() {
+                    if (this.isVideoConcept(this.selectedConcept)) {
+                        if (!this.selectedConcept?.youtubeLink) {
+                            this.showToast('Please add the YouTube / video link before submitting', 'error');
+                            return;
+                        }
+                    } else if (!this.selectedConcept?.driveLink) {
+                        this.showToast('Please add the Google Drive link for PSD/source files before submitting', 'error');
+                        return;
+                    }
+                    this.updateConceptStatus('pending_review');
                 },
 
                 editConcept(concept) {
                     this.editingConcept = concept;
+                    this.conceptMediaType = this.isVideoConcept(concept) ? 'video' : 'graphic';
                     this.conceptForm = {
                         title: concept.title, description: concept.description, caption: concept.caption || '', clientId: concept.clientId?._id || concept.clientId,
                         contentType: concept.contentType, platform: concept.platform || [], priority: concept.priority,
@@ -3740,6 +3930,54 @@ show_admin_bar(false);
                     }
                 },
 
+                async saveYoutubeLink(concept, refreshContentBank = false) {
+                    const token = localStorage.getItem('token');
+                    const link = this.youtubeLinkInput || concept.youtubeLink || '';
+                    try {
+                        const response = await fetch(`${API_URL}/workflow/concepts/${concept._id}`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ youtubeLink: link })
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (this.selectedConcept?._id === concept._id) this.selectedConcept = data.concept;
+                            if (this.selectedContentBankItem?._id === concept._id) this.selectedContentBankItem = data.concept;
+                            this.youtubeLinkInput = '';
+                            this.showToast(link ? 'Video link saved' : 'Video link removed', 'success');
+                            if (refreshContentBank) await this.loadContentBank();
+                        } else {
+                            this.showToast('Failed to save video link', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Save youtube link error:', error);
+                        this.showToast('Failed to save video link', 'error');
+                    }
+                },
+
+                async saveVideoDriveLink(concept) {
+                    const token = localStorage.getItem('token');
+                    const link = this.videoDriveLinkInput || concept.videoDriveLink || '';
+                    try {
+                        const response = await fetch(`${API_URL}/workflow/concepts/${concept._id}`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ videoDriveLink: link })
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.selectedConcept = data.concept;
+                            this.videoDriveLinkInput = '';
+                            this.showToast(link ? 'Project files link saved' : 'Project files link removed', 'success');
+                        } else {
+                            this.showToast('Failed to save project files link', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Save video drive link error:', error);
+                        this.showToast('Failed to save project files link', 'error');
+                    }
+                },
+
                 async deleteAttachment(conceptId, attachmentId) {
                     if (!confirm('Are you sure you want to delete this design?')) return;
                     const token = localStorage.getItem('token');
@@ -3811,7 +4049,7 @@ show_admin_bar(false);
                     if (!conceptId) { console.error('No concept ID found', concept); return; }
                     try {
                         const response = await fetch(`${API_URL}/workflow/concepts/${conceptId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (response.ok) { const data = await response.json(); this.selectedConcept = data.concept; this.showConceptDetail = true; }
+                        if (response.ok) { const data = await response.json(); this.selectedConcept = data.concept; this.driveLinkInput = ''; this.youtubeLinkInput = ''; this.videoDriveLinkInput = ''; this.showConceptDetail = true; }
                         else { console.error('View concept failed:', response.status); }
                     } catch (error) { console.error('View concept error:', error); }
                 },
@@ -4468,6 +4706,7 @@ show_admin_bar(false);
                             const data = await response.json(); 
                             this.selectedContentBankItem = data.concept;
                             this.contentBankCarouselIndex = 0;
+                            this.youtubeLinkInput = '';
                             this.editingContentBankItem = false;
                             this.showContentBankDetail = true; 
                         }
