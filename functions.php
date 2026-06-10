@@ -276,8 +276,21 @@ function esirom_hub_workflow_rewrite_rules() {
     add_rewrite_rule('^workflow/tasks/?$', 'index.php?pagename=workflow', 'top');
     add_rewrite_rule('^workflow/planner/?$', 'index.php?pagename=workflow', 'top');
     add_rewrite_rule('^workflow/feed/?$', 'index.php?pagename=workflow', 'top');
+    add_rewrite_rule('^email-test/?$', 'index.php?esirom_email_test=1', 'top');
 }
 add_action('init', 'esirom_hub_workflow_rewrite_rules');
+
+add_action('init', function () {
+    add_rewrite_tag('%esirom_email_test%', '([^&]+)');
+}, 9);
+
+function esirom_hub_email_test_template($template) {
+    if (get_query_var('esirom_email_test')) {
+        return get_template_directory() . '/page-email-test.php';
+    }
+    return $template;
+}
+add_filter('template_include', 'esirom_hub_email_test_template');
 
 /**
  * Flush rewrite rules on theme activation
@@ -292,10 +305,10 @@ add_action('after_switch_theme', 'esirom_hub_flush_rewrite_rules');
  * Auto-flush rewrite rules if not yet registered (runs once)
  */
 function esirom_hub_maybe_flush_rewrite_rules() {
-    if (get_transient('esirom_hub_rewrite_flushed_v4') !== 'yes') {
+    if (get_transient('esirom_hub_rewrite_flushed_v5') !== 'yes') {
         esirom_hub_workflow_rewrite_rules();
         flush_rewrite_rules();
-        set_transient('esirom_hub_rewrite_flushed_v4', 'yes', 0);
+        set_transient('esirom_hub_rewrite_flushed_v5', 'yes', 0);
     }
 }
 add_action('init', 'esirom_hub_maybe_flush_rewrite_rules', 20);
