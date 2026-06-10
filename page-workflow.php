@@ -1717,12 +1717,18 @@ show_admin_bar(false);
                                 <input type="text" x-model="conceptForm.title" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div class="col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description * <span class="text-xs text-gray-500 font-normal">(Instructions for designer)</span></label>
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Description <span x-show="conceptMediaType !== 'video'" class="text-red-500">*</span>
+                                        <span class="text-xs text-gray-500 font-normal" x-text="conceptMediaType === 'video' ? '(Optional brief for the video team)' : '(Instructions for designer)'"></span>
+                                    </label>
+                                    <button type="button" x-show="conceptMediaType === 'video'" @click="markDescriptionNA()" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" :class="conceptDescriptionNA ? 'bg-gray-200 dark:bg-gray-600' : ''">N/A</button>
+                                </div>
                                 <div class="flex items-center justify-end gap-2 mb-2">
                                     <label class="text-xs text-gray-500">Text color</label>
                                     <input type="color" x-model="conceptForm.briefDetails.descriptionColor" class="h-7 w-9 p-0 border rounded cursor-pointer bg-transparent">
                                 </div>
-                                <textarea x-model="conceptForm.description" required rows="3" :style="`color:${conceptForm.briefDetails.descriptionColor || '#111827'}`" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" placeholder="Instructions for the designer to create this content..."></textarea>
+                                <textarea x-model="conceptForm.description" :required="conceptMediaType !== 'video'" :disabled="conceptDescriptionNA" rows="3" :style="`color:${conceptForm.briefDetails.descriptionColor || '#111827'}`" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 disabled:opacity-60 disabled:bg-gray-100 dark:disabled:bg-gray-800" :placeholder="conceptMediaType === 'video' ? 'Optional — use reference link and inspiration images if no written brief' : 'Instructions for the designer to create this content...'"></textarea>
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Caption <span class="text-xs text-gray-500 font-normal">(Post text for client review)</span></label>
@@ -1839,27 +1845,27 @@ show_admin_bar(false);
                                 <input type="hidden" x-model="conceptForm.clientId" required>
                             </div>
                             <!-- Content Type -->
-                            <div class="relative" x-data="{ open: false, search: '', types: conceptMediaType === 'video' ? [{value: 'video', label: 'Video'}, {value: 'reel', label: 'Reel / IG Video'}] : [{value: 'graphic', label: 'Graphic'}, {value: 'carousel', label: 'Carousel'}, {value: 'story', label: 'Story'}, {value: 'motion_graphic', label: 'Motion Graphic'}] }" @click.away="open = false">
+                            <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content Type *</label>
                                 <div class="relative">
                                     <input type="text" 
                                         x-model="search" 
                                         @focus="open = true" 
                                         @input="open = true"
-                                        :placeholder="conceptForm.contentType ? types.find(t => t.value === conceptForm.contentType)?.label || 'Select Type' : 'Select Type'"
+                                        :placeholder="conceptForm.contentType ? getConceptTypeLabel(conceptForm.contentType) : 'Select Type'"
                                         class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-8">
                                     <button type="button" @click="open = !open" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                     </button>
                                 </div>
                                 <div x-show="open" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                    <template x-for="type in types.filter(t => t.label.toLowerCase().includes(search.toLowerCase()))" :key="type.value">
+                                    <template x-for="type in getConceptTypeOptions().filter(t => t.label.toLowerCase().includes(search.toLowerCase()))" :key="type.value">
                                         <div @click="conceptForm.contentType = type.value; search = ''; open = false" 
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
                                             :class="{'bg-indigo-50 dark:bg-indigo-900/30': conceptForm.contentType === type.value}"
                                             x-text="type.label"></div>
                                     </template>
-                                    <div x-show="types.filter(t => t.label.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-500 dark:text-gray-400">No types found</div>
+                                    <div x-show="getConceptTypeOptions().filter(t => t.label.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-500 dark:text-gray-400">No types found</div>
                                 </div>
                                 <input type="hidden" x-model="conceptForm.contentType" required>
                             </div>
@@ -2076,12 +2082,11 @@ show_admin_bar(false);
                             </div>
                         </div>
 
-                        <!-- Uploaded Designs / Video Review Section -->
-                        <div x-show="['in_progress', 'needs_revision', 'rejected', 'pending_review'].includes(selectedConcept?.status)" class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
+                        <!-- Graphic: Upload designs while in progress -->
+                        <div x-show="!isVideoConcept(selectedConcept) && ['in_progress', 'needs_revision', 'rejected'].includes(selectedConcept?.status)" class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
                             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
-                                <span x-show="isVideoConcept(selectedConcept)">Video for Review</span>
-                                <span x-show="!isVideoConcept(selectedConcept) && (selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected')">Upload New Design (Replace Previous)</span>
-                                <span x-show="!isVideoConcept(selectedConcept) && selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected'">Uploaded Designs</span>
+                                <span x-show="selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected'">Upload New Design (Replace Previous)</span>
+                                <span x-show="selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected'">Uploaded Designs</span>
                             </h3>
                             
                             <!-- Revision Notice -->
@@ -2097,8 +2102,7 @@ show_admin_bar(false);
                                 </div>
                             </div>
                             
-                            <!-- Graphic: Designs List -->
-                            <div x-show="!isVideoConcept(selectedConcept) && selectedConcept?.attachments?.length > 0" class="mb-4 space-y-2">
+                            <div x-show="selectedConcept?.attachments?.length > 0" class="mb-4 space-y-2">
                                 <template x-for="attachment in selectedConcept?.attachments" :key="attachment._id">
                                     <div x-show="attachment?.kind === 'design' || (!attachment?.kind && !attachment?.mimetype?.startsWith('image/'))" class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                         <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -2121,7 +2125,7 @@ show_admin_bar(false);
                             </div>
 
                             <!-- Graphic: Upload Design -->
-                            <div x-show="!isVideoConcept(selectedConcept)" class="border-2 border-dashed rounded-lg p-4 transition-colors"
+                            <div class="border-2 border-dashed rounded-lg p-4 transition-colors"
                                  :class="conceptDragOver ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-300 dark:border-gray-600'"
                                  @dragover.prevent="conceptDragOver = true"
                                  @dragleave.prevent="conceptDragOver = false"
@@ -2139,48 +2143,8 @@ show_admin_bar(false);
                                 </label>
                             </div>
 
-                            <!-- Video: YouTube Link for Review -->
-                            <div x-show="isVideoConcept(selectedConcept)" class="space-y-4">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Paste the YouTube link to the final video or reel for brand rep / client review.</p>
-                                <div x-show="selectedConcept?.youtubeLink" class="aspect-video rounded-lg overflow-hidden bg-black mb-2">
-                                    <iframe :src="getYoutubeEmbedUrl(selectedConcept.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                </div>
-                                <div x-show="selectedConcept?.youtubeLink" class="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                    <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    <a :href="selectedConcept?.youtubeLink" target="_blank" rel="noopener noreferrer" class="text-sm text-green-700 dark:text-green-400 hover:underline truncate flex-1" x-text="selectedConcept?.youtubeLink"></a>
-                                    <button @click="selectedConcept.youtubeLink = ''; saveYoutubeLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
-                                </div>
-                                <div x-show="!selectedConcept?.youtubeLink">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        YouTube / Video Link <span class="text-red-500">*</span>
-                                    </label>
-                                    <p class="text-xs text-red-500 mb-2">Required before submitting for review</p>
-                                    <div class="flex gap-2">
-                                        <input type="url" x-model="youtubeLinkInput" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                                        <button @click="saveYoutubeLink(selectedConcept)" :disabled="!youtubeLinkInput" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors">Save</button>
-                                    </div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unlisted YouTube links work well for client review before posting to IG.</p>
-                                </div>
-                                <div class="mt-2">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        <span class="flex items-center gap-2">
-                                            <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 5.97h6.56l-3.43-5.97L7.71 3.5zm1.14 0l6.56 11.5H21.97l-6.56-11.5H8.85zm6.56 12.5L12 22h12l-3.43-5.97H15.41z"/></svg>
-                                            Project Files Link (optional)
-                                        </span>
-                                    </label>
-                                    <div x-show="selectedConcept?.videoDriveLink" class="flex items-center gap-2 mb-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                        <a :href="selectedConcept?.videoDriveLink" target="_blank" rel="noopener noreferrer" class="text-sm text-green-700 dark:text-green-400 hover:underline truncate flex-1" x-text="selectedConcept?.videoDriveLink"></a>
-                                        <button @click="selectedConcept.videoDriveLink = ''; saveVideoDriveLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
-                                    </div>
-                                    <div x-show="!selectedConcept?.videoDriveLink" class="flex gap-2">
-                                        <input type="url" x-model="videoDriveLinkInput" placeholder="https://drive.google.com/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                        <button @click="saveVideoDriveLink(selectedConcept)" :disabled="!videoDriveLinkInput" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm rounded-lg">Save</button>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Graphic: Google Drive Link for PSD/Source Files -->
-                            <div x-show="!isVideoConcept(selectedConcept)" class="mt-4">
+                            <div class="mt-4">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     <span class="flex items-center gap-2">
                                         <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 5.97h6.56l-3.43-5.97L7.71 3.5zm1.14 0l6.56 11.5H21.97l-6.56-11.5H8.85zm6.56 12.5L12 22h12l-3.43-5.97H15.41z"/></svg>
@@ -2203,6 +2167,52 @@ show_admin_bar(false);
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Paste the Google Drive folder link containing the PSD and source files</p>
                             </div>
+                        </div>
+
+                        <!-- Video: add YouTube link while in progress -->
+                        <div x-show="isVideoConcept(selectedConcept) && ['in_progress', 'needs_revision', 'rejected'].includes(selectedConcept?.status)" class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Video for Review</h3>
+                            <div x-show="selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected'" class="mb-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                                <p class="text-sm text-orange-700 dark:text-orange-400">Update the YouTube link with your revised video, then submit for review again.</p>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Paste the YouTube link to the final video or reel. No design file upload needed — the video link is what goes to the content bank for client approval.</p>
+                            <div x-show="selectedConcept?.youtubeLink" class="aspect-video rounded-lg overflow-hidden bg-black mb-3">
+                                <iframe :src="getYoutubeEmbedUrl(selectedConcept.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                            <div x-show="selectedConcept?.youtubeLink" class="flex items-center gap-2 mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <a :href="selectedConcept?.youtubeLink" target="_blank" rel="noopener noreferrer" class="text-sm text-green-700 dark:text-green-400 hover:underline truncate flex-1" x-text="selectedConcept?.youtubeLink"></a>
+                                <button type="button" @click="selectedConcept.youtubeLink = ''; saveYoutubeLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
+                            </div>
+                            <div x-show="!selectedConcept?.youtubeLink">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube / Video Link <span class="text-red-500">*</span></label>
+                                <p class="text-xs text-red-500 mb-2">Required before submitting for review</p>
+                                <div class="flex gap-2">
+                                    <input type="url" x-model="youtubeLinkInput" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                    <button type="button" @click="saveYoutubeLink(selectedConcept)" :disabled="!youtubeLinkInput" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors">Save</button>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unlisted YouTube links work well for review before posting to IG.</p>
+                            </div>
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Files Link <span class="text-xs font-normal text-gray-500">(optional)</span></label>
+                                <div x-show="selectedConcept?.videoDriveLink" class="flex items-center gap-2 mb-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                    <a :href="selectedConcept?.videoDriveLink" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate flex-1" x-text="selectedConcept?.videoDriveLink"></a>
+                                    <button type="button" @click="selectedConcept.videoDriveLink = ''; saveVideoDriveLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
+                                </div>
+                                <div x-show="!selectedConcept?.videoDriveLink" class="flex gap-2">
+                                    <input type="url" x-model="videoDriveLinkInput" placeholder="https://drive.google.com/... (optional raw project files)" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    <button type="button" @click="saveVideoDriveLink(selectedConcept)" :disabled="!videoDriveLinkInput" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm rounded-lg">Save</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video: preview while pending brand rep review -->
+                        <div x-show="isVideoConcept(selectedConcept) && selectedConcept?.status === 'pending_review' && selectedConcept?.youtubeLink" class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Submitted Video</h3>
+                            <div class="aspect-video rounded-lg overflow-hidden bg-black mb-3">
+                                <iframe :src="getYoutubeEmbedUrl(selectedConcept.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                            <a :href="selectedConcept?.youtubeLink" target="_blank" rel="noopener noreferrer" class="text-sm text-red-600 dark:text-red-400 hover:underline">Open on YouTube</a>
                         </div>
 
                         <!-- Status Actions -->
@@ -3065,7 +3075,19 @@ show_admin_bar(false);
                                                     </span>
                                                 </template>
                                             </div>
-                                            <button @click="addContentBankFeedback()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">Send</button>
+                                            <button type="button" @click="addContentBankFeedback()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">Send</button>
+                                        </div>
+                                    </div>
+                                    <!-- Client feedback (watch video / image and comment) -->
+                                    <div x-show="user.role === 'client' || viewMode === 'client'" class="relative mt-3">
+                                        <textarea
+                                            x-model="newClientContentBankFeedback"
+                                            placeholder="Watch the content above and leave your feedback..."
+                                            rows="3"
+                                            class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm">
+                                        </textarea>
+                                        <div class="flex justify-end mt-2">
+                                            <button type="button" @click="addClientContentBankFeedback()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">Send Feedback</button>
                                         </div>
                                     </div>
                                 </div>
@@ -3196,6 +3218,7 @@ show_admin_bar(false);
                 showConceptModal: false,
                 showConceptTypePicker: false,
                 conceptMediaType: '',
+                conceptDescriptionNA: false,
                 showConceptDetail: false,
                 showTaskModal: false,
                 editingConcept: null,
@@ -3216,7 +3239,7 @@ show_admin_bar(false);
                 contentBankCarouselIndex: 0,
                 contentBankTouchStartX: 0,
                 conceptForm: {
-                    title: '', description: '', caption: '', clientId: '', contentType: '', platform: [],
+                    title: '', description: '', caption: '', clientId: '', contentType: '', mediaCategory: '', platform: [],
                     priority: 'medium', dueDate: '', assignedTo: '', referenceLink: '',
                     briefDetails: { keyMessage: '', callToAction: '', additionalNotes: '', descriptionColor: '#111827', captionColor: '#6B7280' }
                 },
@@ -3257,6 +3280,7 @@ show_admin_bar(false);
                     scheduledPostDate: ''
                 },
                 newContentBankFeedback: '',
+                newClientContentBankFeedback: '',
                 showCBMentionDropdown: false,
                 filteredCBUsers: [],
                 selectedCBMentions: [],
@@ -3587,13 +3611,15 @@ show_admin_bar(false);
 
                 startConceptForm(mediaType) {
                     this.conceptMediaType = mediaType;
+                    this.conceptDescriptionNA = false;
                     this.editingConcept = null;
                     this.conceptForm = {
                         title: '',
                         description: '',
                         caption: '',
                         clientId: '',
-                        contentType: mediaType === 'video' ? 'video' : 'graphic',
+                        contentType: mediaType === 'video' ? 'reel' : 'graphic',
+                        mediaCategory: mediaType,
                         platform: mediaType === 'video' ? ['instagram'] : [],
                         priority: 'medium',
                         dueDate: '',
@@ -3606,8 +3632,44 @@ show_admin_bar(false);
                     this.showConceptModal = true;
                 },
 
+                getConceptTypeOptions() {
+                    if (this.conceptMediaType === 'video') {
+                        return [
+                            { value: 'video', label: 'Video' },
+                            { value: 'reel', label: 'Reel' }
+                        ];
+                    }
+                    return [
+                        { value: 'graphic', label: 'Graphic' },
+                        { value: 'carousel', label: 'Carousel' },
+                        { value: 'story', label: 'Story' },
+                        { value: 'motion_graphic', label: 'Motion Graphic' }
+                    ];
+                },
+
+                getConceptTypeLabel(value) {
+                    const match = this.getConceptTypeOptions().find((t) => t.value === value);
+                    if (match) return match.label;
+                    if (value === 'reel') return 'Reel';
+                    if (value === 'video') return 'Video';
+                    return (value || '').replace('_', ' ');
+                },
+
+                markDescriptionNA() {
+                    this.conceptDescriptionNA = !this.conceptDescriptionNA;
+                    if (this.conceptDescriptionNA) {
+                        this.conceptForm.description = 'N/A';
+                    } else if (this.conceptForm.description === 'N/A') {
+                        this.conceptForm.description = '';
+                    }
+                },
+
                 isVideoConcept(concept) {
-                    const type = concept?.contentType || this.conceptForm?.contentType;
+                    const item = concept || {};
+                    const mediaCategory = item.mediaCategory || this.conceptForm?.mediaCategory || this.conceptMediaType;
+                    if (mediaCategory === 'video') return true;
+                    if (mediaCategory === 'graphic') return false;
+                    const type = item.contentType || this.conceptForm?.contentType;
                     return ['video', 'reel'].includes(type);
                 },
 
@@ -3648,10 +3710,11 @@ show_admin_bar(false);
 
                 editConcept(concept) {
                     this.editingConcept = concept;
-                    this.conceptMediaType = this.isVideoConcept(concept) ? 'video' : 'graphic';
+                    this.conceptMediaType = concept.mediaCategory || (this.isVideoConcept(concept) ? 'video' : 'graphic');
+                    this.conceptDescriptionNA = concept.description === 'N/A';
                     this.conceptForm = {
                         title: concept.title, description: concept.description, caption: concept.caption || '', clientId: concept.clientId?._id || concept.clientId,
-                        contentType: concept.contentType, platform: concept.platform || [], priority: concept.priority,
+                        contentType: concept.contentType, mediaCategory: concept.mediaCategory || this.conceptMediaType, platform: concept.platform || [], priority: concept.priority,
                         dueDate: concept.dueDate ? concept.dueDate.split('T')[0] : '', assignedTo: concept.assignedTo?._id || concept.assignedTo || '',
                         referenceLink: concept.referenceLink || '',
                         briefDetails: {
@@ -4008,6 +4071,14 @@ show_admin_bar(false);
 
                 async saveConcept() {
                     const token = localStorage.getItem('token');
+                    if (this.conceptMediaType === 'video' && !this.conceptForm.description?.trim()) {
+                        this.conceptForm.description = 'N/A';
+                    }
+                    if (this.conceptMediaType !== 'video' && !this.conceptForm.description?.trim()) {
+                        this.showToast('Description is required for graphic concepts', 'error');
+                        return;
+                    }
+                    this.conceptForm.mediaCategory = this.conceptMediaType || this.conceptForm.mediaCategory || 'graphic';
                     const url = this.editingConcept ? `${API_URL}/workflow/concepts/${this.editingConcept._id}` : `${API_URL}/workflow/concepts`;
                     const method = this.editingConcept ? 'PUT' : 'POST';
                     try {
@@ -5039,6 +5110,31 @@ show_admin_bar(false);
                             this.showToast('Comment added', 'success');
                         }
                     } catch (error) { console.error('Add CB feedback error:', error); this.showToast('Failed to add comment', 'error'); }
+                },
+
+                async addClientContentBankFeedback() {
+                    if (!this.newClientContentBankFeedback.trim() || !this.selectedContentBankItem) return;
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/content-bank/${this.selectedContentBankItem._id}/client-feedback`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ message: this.newClientContentBankFeedback })
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.selectedContentBankItem = data.concept;
+                            this.newClientContentBankFeedback = '';
+                            await this.loadContentBank();
+                            this.showToast('Feedback sent', 'success');
+                        } else {
+                            const error = await response.json();
+                            this.showToast(error.message || 'Failed to send feedback', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Add client CB feedback error:', error);
+                        this.showToast('Failed to send feedback', 'error');
+                    }
                 },
 
                 // ===== FEED METHODS =====
