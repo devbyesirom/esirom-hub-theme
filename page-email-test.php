@@ -53,6 +53,8 @@ $workflow_url = $workflow_page ? get_permalink($workflow_page) : home_url('/work
                 <div id="panel" class="hidden px-8 py-8 space-y-5">
                     <div id="alert" class="hidden px-4 py-3 rounded-xl text-sm" role="alert"></div>
 
+                    <div id="statusLine" class="hidden text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3"></div>
+
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Send to</label>
                         <input id="email" type="email" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="you@example.com">
@@ -126,26 +128,57 @@ $workflow_url = $workflow_page ? get_permalink($workflow_page) : home_url('/work
             showAlert('Sending…', 'info');
 
             try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 25000);
+
                 const res = await fetch(API_URL + '/admin/test-email', {
                     method: 'POST',
                     headers: {
                         Authorization: 'Bearer ' + token,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, type })
+                    body: JSON.stringify({ email, type }),
+                    signal: controller.signal
                 });
-                const data = await res.json();
+                clearTimeout(timer);
+
+                let data = {};
+                try {
+                    data = await res.json();
+                } catch (_) {
+                    data = { message: 'Invalid response from server' };
+                }
 
                 if (res.ok && data.success) {
-                    showAlert(data.message || 'Email sent successfully.', 'success');
+                    showAlert((data.message || 'Email sent successfully.') + (data.messageId ? ' ID: ' + data.messageId : ''), 'success');
                 } else {
-                    showAlert(data.message || 'Failed to send email.', 'error');
+                    showAlert(data.message || data.error || 'Failed to send email.', 'error');
                 }
             } catch (err) {
-                showAlert(err.message || 'Network error.', 'error');
+                const msg = err.name === 'AbortError'
+                    ? 'Request timed out. The server may still be retrying SMTP — try again shortly.'
+                    : (err.message || 'Network error.');
+                showAlert(msg, 'error');
             } finally {
                 setLoading(false);
             }
+        }
+
+        async function loadEmailStatus(token) {
+            try {
+                const res = await fetch(API_URL + '/admin/email-status', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) return;
+
+                const el = $('statusLine');
+                el.classList.remove('hidden');
+                el.innerHTML =
+                    '<strong>Provider:</strong> ' + (data.provider === 'resend_api' ? 'Resend API ✓' : 'SMTP') +
+                    ' · <strong>Workflow email:</strong> ' + (data.workflowEmailEnabled ? 'on' : 'off') +
+                    ' · <strong>From:</strong> ' + (data.from || 'not set');
+            } catch (_) { /* optional */ }
         }
 
         async function init() {
@@ -177,6 +210,8 @@ $workflow_url = $workflow_page ? get_permalink($workflow_page) : home_url('/work
                 $('loading').classList.add('hidden');
                 $('panel').classList.remove('hidden');
                 $('email').value = data.user.email || '';
+
+                await loadEmailStatus(token);
 
                 $('btnTest').addEventListener('click', () => sendTest('test'));
                 $('btnContentBank').addEventListener('click', () => sendTest('content_bank'));
