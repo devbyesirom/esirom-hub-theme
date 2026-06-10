@@ -1163,7 +1163,7 @@ show_admin_bar(false);
                                 <span class="px-4 py-2 text-gray-700 dark:text-gray-300 font-medium" x-text="clients[0]?.brandName || clients[0]?.name"></span>
                             </template>
                         </div>
-                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="showManualUploadModal = true" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openManualUploadModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             <span>Upload Pre-Approved Content</span>
                         </button>
@@ -2838,9 +2838,34 @@ show_admin_bar(false);
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload Files (Images/Videos)</label>
-                            <input id="manualUploadFiles" type="file" multiple accept="image/*,video/*" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                            <p class="text-xs text-gray-500 mt-1">Upload pre-approved content that was created before this system</p>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content Type *</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="manualUploadForm.mediaType = 'image'" :class="manualUploadForm.mediaType === 'image' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-500' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'" class="p-3 rounded-lg border text-left transition-all">
+                                    <span class="block text-sm font-semibold text-gray-900 dark:text-white">Image</span>
+                                    <span class="block text-xs text-gray-500 mt-0.5">Upload PNG/JPG files</span>
+                                </button>
+                                <button type="button" @click="manualUploadForm.mediaType = 'video'" :class="manualUploadForm.mediaType === 'video' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 ring-2 ring-red-500' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'" class="p-3 rounded-lg border text-left transition-all">
+                                    <span class="block text-sm font-semibold text-gray-900 dark:text-white">Video / Reel</span>
+                                    <span class="block text-xs text-gray-500 mt-0.5">Paste a YouTube link</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div x-show="manualUploadForm.mediaType === 'video'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format</label>
+                            <select x-model="manualUploadForm.contentType" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="reel">Reel</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                        <div x-show="manualUploadForm.mediaType === 'image'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload Images *</label>
+                            <input id="manualUploadFiles" type="file" multiple accept="image/*" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <p class="text-xs text-gray-500 mt-1">Images only — PNG, JPG, WEBP. For videos, switch to Video / Reel and use a YouTube link.</p>
+                        </div>
+                        <div x-show="manualUploadForm.mediaType === 'video'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube / Video Link *</label>
+                            <input x-model="manualUploadForm.youtubeLink" type="url" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <p class="text-xs text-gray-500 mt-1">Pre-approved reels and videos are linked via YouTube — no file upload needed.</p>
                         </div>
                     </div>
                     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-end gap-3">
@@ -3303,6 +3328,9 @@ show_admin_bar(false);
                     title: '',
                     description: '',
                     platform: 'instagram',
+                    mediaType: 'image',
+                    contentType: 'reel',
+                    youtubeLink: '',
                     files: []
                 },
                 selectedViewClient: null,
@@ -4953,14 +4981,37 @@ show_admin_bar(false);
                     }
 
                     const token = localStorage.getItem('token');
+                    const isVideo = this.manualUploadForm.mediaType === 'video';
+                    const fileInput = document.getElementById('manualUploadFiles');
+
+                    if (isVideo) {
+                        if (!this.manualUploadForm.youtubeLink?.trim()) {
+                            this.showToast('Please enter a YouTube / video link', 'error');
+                            return;
+                        }
+                    } else {
+                        if (!fileInput?.files?.length) {
+                            this.showToast('Please select at least one image', 'error');
+                            return;
+                        }
+                        for (let i = 0; i < fileInput.files.length; i++) {
+                            if (!fileInput.files[i].type.startsWith('image/')) {
+                                this.showToast('Only image files are allowed. Use YouTube link for videos.', 'error');
+                                return;
+                            }
+                        }
+                    }
+
                     const formData = new FormData();
                     formData.append('clientId', this.manualUploadForm.clientId);
                     formData.append('title', this.manualUploadForm.title);
                     formData.append('description', this.manualUploadForm.description);
                     formData.append('platform', this.manualUploadForm.platform);
-                    
-                    const fileInput = document.getElementById('manualUploadFiles');
-                    if (fileInput && fileInput.files) {
+                    formData.append('mediaType', this.manualUploadForm.mediaType);
+                    formData.append('contentType', isVideo ? this.manualUploadForm.contentType : 'graphic');
+                    if (isVideo) {
+                        formData.append('youtubeLink', this.manualUploadForm.youtubeLink.trim());
+                    } else if (fileInput?.files) {
                         for (let i = 0; i < fileInput.files.length; i++) {
                             formData.append('files', fileInput.files[i]);
                         }
@@ -4976,8 +5027,7 @@ show_admin_bar(false);
                         if (response.ok) {
                             this.showToast('Content uploaded successfully to Content Bank!', 'success');
                             this.showManualUploadModal = false;
-                            this.manualUploadForm = { clientId: '', title: '', description: '', platform: 'instagram', files: [] };
-                            if (fileInput) fileInput.value = '';
+                            this.resetManualUploadForm();
                             await this.loadContentBank();
                         } else {
                             const error = await response.json();
@@ -4987,6 +5037,26 @@ show_admin_bar(false);
                         console.error('Manual upload error:', error);
                         this.showToast('Failed to upload content', 'error');
                     }
+                },
+
+                openManualUploadModal() {
+                    this.resetManualUploadForm();
+                    this.showManualUploadModal = true;
+                },
+
+                resetManualUploadForm() {
+                    this.manualUploadForm = {
+                        clientId: '',
+                        title: '',
+                        description: '',
+                        platform: 'instagram',
+                        mediaType: 'image',
+                        contentType: 'reel',
+                        youtubeLink: '',
+                        files: []
+                    };
+                    const fileInput = document.getElementById('manualUploadFiles');
+                    if (fileInput) fileInput.value = '';
                 },
 
                 async scheduleContent(item) {
