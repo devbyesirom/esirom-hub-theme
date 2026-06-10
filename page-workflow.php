@@ -4317,14 +4317,33 @@ show_admin_bar(false);
                         } catch (e) { console.error('Mark notification read error:', e); }
                     }
 
-                    // Navigate based on notification type and relatedModel
                     const id = notification.relatedId;
                     const model = notification.relatedModel;
+                    const token = localStorage.getItem('token');
+
+                    // Content Bank alerts — clients must use content-bank API (not workflow/concepts)
+                    const isContentBankAlert =
+                        notification.type === 'content_bank_ready' ||
+                        (this.user?.role === 'client' && model === 'Concept' && id);
+
+                    if (isContentBankAlert && id) {
+                        this.activeTab = 'contentBank';
+                        this.setWorkflowQuery('contentBank', { content: String(id) });
+                        try {
+                            await this.loadContentBank();
+                            const res = await fetch(`${API_URL}/content-bank/${id}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.concept) await this.viewContentBankItem(data.concept);
+                            }
+                        } catch (e) { console.error('Notification navigate error:', e); }
+                        return;
+                    }
 
                     if (model === 'Concept' && id) {
-                        const token = localStorage.getItem('token');
                         try {
-                            // First check the concept status to decide which detail to open
                             const res = await fetch(`${API_URL}/workflow/concepts/${id}`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                             });
@@ -4333,13 +4352,11 @@ show_admin_bar(false);
                                 const concept = data.concept;
                                 if (concept) {
                                     if (['in_content_bank', 'client_approved', 'posted', 'needs_revision'].includes(concept.status) && concept.clientApprovalStatus) {
-                                        // Open Content Bank detail popup
                                         this.activeTab = 'contentBank';
                                         this.setWorkflowQuery('contentBank', { content: String(concept._id) });
                                         await this.loadContentBank();
                                         await this.viewContentBankItem(concept);
                                     } else {
-                                        // Open Concepts detail popup
                                         this.activeTab = 'concepts';
                                         this.setWorkflowQuery('concepts', { concept: String(id) });
                                         this.selectedConcept = concept;
