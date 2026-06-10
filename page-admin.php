@@ -89,6 +89,10 @@ show_admin_bar(false);
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
                     <span class="nav-text">Clients</span>
                 </a>
+                <a @click.prevent="activeTab = 'emails'; loadClientReminders()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
+                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                    <span class="nav-text">Emails</span>
+                </a>
                 <a @click.prevent="activeTab = 'import'" href="#" :class="activeTab === 'import' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
                     <span class="nav-text">Import Posts</span>
@@ -149,22 +153,6 @@ show_admin_bar(false);
                     <button @click="showUserModal = true; editingUser = null" class="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-indigo-700">
                         Add New User
                     </button>
-                </div>
-
-                <!-- Google Chat workflow digest (admin test) -->
-                <div class="mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Google Space — Workflow Digest</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Posts the daily overdue / due today / due soon summary to your AgencyHUB workflow Space. Runs automatically at 8:30 AM Mon–Fri.</p>
-                        </div>
-                        <button @click="testWorkflowDigest()"
-                                :disabled="workflowDigestLoading"
-                                class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                            <span x-show="!workflowDigestLoading">Send Test Digest Now</span>
-                            <span x-show="workflowDigestLoading">Sending…</span>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Users Table -->
@@ -303,6 +291,94 @@ show_admin_bar(false);
                             </div>
                         </div>
                     </template>
+                </div>
+            </div>
+
+            <!-- Emails Tab -->
+            <div x-show="activeTab === 'emails'" x-cloak class="w-full space-y-6">
+                <div class="bg-white shadow rounded-lg p-5 border border-gray-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">Google Space — Workflow Digest</h3>
+                            <p class="text-xs text-gray-500 mt-1">Daily overdue / due today / due soon summary for your team Space (Mon–Fri 8:30 AM).</p>
+                        </div>
+                        <button @click="testWorkflowDigest()" :disabled="workflowDigestLoading"
+                                class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
+                            <span x-show="!workflowDigestLoading">Send Test Digest Now</span>
+                            <span x-show="workflowDigestLoading">Sending…</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">Content Bank — Client Reminders</h3>
+                            <p class="text-xs text-gray-500 mt-1">Email clients a summary of content waiting for their approval in the Hub.</p>
+                            <p class="text-xs text-indigo-600 mt-2" x-show="reminderTotals.pendingItems > 0">
+                                <span x-text="reminderTotals.pendingItems"></span> item(s) across
+                                <span x-text="reminderTotals.brands"></span> brand(s) ·
+                                <span x-text="reminderTotals.recipients"></span> client contact(s)
+                            </p>
+                            <p class="text-xs text-gray-400 mt-2" x-show="!reminderLoading && reminderBrands.length === 0">No content currently waiting for client approval.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button @click="loadClientReminders()" :disabled="reminderLoading"
+                                    class="px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
+                                Refresh
+                            </button>
+                            <button @click="sendClientReminders()"
+                                    :disabled="reminderSending || reminderLoading || selectedReminderClients.length === 0"
+                                    class="px-4 py-2 bg-purple-600 text-white text-xs font-semibold rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!reminderSending">Send Client Reminder</span>
+                                <span x-show="reminderSending">Sending…</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="reminderLoading" class="p-8 text-center text-sm text-gray-500">Loading pending approvals…</div>
+
+                    <div x-show="!reminderLoading && reminderBrands.length > 0" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">
+                                        <input type="checkbox" class="rounded border-gray-300"
+                                               :checked="selectedReminderClients.length === reminderBrands.length && reminderBrands.length > 0"
+                                               @change="toggleAllReminderClients($event.target.checked)">
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pending</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <template x-for="brand in reminderBrands" :key="brand.clientId">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="rounded border-gray-300"
+                                                   :checked="selectedReminderClients.includes(brand.clientId)"
+                                                   @change="toggleReminderClient(brand.clientId, $event.target.checked)">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800" x-text="brand.pendingCount"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-xs text-gray-600">
+                                            <template x-if="brand.clientUsers.length">
+                                                <span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span>
+                                            </template>
+                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-xs text-gray-500 max-w-md">
+                                            <span x-text="brand.items.map(i => i.title).join(' · ')"></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1161,6 +1237,11 @@ show_admin_bar(false);
                 showUserModal: false,
                 showClientModal: false,
                 workflowDigestLoading: false,
+                reminderBrands: [],
+                reminderTotals: { brands: 0, pendingItems: 0, recipients: 0 },
+                selectedReminderClients: [],
+                reminderLoading: false,
+                reminderSending: false,
                 showCustomizeModal: false,
                 showBulkAddModal: false,
                 showApprovalModal: false,
@@ -1772,6 +1853,82 @@ show_admin_bar(false);
                     }
                 },
 
+                async loadClientReminders() {
+                    this.reminderLoading = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/client-reminders/preview`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.reminderBrands = data.brands || [];
+                            this.reminderTotals = data.totals || { brands: 0, pendingItems: 0, recipients: 0 };
+                            this.selectedReminderClients = this.reminderBrands
+                                .filter(b => b.clientUsers && b.clientUsers.length)
+                                .map(b => b.clientId);
+                        } else {
+                            this.showToast(data.message || 'Failed to load reminders', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadClientReminders:', error);
+                        this.showToast('Could not load client reminders', 'error', 5000);
+                    } finally {
+                        this.reminderLoading = false;
+                    }
+                },
+
+                toggleReminderClient(clientId, checked) {
+                    if (checked) {
+                        if (!this.selectedReminderClients.includes(clientId)) {
+                            this.selectedReminderClients.push(clientId);
+                        }
+                    } else {
+                        this.selectedReminderClients = this.selectedReminderClients.filter(id => id !== clientId);
+                    }
+                },
+
+                toggleAllReminderClients(checked) {
+                    if (checked) {
+                        this.selectedReminderClients = this.reminderBrands
+                            .filter(b => b.clientUsers && b.clientUsers.length)
+                            .map(b => b.clientId);
+                    } else {
+                        this.selectedReminderClients = [];
+                    }
+                },
+
+                async sendClientReminders() {
+                    if (!this.selectedReminderClients.length) return;
+                    const brands = this.reminderBrands.filter(b => this.selectedReminderClients.includes(b.clientId));
+                    const itemCount = brands.reduce((n, b) => n + (b.pendingCount || 0), 0);
+                    const emails = new Set();
+                    brands.forEach(b => (b.clientUsers || []).forEach(u => emails.add(u.email)));
+                    if (!confirm(`Send reminder emails to ${emails.size} client contact(s) covering ${itemCount} pending item(s) across ${brands.length} brand(s)?`)) return;
+
+                    this.reminderSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/client-reminders/send`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ clientIds: this.selectedReminderClients })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.emailsSent > 0) {
+                            this.showToast(data.message || 'Client reminders sent', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'No reminders were sent', data.emailsSent === 0 ? 'info' : 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendClientReminders:', error);
+                        this.showToast('Could not send client reminders', 'error', 5000);
+                    } finally {
+                        this.reminderSending = false;
+                    }
+                },
+
                 async testWorkflowDigest() {
                     if (!confirm('Send the workflow digest to the Google Space now? (Overdue, due today, due in 3 days)')) return;
                     this.workflowDigestLoading = true;
@@ -1974,6 +2131,8 @@ show_admin_bar(false);
                             return 'Pending Registrations';
                         case 'clients':
                             return 'Client Management';
+                        case 'emails':
+                            return 'Emails & Notifications';
                         case 'import':
                             return 'Import Posts';
                         default:
@@ -1989,6 +2148,8 @@ show_admin_bar(false);
                             return 'Review and approve new user registration requests';
                         case 'clients':
                             return 'Manage brands, dashboards, and client settings';
+                        case 'emails':
+                            return 'Client Content Bank reminders and team workflow digest';
                         case 'import':
                             return 'Import historical posts and performance data';
                         default:
