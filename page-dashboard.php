@@ -1629,7 +1629,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
     </div>
 
     <!-- Report Detail Modal -->
-    <div x-show="showReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showReportModal = false">
+    <div x-show="showReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="closeReportModal()">
         <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white" x-text="selectedReport?.name || 'Report'"></h3>
             <div class="space-y-4">
@@ -1644,8 +1644,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
-                <div x-show="selectedReport?.source === 'uploaded' && selectedReport?.pdfUrl" class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/40">
-                    <iframe :src="selectedReport?.pdfUrl" class="w-full h-[28rem]" title="Report PDF"></iframe>
+                <div x-show="selectedReport?.pdfUrl || selectedReport?.source === 'uploaded'" class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/40 min-h-[28rem]">
+                    <div x-show="reportPdfViewerLoading" class="flex items-center justify-center h-[28rem] text-sm text-gray-500 dark:text-gray-400">
+                        <svg class="animate-spin w-5 h-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        Loading PDF...
+                    </div>
+                    <p x-show="reportPdfViewerError" class="p-4 text-sm text-red-600 dark:text-red-400" x-text="reportPdfViewerError"></p>
+                    <iframe x-show="reportPdfViewerUrl && !reportPdfViewerLoading" :src="reportPdfViewerUrl" class="w-full h-[28rem]" title="Report PDF"></iframe>
+                    <div x-show="!reportPdfViewerLoading && (reportPdfViewerUrl || selectedReport?.pdfUrl)" class="px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-right">
+                        <a :href="reportPdfViewerUrl || selectedReport?.pdfUrl" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Open in new tab</a>
+                    </div>
                 </div>
 
                 <div x-show="selectedReport?.source !== 'uploaded'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1697,7 +1705,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
-                    <button type="button" @click="showReportModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
+                    <button type="button" @click="closeReportModal()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
                     <button type="button" @click="saveReportEdits()" x-show="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="savingReportEdit">Save</button>
                     <button type="button" @click="downloadReport(selectedReport)" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Download PDF</button>
                 </div>
@@ -2169,6 +2177,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 reports: [],
                 selectedReport: null,
                 showReportModal: false,
+                reportPdfViewerUrl: null,
+                reportPdfViewerLoading: false,
+                reportPdfViewerError: null,
                 reportEditForm: null,
                 savingReportEdit: false,
                 reportPreview: null,
@@ -5209,17 +5220,54 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
                 },
 
+                revokeReportPdfViewerUrl() {
+                    if (this.reportPdfViewerUrl) {
+                        URL.revokeObjectURL(this.reportPdfViewerUrl);
+                        this.reportPdfViewerUrl = null;
+                    }
+                },
+
+                closeReportModal() {
+                    this.showReportModal = false;
+                    this.revokeReportPdfViewerUrl();
+                    this.reportPdfViewerLoading = false;
+                    this.reportPdfViewerError = null;
+                },
+
+                async fetchReportPdfBlob(reportId) {
+                    const response = await fetch(`${API_URL}/reports/${reportId}/pdf`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (!response.ok) {
+                        let message = 'Failed to load PDF';
+                        try {
+                            const data = await response.json();
+                            message = data.message || message;
+                        } catch (_err) {}
+                        throw new Error(message);
+                    }
+                    return response.blob();
+                },
+
                 async downloadReport(report) {
                     if (!report) return;
-                    if (report.pdfUrl) {
-                        const a = document.createElement('a');
-                        a.href = report.pdfUrl;
-                        a.target = '_blank';
-                        a.rel = 'noopener noreferrer';
-                        a.download = `${(report.name || 'report').replace(/[^a-z0-9]+/gi, '_').toLowerCase()}.pdf`;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
+                    if (report.pdfUrl || report.source === 'uploaded') {
+                        try {
+                            const blob = await this.fetchReportPdfBlob(report._id);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${(report.name || 'report').replace(/[^a-z0-9]+/gi, '_').toLowerCase()}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                        } catch (error) {
+                            console.error('Download report error:', error);
+                            this.showToast(error.message || 'Unable to download report.', 'error');
+                        }
                         return;
                     }
 
@@ -5243,6 +5291,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 async openReport(report) {
                     if (!report?._id) return;
+                    this.revokeReportPdfViewerUrl();
+                    this.reportPdfViewerLoading = false;
+                    this.reportPdfViewerError = null;
                     try {
                         const response = await fetch(`${API_URL}/reports/${report._id}`, {
                             headers: {
@@ -5260,6 +5311,19 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             status: data.data?.status || 'draft'
                         };
                         this.showReportModal = true;
+
+                        if (data.data?.pdfUrl || data.data?.source === 'uploaded') {
+                            this.reportPdfViewerLoading = true;
+                            try {
+                                const blob = await this.fetchReportPdfBlob(report._id);
+                                this.reportPdfViewerUrl = URL.createObjectURL(blob);
+                            } catch (pdfError) {
+                                console.error('Load report PDF error:', pdfError);
+                                this.reportPdfViewerError = pdfError.message || 'Unable to preview PDF. Try Open in new tab or Download PDF.';
+                            } finally {
+                                this.reportPdfViewerLoading = false;
+                            }
+                        }
                     } catch (error) {
                         console.error('Open report error:', error);
                         this.showToast(error.message || 'Unable to open report.', 'error');
