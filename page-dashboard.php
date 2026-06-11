@@ -592,6 +592,24 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     All Platforms
                                 </button>
                             </div>
+
+                            <!-- Connected channels & where to find synced content -->
+                            <div x-show="hasConnectedSocialChannels() || getPlatformPostCount('youtube') > 0" class="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Connected channels</p>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span x-show="socialMediaStatus.facebook?.connected" class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Facebook · <span x-text="getPlatformPostCount('facebook')"></span> posts</span>
+                                    <span x-show="socialMediaStatus.instagram?.connected" class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Instagram · <span x-text="getPlatformPostCount('instagram')"></span> posts</span>
+                                    <span x-show="socialMediaStatus.youtube?.connected" class="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">YouTube · <span x-text="getPlatformPostCount('youtube')"></span> videos</span>
+                                </div>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    Synced posts and video insights feed the metrics above. Use the platform pills to filter, or open <strong>Published Posts</strong> to browse individual items.
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button @click="viewPlatformPosts('youtube')" x-show="clientPlatforms.includes('youtube')" class="text-xs px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700">View YouTube posts</button>
+                                    <button @click="viewPlatformPosts('instagram')" x-show="clientPlatforms.includes('instagram')" class="text-xs px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700">View Instagram posts</button>
+                                    <button @click="viewPlatformPosts('facebook')" x-show="clientPlatforms.includes('facebook')" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700">View Facebook posts</button>
+                                </div>
+                            </div>
                             
                             <!-- Widget Customization Panel -->
                             <div x-show="showCustomizeWidgets" x-collapse class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -2235,6 +2253,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.resetInsightsUpload();
 
                     await this.loadDashboardData(token);
+                    await this.loadSocialMediaStatusForDashboard();
                     await this.loadReports(token);
                     await this.loadPosts(token);
                     await this.loadEventCoverageBookings(token);
@@ -2251,6 +2270,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 monthlyPostTarget: 0, // Will be loaded from client customization
                 clientStartDate: null, // Will be loaded from client customization
                 mirrorIGToFB: false,
+                socialMediaStatus: {},
                 progressViewMode: 'month', // 'month' or 'year' for Monthly Post Progress widget
                 
                 // Date range filter
@@ -3400,16 +3420,19 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             const comments = perf.comments || 0;
                             const shares = perf.shares || 0;
                             const saves = perf.saves || 0;
+                            const views = perf.views || 0;
                             const engagement = perf.engagement || (likes + comments + shares + saves);
+                            const impressions = perf.impressions || views || 0;
+                            const reach = perf.reach || impressions || views || 0;
                             const kpis = {
-                                [`${platform}_reach`]: perf.reach || 0,
-                                [`${platform}_impressions`]: perf.impressions || 0,
+                                [`${platform}_reach`]: reach,
+                                [`${platform}_impressions`]: impressions,
                                 [`${platform}_engagement`]: engagement,
                                 [`${platform}_likes`]: likes,
                                 [`${platform}_comments`]: comments,
                                 [`${platform}_shares`]: shares,
                                 [`${platform}_saves`]: saves,
-                                [`${platform}_views`]: perf.views || 0,
+                                [`${platform}_views`]: views,
                                 [`${platform}_watch_time`]: perf.watch_time || 0,
                                 [`${platform}_skip_rate`]: perf.skip_rate || 0,
                                 [`${platform}_views_followers`]: perf.views_followers || 0,
@@ -4713,18 +4736,68 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.updateDashboardMetrics();
                 },
                 
+                getPostDate(post) {
+                    const raw = post?.publishedDate || post?.scheduledDate;
+                    if (!raw) return null;
+                    const parsed = new Date(raw);
+                    return Number.isNaN(parsed.getTime()) ? null : parsed;
+                },
+
+                isPublishedInsightPost(post) {
+                    return post && (post.status === 'completed' || post.status === 'published');
+                },
+
                 isPostInDateRange(post) {
-                    if (!post.scheduledDate || (post.status !== 'completed' && post.status !== 'published')) return false;
-                    
-                    const postDate = new Date(post.scheduledDate);
+                    if (!this.isPublishedInsightPost(post)) return false;
+                    const postDate = this.getPostDate(post);
+                    if (!postDate) return false;
                     return postDate >= this.currentPeriodStart && postDate <= this.currentPeriodEnd;
                 },
                 
                 isPostInPreviousPeriod(post) {
-                    if (!post.scheduledDate || (post.status !== 'completed' && post.status !== 'published')) return false;
-                    
-                    const postDate = new Date(post.scheduledDate);
+                    if (!this.isPublishedInsightPost(post)) return false;
+                    const postDate = this.getPostDate(post);
+                    if (!postDate) return false;
                     return postDate >= this.previousPeriodStart && postDate <= this.previousPeriodEnd;
+                },
+
+                async loadSocialMediaStatusForDashboard() {
+                    const clientId = this.getClientId();
+                    if (!clientId) {
+                        this.socialMediaStatus = {};
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`${API_URL}/social-media/status/${clientId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        this.socialMediaStatus = data.success ? (data.data || {}) : {};
+                    } catch (error) {
+                        console.error('Error loading social media status:', error);
+                        this.socialMediaStatus = {};
+                    }
+                },
+
+                hasConnectedSocialChannels() {
+                    return !!(this.socialMediaStatus?.facebook?.connected ||
+                        this.socialMediaStatus?.instagram?.connected ||
+                        this.socialMediaStatus?.youtube?.connected);
+                },
+
+                getPlatformPostCount(platform) {
+                    return this.posts.filter((post) =>
+                        this.isPublishedInsightPost(post) &&
+                        post.platforms?.includes(platform)
+                    ).length;
+                },
+
+                viewPlatformPosts(platform) {
+                    this.activePlatforms = [platform];
+                    this.updateDashboardMetrics();
+                    this.activeView = 'calendar';
+                    this.filterPlatform = platform;
+                    window.location.hash = 'content-calendar';
                 },
 
                 // Widget preference management
@@ -4790,6 +4863,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     // Calculate current and previous period metrics
                     const currentReach = this.calculateFilteredKPI('reach', false);
                     const previousReach = this.calculateFilteredKPI('reach', true);
+                    const currentImpressions = this.calculateFilteredKPI('impressions', false);
+                    const previousImpressions = this.calculateFilteredKPI('impressions', true);
                     
                     // Calculate engagement: use engagement field, or fallback to sum of likes+comments+shares+saves
                     let currentEngagement = this.calculateFilteredKPI('engagement', false);
@@ -4805,14 +4880,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         current: currentReach,
                         change: this.calculatePercentageChange(currentReach, previousReach)
                     };
+                    this.dashboardData.metrics.impressions = {
+                        current: currentImpressions,
+                        change: this.calculatePercentageChange(currentImpressions, previousImpressions)
+                    };
                     this.dashboardData.metrics.engagement = {
                         current: currentEngagement,
                         change: this.calculatePercentageChange(currentEngagement, previousEngagement)
                     };
                     
-                    // Calculate engagement rate
-                    const currentEngagementRate = currentReach > 0 ? (currentEngagement / currentReach) * 100 : 0;
-                    const previousEngagementRate = previousReach > 0 ? (previousEngagement / previousReach) * 100 : 0;
+                    // Engagement rate: prefer impressions, then reach (YouTube often has views but no reach)
+                    const currentRateBase = currentImpressions || currentReach;
+                    const previousRateBase = previousImpressions || previousReach;
+                    const currentEngagementRate = currentRateBase > 0 ? (currentEngagement / currentRateBase) * 100 : 0;
+                    const previousEngagementRate = previousRateBase > 0 ? (previousEngagement / previousRateBase) * 100 : 0;
                     this.dashboardData.metrics.engagementRate = {
                         current: currentEngagementRate,
                         change: this.calculatePercentageChange(currentEngagementRate, previousEngagementRate)
@@ -4832,6 +4913,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     // Extract and aggregate demographics from posts
                     this.updateDemographicsData();
                     
+                    this.updateAutoTrackedKPIs();
+
                     // Reinitialize charts with new data
                     this.$nextTick(() => {
                         this.initCharts();
@@ -4970,12 +5053,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 calculatePlatformKPI(platform, metric) {
                     let total = 0;
-                    this.posts.filter(p => p.status === 'completed').forEach(post => {
+                    this.posts.filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post)).forEach(post => {
                         if (post.kpis && post.platforms && post.platforms.includes(platform)) {
                             const key = `${platform}_${metric}`;
-                            total += post.kpis[key] || 0;
+                            total += Number(post.kpis[key] || 0);
                         }
                     });
+                    if (metric === 'reach' || metric === 'impressions') {
+                        const pageTotal = this.pageLevelMetrics?.[platform]?.[metric] || 0;
+                        if (pageTotal > total) total = pageTotal;
+                    }
                     return total;
                 },
 
