@@ -68,9 +68,9 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
 <div <?php echo $hub_staff_show; ?> class="space-y-2">
 
     <!-- ── Workflow ─────────────────────────────────────────────────────── -->
-    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_workflow', ['workflow', 'overview', 'password_vault']); ?> }"
+    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_workflow', ['workflow', 'overview', 'password_vault', 'website_projects']); ?> }"
          x-init="$watch('open', v => localStorage.setItem('hubNav_workflow', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['workflow', 'overview', 'password_vault'])); ?>">
+        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['workflow', 'overview', 'password_vault', 'website_projects'])); ?>">
             <span<?php echo $hub_label_attrs; ?>>Workflow</span>
             <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
@@ -88,6 +88,11 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
                class="<?php echo esc_attr($hub_sub_class('password_vault')); ?>">
                 <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
+            </a>
+            <a href="<?php echo ($hub_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>"
+               class="<?php echo esc_attr($hub_sub_class('website_projects')); ?>">
+                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
+                <span class="nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
             </a>
         </div>
     </div>
@@ -172,11 +177,6 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
     <a href="<?php echo $hub_inventory_url; ?>" class="<?php echo esc_attr($hub_item_class('inventory')); ?>">
         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625-10.928a1.125 1.125 0 00-1.124-.99h-4.5a1.125 1.125 0 00-1.124.99L12.25 7.5M3.75 7.5h16.5M4.5 7.5v10.125c0 .621.504 1.125 1.125 1.125h13.5c.621 0 1.125-.504 1.125-1.125V7.5M9.75 11.25h4.5"/></svg>
         <span class="nav-text"<?php echo $hub_label_attrs; ?>>Inventory</span>
-    </a>
-
-    <a href="<?php echo ($hub_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>" class="<?php echo esc_attr($hub_item_class('website_projects')); ?>">
-        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
-        <span class="nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
     </a>
 
 </div>

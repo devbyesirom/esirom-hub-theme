@@ -409,6 +409,54 @@ show_admin_bar(false);
                     </div>
                 </div>
 
+                <!-- ── Website Development ── -->
+                <div x-show="websiteDevelopment && websiteDevelopment.projectCount > 0" class="ov-card-appear">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Website Development</span>
+                            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700 min-w-[2rem]"></div>
+                        </div>
+                        <a href="<?php echo esc_url(get_permalink(get_page_by_path('website-projects'))); ?>"
+                           class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Open Website Projects →</a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="ov-stat-card bg-white dark:bg-gray-800 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/40 text-center">
+                            <p class="text-2xl font-extrabold text-amber-600 tabular-nums" x-text="websiteDevelopment.totals?.pending ?? 0"></p>
+                            <p class="text-xs text-gray-500 mt-1 font-medium">Pending</p>
+                        </div>
+                        <div class="ov-stat-card bg-white dark:bg-gray-800 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/40 text-center">
+                            <p class="text-2xl font-extrabold text-blue-600 tabular-nums" x-text="websiteDevelopment.totals?.outstanding ?? 0"></p>
+                            <p class="text-xs text-gray-500 mt-1 font-medium">Outstanding</p>
+                        </div>
+                        <div class="ov-stat-card bg-white dark:bg-gray-800 rounded-2xl p-4 border border-green-100 dark:border-green-900/40 text-center">
+                            <p class="text-2xl font-extrabold text-green-600 tabular-nums" x-text="websiteDevelopment.totals?.completed ?? 0"></p>
+                            <p class="text-xs text-gray-500 mt-1 font-medium">Completed</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <template x-for="wp in (websiteDevelopment.projects || [])" :key="wp._id">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                                <div class="flex items-start justify-between gap-2 mb-3">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="wp.title"></h3>
+                                        <p class="text-xs text-gray-500 truncate">
+                                            <span x-text="wp.clientName"></span>
+                                            <span x-show="wp.isInternal" class="ml-1 text-purple-600 dark:text-purple-400">· Internal</span>
+                                        </p>
+                                    </div>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 capitalize shrink-0" x-text="(wp.status || '').replace(/_/g, ' ')"></span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div><p class="text-lg font-bold text-amber-600 tabular-nums" x-text="wp.counts?.pending ?? 0"></p><p class="text-[10px] text-gray-400">Pending</p></div>
+                                    <div><p class="text-lg font-bold text-blue-600 tabular-nums" x-text="wp.counts?.outstanding ?? 0"></p><p class="text-[10px] text-gray-400">Active</p></div>
+                                    <div><p class="text-lg font-bold text-green-600 tabular-nums" x-text="wp.counts?.completed ?? 0"></p><p class="text-[10px] text-gray-400">Done</p></div>
+                                </div>
+                                <p x-show="wp.leadDeveloper" class="text-[10px] text-gray-400 mt-2" x-text="'Lead: ' + wp.leadDeveloper"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 <!-- ── Search & Filter ── -->
                 <div class="ov-card-appear flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                     <div class="relative flex-1 min-w-0">
@@ -562,6 +610,11 @@ show_admin_bar(false);
                     totalRequiredPosts: 0,
                     totalRemainingPosts: 0,
                     overallProgress: 0
+                },
+                websiteDevelopment: {
+                    projectCount: 0,
+                    totals: { pending: 0, outstanding: 0, completed: 0, total: 0 },
+                    projects: []
                 },
 
                 showToast(message, type = 'info', duration = 3000) {
@@ -769,6 +822,11 @@ show_admin_bar(false);
                             ...((data && data.stats) || {})
                         };
                         this.periodInfo = (data && data.period) ? data.period : { label: '' };
+                        this.websiteDevelopment = data.websiteDevelopment || {
+                            projectCount: 0,
+                            totals: { pending: 0, outstanding: 0, completed: 0, total: 0 },
+                            projects: []
+                        };
                         this.filterBrands();
                     } catch (error) {
                         console.error('Error loading data:', error);

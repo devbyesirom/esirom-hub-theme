@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) exit;
 show_admin_bar(false);
 
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
+$website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects')));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -215,6 +216,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <h2 class="text-2xl font-bold text-gray-900 dark:text-white" x-text="(user?.firstName || '') + ' ' + (user?.lastName || '')"></h2>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" x-text="periodLabel"></p>
 
+                            <a x-show="myData.department === 'web_developer'" href="<?php echo $website_projects_url; ?>"
+                               class="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                View Website Projects & task queue →
+                            </a>
+
                             <!-- Score description -->
                             <div class="mt-3 flex items-center gap-2">
                                 <div class="h-2 flex-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -248,7 +254,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     <div>
                         <p class="text-xs font-semibold text-blue-800 dark:text-blue-200">How is my score calculated?</p>
                         <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5"
-                           x-text="myData.department === 'multimedia' ? 'Your score is the average of all your active delivery goals this month. Goals are only counted when you have projects assigned for that type.' : myData.department === 'graphic_designer' ? 'Graphics Completed counts double towards your score, as it reflects volume of work. On-Time Delivery counts once. Score = (Graphics% × 2 + On-Time%) ÷ 3.' : myData.department === 'social_media_exec' ? 'Score is based on concepts created vs. your monthly target across assigned brands. If No Data appears, ask your admin to set a monthly target per brand.' : 'Your score is a weighted average of all active goals for this period.'">
+                           x-text="myData.department === 'multimedia' ? 'Your score is the average of all your active delivery goals this month. Goals are only counted when you have projects assigned for that type.' : myData.department === 'graphic_designer' ? 'Graphics Completed counts double towards your score, as it reflects volume of work. On-Time Delivery counts once. Score = (Graphics% × 2 + On-Time%) ÷ 3.' : myData.department === 'social_media_exec' ? 'Score is based on concepts created vs. your monthly target across assigned brands. If No Data appears, ask your admin to set a monthly target per brand.' : myData.department === 'web_developer' ? 'Web developer goals pull from Website Projects: projects started, tasks completed, and sites marked live. Manage work in Website Projects under Workflow.' : 'Your score is a weighted average of all active goals for this period.'">
                         </p>
                     </div>
                 </div>

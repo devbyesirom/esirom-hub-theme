@@ -11,6 +11,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 $login_url = esc_url(get_permalink(get_page_by_path('login')));
 $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
 $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects')));
+$progress_url = esc_url(get_permalink(get_page_by_path('progress')));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -26,6 +27,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
         const LOGIN_URL = '<?php echo esc_js($login_url); ?>';
         const DASHBOARD_URL = '<?php echo esc_js($dashboard_url); ?>';
         const WEBSITE_PROJECTS_URL = '<?php echo esc_js($website_projects_url); ?>';
+        const PROGRESS_URL = '<?php echo esc_js($progress_url); ?>';
         tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
     </script>
     <style>
@@ -65,9 +67,10 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 class="text-lg font-bold text-gray-900 dark:text-white">Website Projects</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="isClient ? 'Submit bugs, requests, and content updates for your website' : 'Manage client websites, bugs, and development requests'"></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="isClient ? 'Submit bugs, requests, and content updates for your website' : (user?.department === 'web_developer' ? 'Manage websites — tracked in My Progress' : 'Report bugs, suggest features, or request updates for client & internal sites')"></p>
                 </div>
                 <div class="flex flex-wrap gap-2">
+                    <a x-show="canManageTasks" href="<?php echo esc_url($progress_url); ?>" class="px-3 py-1.5 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30">My Progress →</a>
                     <button x-show="canManageProjects" @click="openProjectModal()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700">+ New Project</button>
                     <button @click="openTaskModal()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700" x-text="isClient ? '+ New Request' : '+ New Task'"></button>
                 </div>
@@ -106,6 +109,34 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                         <p class="text-xs text-gray-500 mt-1">Completed (7d)</p>
                     </div>
                 </div>
+
+                <!-- Transparency counts -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-5">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h2 class="font-semibold text-gray-900 dark:text-white">Development transparency</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Counts only — no task details exposed</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40">
+                            <p class="text-3xl font-extrabold text-amber-600 tabular-nums" x-text="stats.pending ?? 0"></p>
+                            <p class="text-xs font-medium text-amber-800 dark:text-amber-300 mt-1">Pending</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Submitted & acknowledged</p>
+                        </div>
+                        <div class="text-center p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40">
+                            <p class="text-3xl font-extrabold text-blue-600 tabular-nums" x-text="stats.outstanding ?? 0"></p>
+                            <p class="text-xs font-medium text-blue-800 dark:text-blue-300 mt-1">Outstanding</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5">In progress & review</p>
+                        </div>
+                        <div class="text-center p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40">
+                            <p class="text-3xl font-extrabold text-green-600 tabular-nums" x-text="stats.completed ?? 0"></p>
+                            <p class="text-xs font-medium text-green-800 dark:text-green-300 mt-1">Completed</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Delivered work</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b dark:border-gray-700 font-semibold">Recent Activity</div>
                     <div class="divide-y dark:divide-gray-700">
@@ -131,18 +162,35 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h3 class="font-semibold text-gray-900 dark:text-white" x-text="project.title"></h3>
-                                <p class="text-xs text-gray-500" x-text="project.clientId?.brandName || project.clientId?.name"></p>
+                                <p class="text-xs text-gray-500">
+                                    <span x-text="project.clientId?.brandName || project.clientId?.name"></span>
+                                    <span x-show="project.isInternal" class="ml-1 px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Internal</span>
+                                </p>
                             </div>
                             <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300" x-text="project.status.replace(/_/g, ' ')"></span>
                         </div>
                         <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2" x-text="project.description || 'No description'"></p>
                         <div class="flex flex-wrap gap-2 text-xs">
                             <a x-show="project.productionUrl" :href="project.productionUrl" target="_blank" class="text-indigo-600 hover:underline">Live site ↗</a>
-                            <a x-show="project.stagingUrl" :href="project.stagingUrl" target="_blank" class="text-amber-600 hover:underline">Staging ↗</a>
                             <a x-show="project.adminUrl" :href="project.adminUrl" target="_blank" class="text-gray-600 hover:underline">Admin ↗</a>
+                            <span x-show="project.cmsType" class="text-gray-500" x-text="(project.cmsType === 'custom' ? 'Custom' : 'WordPress') + (project.hostingProvider ? ' · ' + hostingLabel(project.hostingProvider) : '')"></span>
+                        </div>
+                        <div class="flex gap-3 text-center">
+                            <div class="flex-1 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                                <p class="text-lg font-bold text-amber-600 tabular-nums" x-text="project.taskCounts?.pending ?? 0"></p>
+                                <p class="text-[10px] text-gray-500">Pending</p>
+                            </div>
+                            <div class="flex-1 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                                <p class="text-lg font-bold text-blue-600 tabular-nums" x-text="project.taskCounts?.outstanding ?? 0"></p>
+                                <p class="text-[10px] text-gray-500">Outstanding</p>
+                            </div>
+                            <div class="flex-1 py-2 rounded-lg bg-green-50 dark:bg-green-900/20">
+                                <p class="text-lg font-bold text-green-600 tabular-nums" x-text="project.taskCounts?.completed ?? 0"></p>
+                                <p class="text-[10px] text-gray-500">Done</p>
+                            </div>
                         </div>
                         <div class="flex items-center justify-between pt-2 border-t dark:border-gray-700">
-                            <span class="text-xs text-gray-500" x-text="(project.openTaskCount || 0) + ' open tasks'"></span>
+                            <button @click="openTaskModal(project._id)" class="text-xs text-emerald-600 hover:underline">+ Submit request</button>
                             <div class="flex gap-2">
                                 <button @click="selectProject(project); tab='tasks'; loadTasks()" class="text-xs text-indigo-600 hover:underline">View tasks</button>
                                 <button x-show="canManageProjects" @click="openProjectModal(project)" class="text-xs text-gray-600 hover:underline">Edit</button>
@@ -228,24 +276,28 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
             <div><label class="text-xs font-medium">Description</label><textarea x-model="projectForm.description" rows="2" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></textarea></div>
             <div class="grid grid-cols-2 gap-3">
                 <div><label class="text-xs font-medium">Live URL</label><input x-model="projectForm.productionUrl" type="url" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></div>
-                <div><label class="text-xs font-medium">Staging URL</label><input x-model="projectForm.stagingUrl" type="url" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></div>
+                <div><label class="text-xs font-medium">Admin / CMS URL</label><input x-model="projectForm.adminUrl" type="url" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="text-xs font-medium">Admin / CMS URL</label><input x-model="projectForm.adminUrl" type="url" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></div>
                 <div>
                     <label class="text-xs font-medium">CMS</label>
                     <select x-model="projectForm.cmsType" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
                         <option value="wordpress">WordPress</option>
-                        <option value="shopify">Shopify</option>
-                        <option value="webflow">Webflow</option>
-                        <option value="squarespace">Squarespace</option>
                         <option value="custom">Custom</option>
-                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium">Hosting</label>
+                    <select x-model="projectForm.hostingProvider" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
+                        <option value="">Select hosting</option>
+                        <option value="netlify">Netlify</option>
+                        <option value="railway">Railway</option>
+                        <option value="hostgator">HostGator</option>
+                        <option value="siteground">SiteGround</option>
                     </select>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="text-xs font-medium">Hosting</label><input x-model="projectForm.hostingProvider" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></div>
                 <div>
                     <label class="text-xs font-medium">Lead developer</label>
                     <select x-model="projectForm.leadDeveloper" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
@@ -254,6 +306,12 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                             <option :value="d._id" x-text="d.firstName + ' ' + d.lastName"></option>
                         </template>
                     </select>
+                </div>
+                <div class="flex items-end pb-2">
+                    <label class="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                        <input type="checkbox" x-model="projectForm.isInternal" class="rounded border-gray-300 text-indigo-600">
+                        Internal site (all brand reps can submit tasks)
+                    </label>
                 </div>
             </div>
             <div><label class="text-xs font-medium">Tech stack / notes</label><textarea x-model="projectForm.notes" rows="2" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"></textarea></div>
@@ -268,7 +326,8 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
 <!-- Task Modal (create) -->
 <div x-show="showTaskModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
     <div @click.outside="showTaskModal = false" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4">
-        <h2 class="text-lg font-bold" x-text="isClient ? 'Submit a Request' : 'New Task'"></h2>
+        <h2 class="text-lg font-bold" x-text="isClient ? 'Submit a Request' : (user?.role === 'brand_rep' && user?.department !== 'web_developer' ? 'Report Bug or Suggest Feature' : 'New Task')"></h2>
+        <p x-show="user?.role === 'brand_rep' && user?.department !== 'web_developer'" class="text-xs text-gray-500">Your submission goes to the web team for review. Internal sites are open to all brand reps.</p>
         <div class="space-y-3">
             <div>
                 <label class="text-xs font-medium">Website project *</label>
@@ -454,6 +513,9 @@ function websiteProjectsApp() {
         get canManageTasks() {
             return !this.isClient && (this.user?.role === 'admin' || this.user?.department === 'web_developer');
         },
+        get canSubmitTasks() {
+            return this.isClient || this.user?.role === 'admin' || this.user?.role === 'brand_rep';
+        },
         get visibleTabs() {
             const tabs = [
                 { id: 'dashboard', label: 'Dashboard' },
@@ -494,6 +556,10 @@ function websiteProjectsApp() {
             return 'bg-gray-100 text-gray-600';
         },
         formatDate(d) { return d ? new Date(d).toLocaleString() : ''; },
+        hostingLabel(v) {
+            const map = { netlify: 'Netlify', railway: 'Railway', hostgator: 'HostGator', siteground: 'SiteGround' };
+            return map[v] || v || '';
+        },
 
         async init() {
             const token = localStorage.getItem('token');
@@ -590,7 +656,7 @@ function websiteProjectsApp() {
         },
 
         openProjectModal(project = null) {
-            this.projectForm = project ? { ...project, clientId: project.clientId?._id || project.clientId, leadDeveloper: project.leadDeveloper?._id || project.leadDeveloper || '' } : { clientId: '', title: '', description: '', productionUrl: '', stagingUrl: '', adminUrl: '', cmsType: 'wordpress', hostingProvider: '', leadDeveloper: '', notes: '' };
+            this.projectForm = project ? { ...project, clientId: project.clientId?._id || project.clientId, leadDeveloper: project.leadDeveloper?._id || project.leadDeveloper || '', isInternal: !!project.isInternal } : { clientId: '', title: '', description: '', productionUrl: '', adminUrl: '', cmsType: 'wordpress', hostingProvider: '', leadDeveloper: '', isInternal: false, notes: '' };
             this.showProjectModal = true;
         },
 
@@ -611,13 +677,13 @@ function websiteProjectsApp() {
             }
         },
 
-        openTaskModal() {
+        openTaskModal(projectId = '') {
             if (!this.projects.length) {
                 this.showToast(this.isClient ? 'No website project linked to your account yet. Contact your account manager.' : 'Create a website project first', 'error');
                 return;
             }
             this.taskForm = {
-                projectId: this.taskFilter.projectId || this.projects[0]?._id || '',
+                projectId: projectId || this.taskFilter.projectId || this.projects[0]?._id || '',
                 type: 'bug',
                 title: '',
                 description: '',
