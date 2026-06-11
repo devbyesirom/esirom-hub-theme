@@ -315,6 +315,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                         <span class="hidden sm:inline">Upload Insights</span>
                     </button>
+                    <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openUploadReportModal()" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span class="hidden sm:inline">Upload Report</span>
+                    </button>
                     <button @click="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle theme">
                         <svg x-show="theme === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         <svg x-show="theme === 'dark'" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -388,16 +392,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 </button>
                             </div>
                             <div x-show="!dashboardData.recentReports || dashboardData.recentReports.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
-                                <p class="mb-1">No saved reports yet. When you generate or save a report (including PDF export), it will list here with the date range and status.</p>
+                                <p class="mb-1">No saved reports yet. Your team can upload legacy PDF reports or generate new ones — they will appear here by month.</p>
                             </div>
                             <ul x-show="dashboardData.recentReports && dashboardData.recentReports.length > 0" class="divide-y divide-gray-200 dark:divide-gray-600">
                                 <template x-for="report in (dashboardData.recentReports || [])" :key="report._id">
                                     <li class="py-3 first:pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                         <div>
                                             <p class="font-medium text-gray-900 dark:text-white" x-text="report.name"></p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatDateRange(report.dateRange)"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatReportPeriod(report)"></p>
                                         </div>
                                         <div class="flex items-center flex-wrap gap-2">
+                                            <span x-show="report.source === 'uploaded'" class="text-xs font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Uploaded PDF</span>
                                             <span class="text-xs font-medium px-2 py-0.5 rounded capitalize"
                                                 :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
                                                 x-text="report.status || 'draft'"></span>
@@ -896,9 +901,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                         <div class="flex items-center justify-between gap-3 mb-4">
                             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Reports</h2>
+                            <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openUploadReportModal()" class="px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                Upload PDF Report
+                            </button>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                        <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Name</label>
                                 <input type="text" x-model="reportBuilder.name" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Monthly Social Performance Report">
@@ -921,7 +930,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="mb-4">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Platforms</h3>
                                 <button @click="reportBuilder.platforms = [...clientPlatforms]" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Select all</button>
@@ -936,7 +945,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="mb-4">
                             <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-2">
                                 <input type="checkbox" x-model="reportBuilder.useSelectedPosts" class="rounded">
                                 <span>Choose specific published posts for this report</span>
@@ -956,7 +965,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap gap-2 mb-4">
+                        <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="flex flex-wrap gap-2 mb-4">
                             <button @click="previewReportBuilder()" class="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600" :disabled="reportPreviewLoading">
                                 <span x-show="!reportPreviewLoading">Preview Report</span>
                                 <span x-show="reportPreviewLoading">Previewing...</span>
@@ -967,7 +976,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </button>
                         </div>
 
-                        <div x-show="reportPreview" class="mb-6 border border-indigo-200 dark:border-indigo-700 rounded-lg p-3 bg-indigo-50/50 dark:bg-indigo-900/10">
+                        <div x-show="(user.role === 'admin' || user.role === 'brand_rep') && reportPreview" class="mb-6 border border-indigo-200 dark:border-indigo-700 rounded-lg p-3 bg-indigo-50/50 dark:bg-indigo-900/10">
                             <p class="text-sm font-medium text-gray-900 dark:text-white mb-2">Preview Metrics</p>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                 <div><p class="text-gray-500 dark:text-gray-400">Reach</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.metrics?.totalReach || 0)"></p></div>
@@ -986,15 +995,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <li class="py-3 first:pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div>
                                         <p class="font-medium text-gray-900 dark:text-white" x-text="report.name"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatDateRange(report.dateRange)"></p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatReportPeriod(report)"></p>
                                     </div>
                                     <div class="flex items-center flex-wrap gap-3">
+                                        <span x-show="report.source === 'uploaded'" class="text-xs font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Uploaded PDF</span>
                                         <span class="text-xs font-medium px-2 py-0.5 rounded capitalize"
                                             :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
                                             x-text="report.status || 'draft'"></span>
                                         <button @click.prevent="openReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View</button>
-                                        <button @click.prevent="startReportEdit(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
-                                        <button @click.prevent="deleteReport(report)" class="text-sm text-red-600 dark:text-red-400 hover:underline">Delete</button>
+                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="startReportEdit(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
+                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="deleteReport(report)" class="text-sm text-red-600 dark:text-red-400 hover:underline">Delete</button>
                                         <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download PDF</button>
                                     </div>
                                 </li>
@@ -1625,8 +1635,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                        <p class="text-gray-500 dark:text-gray-400">Date Range</p>
-                        <p class="font-semibold text-gray-900 dark:text-white" x-text="formatDateRange(selectedReport?.dateRange)"></p>
+                        <p class="text-gray-500 dark:text-gray-400">Period</p>
+                        <p class="font-semibold text-gray-900 dark:text-white" x-text="formatReportPeriod(selectedReport)"></p>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                         <p class="text-gray-500 dark:text-gray-400">Status</p>
@@ -1634,7 +1644,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div x-show="selectedReport?.source === 'uploaded' && selectedReport?.pdfUrl" class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/40">
+                    <iframe :src="selectedReport?.pdfUrl" class="w-full h-[28rem]" title="Report PDF"></iframe>
+                </div>
+
+                <div x-show="selectedReport?.source !== 'uploaded'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                         <p class="text-xs text-gray-500 dark:text-gray-400">Total Reach</p>
                         <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(selectedReport?.metrics?.totalReach || 0)"></p>
@@ -1653,7 +1667,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div x-show="selectedReport?.source !== 'uploaded'" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                         <p class="text-gray-500 dark:text-gray-400">Platforms</p>
                         <p class="font-semibold text-gray-900 dark:text-white capitalize" x-text="(selectedReport?.platforms || []).join(', ') || 'N/A'"></p>
@@ -1664,7 +1678,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
-                <div x-show="reportEditForm" class="space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div x-show="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')" class="space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">Edit Report</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
@@ -1684,7 +1698,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
                     <button type="button" @click="showReportModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
-                    <button type="button" @click="saveReportEdits()" x-show="reportEditForm" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="savingReportEdit">Save</button>
+                    <button type="button" @click="saveReportEdits()" x-show="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="savingReportEdit">Save</button>
                     <button type="button" @click="downloadReport(selectedReport)" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Download PDF</button>
                 </div>
             </div>
@@ -2081,6 +2095,62 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         </div>
     </div>
 
+    <!-- Upload PDF Report Modal -->
+    <div x-show="showUploadReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showUploadReportModal = false" @keydown.escape.window="showUploadReportModal = false">
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-xl shadow-lg rounded-lg bg-white dark:bg-gray-800 mb-10">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Upload PDF Report
+                </h3>
+                <button @click="showUploadReportModal = false; resetReportUpload()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">Upload a legacy monthly report PDF. Clients will see it in their Reports section for the assigned month.</p>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand</label>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg" x-text="selectedClient?.brandName || selectedClient?.companyName || 'Select a client first'"></p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Month</label>
+                    <input type="month" x-model="reportUploadForm.month" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Name <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <input type="text" x-model="reportUploadForm.name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" placeholder="e.g. January 2024 Performance Report">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PDF File</label>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-5 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors cursor-pointer"
+                         @click="$refs.reportPdfInput.click()">
+                        <input type="file" x-ref="reportPdfInput" @change="handleReportPdfSelect($event)" accept=".pdf,application/pdf" class="hidden">
+                        <svg class="mx-auto w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Choose PDF</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Max 25 MB</p>
+                    </div>
+                    <div x-show="reportUploadForm.file" class="mt-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+                        <p class="text-sm text-indigo-700 dark:text-indigo-300" x-text="reportUploadForm.file?.name"></p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
+                    <button @click="showUploadReportModal = false; resetReportUpload()" class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Cancel</button>
+                    <button @click="uploadReportPdf()" :disabled="!reportUploadForm.file || !reportUploadForm.month || reportUploadLoading" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        <svg x-show="reportUploadLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        Upload Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
     <script>
@@ -2204,6 +2274,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 filterCampaign: '',
                 searchQuery: '',
                 showUploadInsightsModal: false,
+                showUploadReportModal: false,
+                reportUploadLoading: false,
+                reportUploadForm: {
+                    month: '',
+                    name: '',
+                    file: null
+                },
                 insightsUploadPlatform: 'instagram',
                 insightsUploadFile: null,
                 insightsUploadFolderFiles: null,
@@ -4927,6 +5004,98 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     const start = new Date(range.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     const end = new Date(range.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     return `${start} - ${end}`;
+                },
+
+                formatReportPeriod(report) {
+                    if (!report) return '';
+                    const monthKey = report?.customData?.reportMonth;
+                    if (report?.source === 'uploaded' && monthKey) {
+                        const [year, month] = String(monthKey).split('-').map(Number);
+                        if (year && month) {
+                            return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                        }
+                    }
+                    return this.formatDateRange(report.dateRange);
+                },
+
+                openUploadReportModal() {
+                    const clientId = this.getClientId();
+                    if (!clientId) {
+                        this.showToast('Select a client brand first.', 'error');
+                        return;
+                    }
+                    const now = new Date();
+                    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    this.reportUploadForm = {
+                        month: defaultMonth,
+                        name: '',
+                        file: null
+                    };
+                    this.showUploadReportModal = true;
+                },
+
+                resetReportUpload() {
+                    this.reportUploadForm = { month: '', name: '', file: null };
+                    this.reportUploadLoading = false;
+                    if (this.$refs.reportPdfInput) this.$refs.reportPdfInput.value = '';
+                },
+
+                handleReportPdfSelect(event) {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+                    if (!isPdf) {
+                        this.showToast('Please choose a PDF file.', 'error');
+                        event.target.value = '';
+                        return;
+                    }
+                    this.reportUploadForm.file = file;
+                },
+
+                async uploadReportPdf() {
+                    const clientId = this.getClientId();
+                    if (!clientId) {
+                        this.showToast('Select a client brand first.', 'error');
+                        return;
+                    }
+                    if (!this.reportUploadForm.file || !this.reportUploadForm.month) {
+                        this.showToast('Choose a month and PDF file.', 'error');
+                        return;
+                    }
+
+                    this.reportUploadLoading = true;
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', this.reportUploadForm.file);
+                        formData.append('clientId', clientId);
+                        formData.append('month', this.reportUploadForm.month);
+                        if (this.reportUploadForm.name?.trim()) {
+                            formData.append('name', this.reportUploadForm.name.trim());
+                        }
+
+                        const response = await fetch(`${API_URL}/reports/upload`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Failed to upload report');
+                        }
+
+                        this.showUploadReportModal = false;
+                        this.resetReportUpload();
+                        await this.loadReports(this.clientLoadToken);
+                        await this.loadDashboardData(this.clientLoadToken);
+                        this.showToast('Report uploaded successfully.', 'success');
+                    } catch (error) {
+                        console.error('Upload report error:', error);
+                        this.showToast(error.message || 'Failed to upload report.', 'error');
+                    } finally {
+                        this.reportUploadLoading = false;
+                    }
                 },
 
                 async generateReportFromBuilder() {
