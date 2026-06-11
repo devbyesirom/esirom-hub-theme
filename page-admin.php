@@ -1088,7 +1088,7 @@ show_admin_bar(false);
                                 </div>
                             </div>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex flex-wrap gap-2">
                             <button 
                                 x-show="!socialMediaStatus.facebook?.connected"
                                 @click="connectFacebook(customizingClient._id)" 
@@ -1104,12 +1104,44 @@ show_admin_bar(false);
                                 </svg>
                                 Sync Posts
                             </button>
+                            <button
+                                x-show="socialMediaStatus.facebook?.connected"
+                                @click="testMetaConnection(customizingClient._id)"
+                                :disabled="socialMediaDiagnosisLoading"
+                                class="bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition-colors disabled:opacity-60">
+                                <span x-show="!socialMediaDiagnosisLoading">Test Connection</span>
+                                <span x-show="socialMediaDiagnosisLoading">Testing...</span>
+                            </button>
                             <button 
                                 x-show="socialMediaStatus.facebook?.connected"
                                 @click="disconnectSocialMedia(customizingClient._id, 'facebook')" 
                                 class="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors">
                                 Disconnect
                             </button>
+                        </div>
+                        <div x-show="socialMediaDiagnosis" class="mt-3 p-3 bg-white rounded border border-blue-100 text-xs space-y-2">
+                            <p class="font-semibold text-gray-800">Connection diagnostics</p>
+                            <template x-for="check in (socialMediaDiagnosis.facebook?.checks || [])" :key="'fb-' + check.step">
+                                <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
+                                    <span x-text="check.ok ? '✓' : '✗'"></span>
+                                    <span class="font-medium" x-text="' FB ' + check.step + ':'"></span>
+                                    <span x-text="check.message"></span>
+                                </p>
+                            </template>
+                            <template x-for="check in (socialMediaDiagnosis.instagram?.checks || [])" :key="'ig-' + check.step">
+                                <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
+                                    <span x-text="check.ok ? '✓' : '✗'"></span>
+                                    <span class="font-medium" x-text="' IG ' + check.step + ':'"></span>
+                                    <span x-text="check.message"></span>
+                                </p>
+                            </template>
+                            <p class="text-gray-600" x-show="socialMediaDiagnosis.database">
+                                Stored posts — IG: <span x-text="socialMediaDiagnosis.database?.instagramPosts || 0"></span>,
+                                FB: <span x-text="socialMediaDiagnosis.database?.facebookPosts || 0"></span>
+                            </p>
+                            <template x-for="(tip, idx) in (socialMediaDiagnosis.recommendations || [])" :key="'tip-' + idx">
+                                <p class="text-amber-800">→ <span x-text="tip"></span></p>
+                            </template>
                         </div>
                         <div x-show="socialMediaStatus.facebook?.connected" class="mt-3 pt-3 border-t border-blue-200 space-y-2">
                             <p class="text-xs font-medium text-gray-700">Manual Instagram link (optional)</p>
@@ -1296,6 +1328,8 @@ show_admin_bar(false);
                 editingUpdate: null,
                 customizingClient: null,
                 socialMediaStatus: {},
+                socialMediaDiagnosis: null,
+                socialMediaDiagnosisLoading: false,
                 manualIgAccountId: '',
                 manualIgUsername: '',
                 bulkAddMetric: '',
@@ -1676,6 +1710,7 @@ show_admin_bar(false);
 
                 async customizeClient(client) {
                     this.customizingClient = client;
+                    this.socialMediaDiagnosis = null;
                     
                     // Load social media connection status
                     await this.loadSocialMediaStatus(client._id);
@@ -1745,6 +1780,37 @@ show_admin_bar(false);
                         }
                     } catch (error) {
                         console.error('Error loading social media status:', error);
+                    }
+                },
+
+                async testMetaConnection(clientId) {
+                    this.socialMediaDiagnosisLoading = true;
+                    this.socialMediaDiagnosis = null;
+                    try {
+                        const response = await fetch(`${API_URL}/social-media/diagnose/${clientId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.socialMediaDiagnosis = data.data;
+                            const failed = [
+                                ...(data.data.facebook?.checks || []),
+                                ...(data.data.instagram?.checks || [])
+                            ].some((check) => !check.ok);
+                            if (failed || (data.data.recommendations || []).length) {
+                                this.showToast('Connection test finished — review diagnostics below', 'error', 6000);
+                            } else {
+                                this.showToast('Facebook and Instagram connections look healthy', 'success', 5000);
+                            }
+                            await this.loadSocialMediaStatus(clientId);
+                        } else {
+                            this.showToast(data.message || 'Connection test failed', 'error', 6000);
+                        }
+                    } catch (error) {
+                        console.error('testMetaConnection:', error);
+                        this.showToast('Error running connection test', 'error', 5000);
+                    } finally {
+                        this.socialMediaDiagnosisLoading = false;
                     }
                 },
 
