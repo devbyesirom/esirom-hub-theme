@@ -278,6 +278,7 @@ show_admin_bar(false);
                                 <span x-show="!client.serviceType || client.serviceType === 'social_media'" class="inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">Social Media</span>
                                 <span x-show="client.serviceType === 'creative'" class="inline-block px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 text-xs font-medium">Creative</span>
                                 <span x-show="client.serviceType === 'multimedia'" class="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">Multimedia</span>
+                                <span x-show="client.serviceType === 'website'" class="inline-block px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-xs font-medium">Website</span>
                             </p>
                             <div class="flex flex-col space-y-2">
                                 <button @click="customizeClient(client)" class="w-full bg-green-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-green-700 flex items-center justify-center">
@@ -820,6 +821,7 @@ show_admin_bar(false);
                             <option value="social_media">Social Media</option>
                             <option value="creative">Creative</option>
                             <option value="multimedia">Multimedia</option>
+                            <option value="website">Website (no social media)</option>
                         </select>
                     </div>
                 </div>

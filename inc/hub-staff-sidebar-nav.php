@@ -4,7 +4,7 @@
  * Grouped into collapsible sections to save vertical space.
  *
  * Expects:
- *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|progress|inventory
+ *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|progress|inventory|website_projects
  *   $hub_nav_context  string  site|dashboard
  *   $hub_nav_alpine_labels bool
  */
@@ -22,6 +22,7 @@ $hub_workflow_url = esc_url(esirom_hub_page_url('workflow'));
 $hub_overview_url = esc_url(esirom_hub_page_url('overview'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
 $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
+$hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
 $hub_password_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 
@@ -171,6 +172,11 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
     <a href="<?php echo $hub_inventory_url; ?>" class="<?php echo esc_attr($hub_item_class('inventory')); ?>">
         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625-10.928a1.125 1.125 0 00-1.124-.99h-4.5a1.125 1.125 0 00-1.124.99L12.25 7.5M3.75 7.5h16.5M4.5 7.5v10.125c0 .621.504 1.125 1.125 1.125h13.5c.621 0 1.125-.504 1.125-1.125V7.5M9.75 11.25h4.5"/></svg>
         <span class="nav-text"<?php echo $hub_label_attrs; ?>>Inventory</span>
+    </a>
+
+    <a href="<?php echo ($hub_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>" class="<?php echo esc_attr($hub_item_class('website_projects')); ?>">
+        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
+        <span class="nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
     </a>
 
 </div>

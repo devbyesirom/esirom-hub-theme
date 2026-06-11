@@ -3,7 +3,7 @@
  * Shared sidebar navigation for client view (viewMode === 'client').
  *
  * Expects:
- *   $hub_client_nav_active   content_bank|password_vault|published_posts|overview|reports|event_coverage|content_calendar
+ *   $hub_client_nav_active   content_bank|password_vault|published_posts|overview|reports|event_coverage|content_calendar|website_projects
  *   $hub_client_nav_context    site|dashboard
  *   $hub_nav_alpine_labels     bool
  */
@@ -21,6 +21,7 @@ $hub_workflow_url = esc_url(esirom_hub_page_url('workflow')) . '?tab=contentBank
 $hub_dashboard_url = esc_url(esirom_hub_page_url('dashboard'));
 $hub_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
+$hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_is_dashboard = ($hub_client_nav_context === 'dashboard');
 
 $hub_client_show = 'x-show="viewMode === \'client\'"';
@@ -34,14 +35,15 @@ $hub_link_class = function ($key) use ($hub_client_nav_active) {
 };
 ?>
 
-<a <?php echo $hub_client_show; ?> href="<?php echo $hub_workflow_url; ?>" class="<?php echo esc_attr($hub_link_class('content_bank')); ?>">
-    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Content Bank</span>
+<a <?php echo $hub_client_show; ?> href="<?php echo ($hub_client_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>" class="<?php echo esc_attr($hub_link_class('website_projects')); ?>">
+    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
 </a>
 
-<a <?php echo $hub_client_show; ?> href="<?php echo $hub_vault_url; ?>" class="<?php echo esc_attr($hub_link_class('password_vault')); ?>">
-    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
+<div <?php echo $hub_client_show; ?> x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient">
+<a href="<?php echo $hub_workflow_url; ?>" class="<?php echo esc_attr($hub_link_class('content_bank')); ?>">
+    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Content Bank</span>
 </a>
 
 <?php if ($hub_is_dashboard) : ?>
@@ -83,4 +85,10 @@ $hub_link_class = function ($key) use ($hub_client_nav_active) {
 <a <?php echo $hub_client_show; ?> href="<?php echo $hub_calendar_url; ?>" class="<?php echo esc_attr($hub_link_class('content_calendar')); ?>">
     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
     <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Content Calendar</span>
+</a>
+</div>
+
+<a <?php echo $hub_client_show; ?> href="<?php echo $hub_vault_url; ?>" class="<?php echo esc_attr($hub_link_class('password_vault')); ?>">
+    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
 </a>

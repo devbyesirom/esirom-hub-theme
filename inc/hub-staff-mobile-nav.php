@@ -16,6 +16,7 @@ $hub_workflow_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url
 $hub_overview_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('overview') : esc_url(get_permalink(get_page_by_path('overview')));
 $hub_dashboard_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('dashboard') : esc_url(get_permalink(get_page_by_path('dashboard')));
 $hub_inventory_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('inventory') : esc_url(get_permalink(get_page_by_path('inventory')));
+$hub_website_projects_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('website-projects') : esc_url(get_permalink(get_page_by_path('website-projects')));
 $hub_progress_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('progress') : esc_url(get_permalink(get_page_by_path('progress')));
 $hub_calendar_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('content-calendar') : esc_url(get_permalink(get_page_by_path('content-calendar')));
 $hub_admin_url = function_exists('esirom_hub_page_url') ? esirom_hub_page_url('admin') : esc_url(get_permalink(get_page_by_path('admin')));
@@ -44,9 +45,9 @@ $hub_mobile_label_class = function ($key) use ($hub_mobile_active) {
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <span class="<?php echo esc_attr($hub_mobile_label_class('dashboard')); ?>">Insights</span>
         </a>
-        <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_inventory_url); ?>" class="<?php echo esc_attr($hub_mobile_class('inventory')); ?>">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625-10.928a1.125 1.125 0 00-1.124-.99h-4.5a1.125 1.125 0 00-1.124.99L12.25 7.5M3.75 7.5h16.5M4.5 7.5v10.125c0 .621.504 1.125 1.125 1.125h13.5c.621 0 1.125-.504 1.125-1.125V7.5M9.75 11.25h4.5"/></svg>
-            <span class="<?php echo esc_attr($hub_mobile_label_class('inventory')); ?>">Inventory</span>
+        <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_website_projects_url); ?>" class="<?php echo esc_attr($hub_mobile_class('website_projects')); ?>">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            <span class="<?php echo esc_attr($hub_mobile_label_class('website_projects')); ?>">Websites</span>
         </a>
         <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_progress_url); ?>" class="<?php echo esc_attr($hub_mobile_class('progress')); ?>">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
