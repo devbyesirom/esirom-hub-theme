@@ -1122,14 +1122,56 @@ show_admin_bar(false);
                         </div>
                     </div>
 
+                    <!-- YouTube Connection -->
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 p-4 rounded-lg border border-red-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <svg class="w-8 h-8 text-red-600 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                </svg>
+                                <div>
+                                    <h5 class="font-semibold text-gray-800">YouTube</h5>
+                                    <p class="text-xs text-gray-600" x-show="!socialMediaStatus.youtube?.connected">Not connected</p>
+                                    <p class="text-xs text-green-600" x-show="socialMediaStatus.youtube?.connected">
+                                        ✓ Connected: <span x-text="socialMediaStatus.youtube?.username"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                x-show="!socialMediaStatus.youtube?.connected"
+                                @click="connectYouTube(customizingClient._id)"
+                                class="flex-1 bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors">
+                                Connect Channel
+                            </button>
+                            <button
+                                x-show="socialMediaStatus.youtube?.connected"
+                                @click="syncSocialMedia(customizingClient._id)"
+                                class="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                                <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Sync Videos
+                            </button>
+                            <button
+                                x-show="socialMediaStatus.youtube?.connected"
+                                @click="disconnectSocialMedia(customizingClient._id, 'youtube')"
+                                class="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors">
+                                Disconnect
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-3">Syncs channel videos with views, likes, comments, and watch time into the brand dashboard.</p>
+                    </div>
+
                     <!-- Coming Soon Platforms -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60 md:col-span-2">
                         <div class="flex items-center mb-3">
-                            <svg class="w-8 h-8 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            <svg class="w-8 h-8 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
                             <div>
-                                <h5 class="font-semibold text-gray-600">LinkedIn, YouTube, X</h5>
+                                <h5 class="font-semibold text-gray-600">LinkedIn & X</h5>
                                 <p class="text-xs text-gray-500">Coming soon</p>
                             </div>
                         </div>
@@ -1144,7 +1186,7 @@ show_admin_bar(false);
                         <svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                         </svg>
-                        <strong>Note:</strong> Connecting Facebook will also connect Instagram if your Facebook Page has an Instagram Business Account linked.
+                        <strong>Note:</strong> Facebook can auto-link Instagram when a Business Account is connected to the Page. YouTube uses a separate Google OAuth connection for the brand channel.
                     </p>
                 </div>
             </div>
@@ -1706,6 +1748,41 @@ show_admin_bar(false);
                     }
                 },
 
+                async connectYouTube(clientId) {
+                    try {
+                        const response = await fetch(`${API_URL}/social-media/auth/youtube?clientId=${clientId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+
+                        if (data.success && data.authUrl) {
+                            const width = 600;
+                            const height = 700;
+                            const left = (screen.width - width) / 2;
+                            const top = (screen.height - height) / 2;
+
+                            const popup = window.open(
+                                data.authUrl,
+                                'YouTube OAuth',
+                                `width=${width},height=${height},left=${left},top=${top}`
+                            );
+
+                            const checkPopup = setInterval(() => {
+                                if (popup.closed) {
+                                    clearInterval(checkPopup);
+                                    this.loadSocialMediaStatus(clientId);
+                                    this.showToast('Checking YouTube connection status...', 'info', 2000);
+                                }
+                            }, 1000);
+                        } else {
+                            this.showToast(data.message || 'Failed to get YouTube authorization URL', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('Error connecting YouTube:', error);
+                        this.showToast('Error connecting YouTube channel', 'error', 5000);
+                    }
+                },
+
                 async connectFacebook(clientId) {
                     try {
                         const response = await fetch(`${API_URL}/social-media/auth/facebook?clientId=${clientId}`, {
@@ -1758,13 +1835,15 @@ show_admin_bar(false);
                             const total = data.data.total;
                             const ig = data.data.instagram;
                             const fb = data.data.facebook;
+                            const yt = data.data.youtube || 0;
                             const totalUpdated = data.data.totalUpdated || 0;
                             const igUpdated = data.data.instagramUpdated || 0;
                             const fbUpdated = data.data.facebookUpdated || 0;
+                            const ytUpdated = data.data.youtubeUpdated || 0;
                             const errors = data.data.errors || {};
                             
                             if (total > 0 || totalUpdated > 0) {
-                                this.showToast(`✅ Synced ${total} new posts (IG: ${ig}, FB: ${fb}) and updated insights for ${totalUpdated} posts (IG: ${igUpdated}, FB: ${fbUpdated})`, 'success', 6000);
+                                this.showToast(`✅ Synced ${total} new items (IG: ${ig}, FB: ${fb}, YT: ${yt}) and updated insights for ${totalUpdated} items (IG: ${igUpdated}, FB: ${fbUpdated}, YT: ${ytUpdated})`, 'success', 6000);
                             } else {
                                 this.showToast('No new posts to sync and no insights to update. All posts are up to date.', 'info', 4000);
                             }
