@@ -139,6 +139,7 @@ function adsApp() {
     return {
         authChecked: false,
         user: null,
+        viewMode: localStorage.getItem('viewMode') || 'admin',
         isSidebarOpen: true,
         loading: false,
         tab: 'boost',
@@ -159,6 +160,11 @@ function adsApp() {
                 if (this.user.role === 'client') {
                     window.location.href = DASHBOARD_URL;
                     return;
+                }
+                if (this.user.role === 'brand_rep') {
+                    this.viewMode = 'brand_rep';
+                } else if (this.user.role === 'admin' && this.viewMode === 'client') {
+                    this.viewMode = 'admin';
                 }
                 await this.loadClients();
                 const saved = localStorage.getItem('hubSelectedClientId');
@@ -209,6 +215,12 @@ function adsApp() {
         fmtDate(value) {
             if (!value) return '—';
             return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = LOGIN_URL;
         }
     };
 }

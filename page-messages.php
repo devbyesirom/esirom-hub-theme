@@ -108,7 +108,7 @@ $admin_url = esc_url(get_permalink(get_page_by_path('admin')));
                 <p class="font-semibold mb-1">Some inboxes could not be loaded</p>
                 <p x-show="errors?.facebook" class="text-xs mt-1"><strong>Messenger:</strong> <span x-text="errors.facebook"></span></p>
                 <p x-show="errors?.instagram" class="text-xs mt-1"><strong>Instagram:</strong> <span x-text="errors.instagram"></span></p>
-                <p class="text-xs mt-2 text-amber-700 dark:text-amber-300">Ensure the Meta app has Messenger and Instagram messaging permissions, then reconnect the brand in Admin.</p>
+                <p class="text-xs mt-2 text-amber-700 dark:text-amber-300">Reconnect the brand in <a href="<?php echo esc_url($admin_url); ?>" class="underline font-medium">Admin → Social Media Connections</a> so the Page token includes Messenger and Instagram messaging permissions.</p>
             </div>
 
             <div x-show="loading" class="flex justify-center py-16">
@@ -148,6 +148,7 @@ function messagesApp() {
     return {
         authChecked: false,
         user: null,
+        viewMode: localStorage.getItem('viewMode') || 'admin',
         isSidebarOpen: true,
         loading: false,
         clients: [],
@@ -170,6 +171,11 @@ function messagesApp() {
                 if (this.user.role === 'client') {
                     window.location.href = DASHBOARD_URL;
                     return;
+                }
+                if (this.user.role === 'brand_rep') {
+                    this.viewMode = 'brand_rep';
+                } else if (this.user.role === 'admin' && this.viewMode === 'client') {
+                    this.viewMode = 'admin';
                 }
                 await this.loadClients();
                 const saved = localStorage.getItem('hubSelectedClientId');
@@ -230,6 +236,12 @@ function messagesApp() {
         fmtTime(value) {
             if (!value) return '';
             return new Date(value).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = LOGIN_URL;
         }
     };
 }
