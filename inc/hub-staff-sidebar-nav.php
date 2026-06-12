@@ -4,7 +4,7 @@
  * Grouped into collapsible sections to save vertical space.
  *
  * Expects:
- *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|progress|inventory|website_projects
+ *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|messages|ads|progress|inventory|website_projects
  *   $hub_nav_context  string  site|dashboard
  *   $hub_nav_alpine_labels bool
  */
@@ -21,6 +21,8 @@ $hub_dashboard_url = esc_url(esirom_hub_page_url('dashboard'));
 $hub_workflow_url = esc_url(esirom_hub_page_url('workflow'));
 $hub_overview_url = esc_url(esirom_hub_page_url('overview'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
+$hub_messages_url = esc_url(esirom_hub_page_url('messages'));
+$hub_ads_url = esc_url(esirom_hub_page_url('ads'));
 $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
@@ -138,11 +140,11 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
         </div>
     </div>
 
-    <!-- ── Published Posts ────────────────────────────────────────────────── -->
-    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_content', ['published_posts', 'content_calendar']); ?> }"
-         x-init="$watch('open', v => localStorage.setItem('hubNav_content', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['published_posts', 'content_calendar'])); ?>">
-            <span<?php echo $hub_label_attrs; ?>>Published Posts</span>
+    <!-- ── Social Media ───────────────────────────────────────────────────── -->
+    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_social', ['published_posts', 'content_calendar', 'messages', 'ads']); ?> }"
+         x-init="$watch('open', v => localStorage.setItem('hubNav_social', v ? '1' : '0'))">
+        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['published_posts', 'content_calendar', 'messages', 'ads'])); ?>">
+            <span<?php echo $hub_label_attrs; ?>>Social Media</span>
             <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
         <div x-show="open" x-cloak class="mt-0.5 space-y-0.5">
@@ -162,6 +164,16 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
                class="<?php echo esc_attr($hub_sub_class('content_calendar')); ?>">
                 <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Content Calendar</span>
+            </a>
+            <a href="<?php echo ($hub_nav_active === 'messages' && !$hub_is_dashboard) ? '#' : $hub_messages_url; ?>"
+               class="<?php echo esc_attr($hub_sub_class('messages')); ?>">
+                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+                <span class="nav-text"<?php echo $hub_label_attrs; ?>>Messages</span>
+            </a>
+            <a href="<?php echo ($hub_nav_active === 'ads' && !$hub_is_dashboard) ? '#' : $hub_ads_url; ?>"
+               class="<?php echo esc_attr($hub_sub_class('ads')); ?>">
+                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L15 6.75m-3-3v11.25m9-5.25H9"/></svg>
+                <span class="nav-text"<?php echo $hub_label_attrs; ?>>Ads</span>
             </a>
         </div>
     </div>

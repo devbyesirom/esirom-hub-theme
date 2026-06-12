@@ -252,6 +252,8 @@ function esirom_hub_remove_admin_bar() {
         'page-workflow.php',
         'page-overview.php',
         'page-content-calendar.php',
+        'page-messages.php',
+        'page-ads.php',
         'page-inventory.php',
         'page-progress.php',
         'page-password-vault.php',

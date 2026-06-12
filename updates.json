@@ -1,5 +1,19 @@
 [
   {
+    "id": 23,
+    "title": "Social Media Hub Sections",
+    "version": "2.3.23",
+    "description": "Published Posts nav is now Social Media with Messages and Ads sections for Facebook Messenger, Instagram DMs, and post boosting.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Sidebar group renamed to Social Media with Published Posts, Content Calendar, Messages, and Ads",
+      "Messages page — unified inbox for Messenger and Instagram DMs per brand",
+      "Ads page — lists boostable synced posts (Marketing API campaigns coming next)",
+      "Staff-only access for Messages and Ads (admins and brand reps)"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 22,
     "title": "Password Vault Standalone Page",
     "version": "2.3.0",
