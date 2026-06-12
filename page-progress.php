@@ -254,7 +254,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                     <div>
                         <p class="text-xs font-semibold text-blue-800 dark:text-blue-200">How is my score calculated?</p>
                         <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5"
-                           x-text="myData.department === 'multimedia' ? 'Your score is the average of all your active delivery goals this month. Goals are only counted when you have projects assigned for that type.' : myData.department === 'graphic_designer' ? 'Graphics Completed counts double towards your score, as it reflects volume of work. On-Time Delivery counts once. Score = (Graphics% × 2 + On-Time%) ÷ 3.' : myData.department === 'social_media_exec' ? 'Score is based on concepts created vs. your monthly target across assigned brands. If No Data appears, ask your admin to set a monthly target per brand.' : myData.department === 'web_developer' ? 'Web developer goals pull from Website Projects: projects started, tasks completed, and sites marked live. Manage work in Website Projects under Workflow.' : 'Your score is a weighted average of all active goals for this period.'">
+                           x-text="myData.department === 'multimedia' ? 'Your score is the average of all your active delivery goals this month. Goals are only counted when you have projects assigned for that type.' : myData.department === 'graphic_designer' ? 'You are scored when artwork is submitted for review — not when the client approves. On-time handoffs use your first submission date; revisions after review do not count against you. Score = (Handoffs% × 2 + On-Time%) ÷ 3.' : myData.department === 'social_media_exec' ? 'Owned brands (set in Admin) drive your targets. Upload next month\'s concepts by the 2nd Friday, publish this month\'s posts, and submit last month\'s report for each brand in the first week.' : myData.department === 'web_developer' ? 'Web developer goals pull from Website Projects: projects started, tasks completed, and sites marked live. Manage work in Website Projects under Workflow.' : 'Your score is a weighted average of all active goals for this period.'">
                         </p>
                     </div>
                 </div>
@@ -304,13 +304,14 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                      }"
                                      :style="'width: ' + Math.min(goal.percentage || 0, 100) + '%'"></div>
                             </div>
-                            <div x-show="goal.percentage === null" class="text-xs text-amber-600 dark:text-amber-400 mb-2">Deadline has not passed yet — tracking will begin after the 2nd Friday.</div>
+                            <div x-show="goal.percentage === null" class="text-xs text-amber-600 dark:text-amber-400 mb-2"
+                                 x-text="goal.id === 'monthly_reports' ? 'Report deadline has not passed yet — due by end of the first week of this month.' : goal.id === 'concept_deadline' ? 'Concept deadline has not passed yet — tracking begins after the 2nd Friday.' : 'Deadline has not passed yet — tracking will begin after the due date.'"></div>
 
                             <p x-show="goal.percentage !== null" class="text-xs text-gray-500 dark:text-gray-400" x-text="(goal.percentage || 0) + '% complete'"></p>
 
                             <!-- Late details for graphic designer -->
-                            <div x-show="goal.id === 'on_time_delivery' && goal.details && goal.details.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-2">Late Submissions:</p>
+                            <div x-show="(goal.id === 'on_time_handoffs' || goal.id === 'on_time_delivery') && goal.details && goal.details.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-2">Late first submissions:</p>
                                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
                                     <template x-for="item in (goal.details || [])" :key="item.title">
                                         <div class="flex items-start justify-between gap-2 text-xs">
@@ -322,8 +323,8 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                             </div>
 
                             <!-- Pending items for graphic designer -->
-                            <div x-show="goal.id === 'graphics_completed' && goal.details && goal.details.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Pending (<span x-text="goal.details.length"></span>):</p>
+                            <div x-show="(goal.id === 'handoffs_completed' || goal.id === 'graphics_completed') && goal.details && goal.details.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Still in progress (<span x-text="goal.details.length"></span>):</p>
                                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
                                     <template x-for="item in (goal.details || [])" :key="item.title">
                                         <div class="flex items-start justify-between gap-2 text-xs">
@@ -335,17 +336,33 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                 </div>
                             </div>
 
-                            <!-- Brand breakdown for social media exec -->
-                            <div x-show="goal.id === 'deadline_compliance' && goal.brandBreakdown && goal.brandBreakdown.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Brand Targets</p>
-                                    <p x-show="goal.secondFriday" class="text-xs text-indigo-600 dark:text-indigo-400">Deadline: <span x-text="goal.secondFriday ? new Date(goal.secondFriday).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></span></p>
+                            <!-- Revisions in progress (informational, no penalty) -->
+                            <div x-show="goal.revisionItems && goal.revisionItems.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Awaiting revision (<span x-text="goal.revisionItems.length"></span>) — already handed off:</p>
+                                <div class="space-y-1 max-h-24 overflow-y-auto">
+                                    <template x-for="item in (goal.revisionItems || [])" :key="item.title + '-rev'">
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 truncate" x-text="item.title"></p>
+                                    </template>
                                 </div>
-                                <div class="space-y-1">
-                                    <template x-for="brand in (goal.brandBreakdown || [])" :key="brand.brandId">
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="text-gray-700 dark:text-gray-300 truncate" x-text="brand.brandName"></span>
-                                            <span class="text-gray-500 font-medium" x-text="brand.target + ' concepts'"></span>
+                            </div>
+
+                            <!-- Brand breakdown for social media exec -->
+                            <div x-show="goal.brandBreakdown && goal.brandBreakdown.length > 0 && ['next_month_concepts','concept_deadline','posts_published','monthly_reports','deadline_compliance','concepts_created'].includes(goal.id)" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Owned brands</p>
+                                    <p x-show="goal.secondFriday" class="text-xs text-indigo-600 dark:text-indigo-400">2nd Fri: <span x-text="new Date(goal.secondFriday).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })"></span></p>
+                                    <p x-show="goal.reportDeadline && goal.id === 'monthly_reports'" class="text-xs text-indigo-600 dark:text-indigo-400">Due: <span x-text="new Date(goal.reportDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })"></span></p>
+                                </div>
+                                <div class="space-y-2">
+                                    <template x-for="brand in (goal.brandBreakdown || [])" :key="brand.brandId + goal.id">
+                                        <div class="text-xs">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="font-medium text-gray-700 dark:text-gray-300 truncate" x-text="brand.brandName"></span>
+                                                <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'next_month_concepts' || goal.id === 'concepts_created'" x-text="(brand.conceptsCreated ?? 0) + ' / ' + (brand.conceptsTarget ?? brand.target) + ' concepts'"></span>
+                                                <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'concept_deadline' || goal.id === 'deadline_compliance'" x-text="(brand.conceptsOnTime ?? 0) + ' / ' + (brand.conceptsTarget ?? brand.target) + ' on time'"></span>
+                                                <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'posts_published'" x-text="(brand.postsPublished ?? 0) + ' / ' + (brand.target ?? 0) + ' posts'"></span>
+                                                <span class="whitespace-nowrap font-medium" x-show="goal.id === 'monthly_reports'" :class="brand.reportSubmitted ? 'text-green-600' : 'text-amber-600'" x-text="brand.reportSubmitted ? 'Report ✓' : 'Report missing'"></span>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>

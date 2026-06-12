@@ -691,7 +691,7 @@ show_admin_bar(false);
                     <p class="text-xs text-gray-500 mt-1">Assign one or more brands to this client account</p>
                 </div>
                 <div class="mb-4" x-show="userForm.role === 'brand_rep'">
-                    <label class="block text-sm font-medium mb-1">Assign Clients</label>
+                    <label class="block text-sm font-medium mb-1">Owned Brands (My Progress)</label>
                     <div class="border rounded px-3 py-2 max-h-40 overflow-y-auto space-y-2">
                         <div class="flex items-center justify-between mb-1">
                             <button type="button" @click="userForm.assignedClients = clients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
@@ -704,7 +704,8 @@ show_admin_bar(false);
                             </label>
                         </template>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Assign one or more brands for this brand representative</p>
+                    <p class="text-xs text-gray-500 mt-1" x-show="userForm.department === 'social_media_exec'">Brands this rep is accountable for in My Progress (concepts, posts, reports). They may still access other brands elsewhere.</p>
+                    <p class="text-xs text-gray-500 mt-1" x-show="userForm.department !== 'social_media_exec'">Assign one or more brands for this brand representative</p>
                 </div>
 
                 <!-- Department & Role (admin/brand_rep only) -->
