@@ -32,6 +32,11 @@ $admin_url = esc_url(get_permalink(get_page_by_path('admin')));
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; }
         <?php esirom_hub_layout_styles(); ?>
+        .msg-thread-active { background: rgb(238 242 255); }
+        .dark .msg-thread-active { background: rgb(49 46 129 / 0.25); }
+        .msg-bubble-page { background: rgb(79 70 229); color: white; margin-left: auto; }
+        .msg-bubble-user { background: rgb(243 244 246); color: rgb(17 24 39); }
+        .dark .msg-bubble-user { background: rgb(55 65 81); color: rgb(243 244 246); }
     </style>
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="messagesApp()" x-init="init()">
@@ -120,24 +125,91 @@ $admin_url = esc_url(get_permalink(get_page_by_path('admin')));
                 <p class="text-xs text-gray-500 mt-2">Threads appear here once Messenger or Instagram messaging is connected and active.</p>
             </div>
 
-            <div x-show="!loading && filteredThreads.length > 0" x-cloak class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden divide-y dark:divide-gray-700">
-                <template x-for="thread in filteredThreads" :key="thread.id">
-                    <div class="px-5 py-4 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                             :class="thread.platform === 'instagram' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-blue-600'"
-                             x-text="(thread.name || '?').charAt(0).toUpperCase()"></div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-2">
-                                <p class="font-semibold truncate" x-text="thread.name"></p>
-                                <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full flex-shrink-0"
-                                      :class="thread.platform === 'instagram' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'"
-                                      x-text="thread.platform === 'instagram' ? 'IG' : 'FB'"></span>
-                            </div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 truncate mt-0.5" x-text="thread.snippet || 'No preview'"></p>
-                            <p class="text-xs text-gray-400 mt-1" x-text="fmtTime(thread.updatedTime) + (thread.messageCount ? ' · ' + thread.messageCount + ' messages' : '')"></p>
-                        </div>
+            <div x-show="!loading && filteredThreads.length > 0" x-cloak class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden flex flex-col md:flex-row min-h-[520px] max-h-[calc(100dvh-220px)]">
+                <!-- Thread list -->
+                <div class="md:w-80 lg:w-96 border-b md:border-b-0 md:border-r dark:border-gray-700 flex flex-col min-h-0" :class="activeThread && 'hidden md:flex'">
+                    <div class="px-4 py-3 border-b dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase tracking-wide">Inbox</div>
+                    <div class="flex-1 overflow-y-auto divide-y dark:divide-gray-700">
+                        <template x-for="thread in filteredThreads" :key="thread.id">
+                            <button type="button" @click="openThread(thread)"
+                                    class="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                                    :class="activeThread?.id === thread.id ? 'msg-thread-active' : ''">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                                     :class="thread.platform === 'instagram' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-blue-600'"
+                                     x-text="(thread.name || '?').charAt(0).toUpperCase()"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="font-semibold text-sm truncate" x-text="thread.name"></p>
+                                        <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                              :class="thread.platform === 'instagram' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'"
+                                              x-text="thread.platform === 'instagram' ? 'IG' : 'FB'"></span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="thread.snippet || 'No preview'"></p>
+                                    <p class="text-[10px] text-gray-400 mt-1" x-text="fmtTime(thread.updatedTime)"></p>
+                                </div>
+                            </button>
+                        </template>
                     </div>
-                </template>
+                </div>
+
+                <!-- Conversation panel -->
+                <div class="flex-1 flex flex-col min-h-0 min-w-0" :class="!activeThread && 'hidden md:flex'">
+                    <div x-show="!activeThread" class="flex-1 flex items-center justify-center text-sm text-gray-500 p-8 text-center">
+                        Select a conversation to read and reply
+                    </div>
+
+                    <template x-if="activeThread">
+                        <div class="flex flex-col flex-1 min-h-0">
+                            <div class="px-4 py-3 border-b dark:border-gray-700 flex items-center gap-3 flex-shrink-0">
+                                <button type="button" @click="closeThread()" class="md:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                                     :class="activeThread.platform === 'instagram' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-blue-600'"
+                                     x-text="(activeThread.name || '?').charAt(0).toUpperCase()"></div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-semibold truncate" x-text="activeThread.name"></p>
+                                    <p class="text-xs text-gray-500" x-text="activeThread.platform === 'instagram' ? 'Instagram DM' : 'Messenger'"></p>
+                                </div>
+                                <button type="button" @click="loadThreadMessages()" class="text-xs text-indigo-600 hover:underline" :disabled="threadLoading">Refresh</button>
+                            </div>
+
+                            <div x-show="threadLoading" class="flex-1 flex items-center justify-center">
+                                <div class="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+
+                            <div x-show="threadError && !threadLoading" class="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200" x-text="threadError"></div>
+
+                            <div x-show="!threadLoading" class="flex-1 overflow-y-auto p-4 space-y-3" id="msg-scroll-area">
+                                <template x-for="msg in threadMessages" :key="msg.id">
+                                    <div class="flex" :class="msg.isPage ? 'justify-end' : 'justify-start'">
+                                        <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm"
+                                             :class="msg.isPage ? 'msg-bubble-page rounded-br-md' : 'msg-bubble-user rounded-bl-md dark:bg-gray-700'">
+                                            <p class="whitespace-pre-wrap break-words" x-text="msg.text"></p>
+                                            <p class="text-[10px] mt-1 opacity-70" x-text="fmtTime(msg.createdTime) + (msg.isPage ? ' · You' : '')"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="!threadLoading && threadMessages.length === 0" class="text-center text-sm text-gray-500 py-8">No messages loaded for this thread.</div>
+                            </div>
+
+                            <div class="border-t dark:border-gray-700 p-3 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50">
+                                <div class="flex gap-2 items-end">
+                                    <textarea x-model="replyText" rows="2" placeholder="Type a reply…"
+                                              @keydown.meta.enter="sendReply()" @keydown.ctrl.enter="sendReply()"
+                                              class="flex-1 resize-none rounded-xl border dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                                    <button type="button" @click="sendReply()" :disabled="sending || !replyText.trim()"
+                                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+                                        <span x-show="!sending">Send</span>
+                                        <span x-show="sending">…</span>
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-2">Replies must be sent within Meta’s 24-hour messaging window. Cmd/Ctrl+Enter to send.</p>
+                                <p x-show="sendError" class="text-xs text-red-600 mt-1" x-text="sendError"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
     </main>
@@ -159,6 +231,13 @@ function messagesApp() {
         platforms: null,
         errors: null,
         platformFilter: 'all',
+        activeThread: null,
+        threadMessages: [],
+        threadLoading: false,
+        threadError: null,
+        replyText: '',
+        sending: false,
+        sendError: null,
 
         async init() {
             const token = localStorage.getItem('token');
@@ -206,6 +285,8 @@ function messagesApp() {
             this.selectedClient = client._id;
             this.selectedClientName = client.brandName || client.name;
             localStorage.setItem('hubSelectedClientId', client._id);
+            this.activeThread = null;
+            this.threadMessages = [];
             await this.loadMessages();
         },
 
@@ -231,6 +312,89 @@ function messagesApp() {
             this.filteredThreads = this.platformFilter === 'all'
                 ? this.threads
                 : this.threads.filter(t => t.platform === this.platformFilter);
+            if (this.activeThread && !this.filteredThreads.some(t => t.id === this.activeThread.id)) {
+                this.closeThread();
+            }
+        },
+
+        openThread(thread) {
+            this.activeThread = thread;
+            this.replyText = '';
+            this.sendError = null;
+            this.threadError = null;
+            this.loadThreadMessages();
+        },
+
+        closeThread() {
+            this.activeThread = null;
+            this.threadMessages = [];
+            this.replyText = '';
+            this.threadError = null;
+            this.sendError = null;
+        },
+
+        async loadThreadMessages() {
+            if (!this.selectedClient || !this.activeThread) return;
+            this.threadLoading = true;
+            this.threadError = null;
+            try {
+                const params = new URLSearchParams();
+                if (this.activeThread.recipientId) params.set('recipientId', this.activeThread.recipientId);
+                const res = await fetch(
+                    `${API_URL}/social-media/messages/${this.selectedClient}/threads/${encodeURIComponent(this.activeThread.id)}?${params}`,
+                    { headers: this.headers() }
+                );
+                const data = await res.json();
+                if (data.success) {
+                    this.threadMessages = data.data.messages || [];
+                    if (data.data.error) this.threadError = data.data.error;
+                    this.$nextTick(() => {
+                        const el = document.getElementById('msg-scroll-area');
+                        if (el) el.scrollTop = el.scrollHeight;
+                    });
+                } else {
+                    this.threadError = data.message || 'Could not load messages';
+                    this.threadMessages = [];
+                }
+            } catch (e) {
+                this.threadError = 'Failed to load conversation';
+                this.threadMessages = [];
+            } finally {
+                this.threadLoading = false;
+            }
+        },
+
+        async sendReply() {
+            if (!this.activeThread || !this.replyText.trim() || this.sending) return;
+            if (!this.activeThread.recipientId) {
+                this.sendError = 'Cannot reply — missing recipient ID. Refresh the inbox and try again.';
+                return;
+            }
+            this.sending = true;
+            this.sendError = null;
+            try {
+                const res = await fetch(`${API_URL}/social-media/messages/${this.selectedClient}/reply`, {
+                    method: 'POST',
+                    headers: this.headers(),
+                    body: JSON.stringify({
+                        recipientId: this.activeThread.recipientId,
+                        text: this.replyText.trim(),
+                        platform: this.activeThread.platform
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.replyText = '';
+                    await this.loadThreadMessages();
+                    await this.loadMessages();
+                } else {
+                    this.sendError = data.message || 'Failed to send reply';
+                }
+            } catch (e) {
+                this.sendError = 'Failed to send reply';
+            } finally {
+                this.sending = false;
+            }
         },
 
         fmtTime(value) {
