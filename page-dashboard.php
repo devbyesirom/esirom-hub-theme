@@ -1483,8 +1483,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             'bg-orange-500 text-white': post.status === 'needs_review',
                                             'bg-green-500 text-white': post.status === 'approved',
                                             'bg-purple-500 text-white': post.status === 'posted',
-                                            'bg-indigo-600 text-white': post.status === 'completed'
-                                        }" x-text="post.status.replace(/_/g, ' ').toUpperCase()"></span>
+                                            'bg-indigo-600 text-white': post.status === 'completed',
+                                            'bg-teal-600 text-white': post.syncedFromApi
+                                        }" x-text="post.syncedFromApi ? 'SYNCED' : post.status.replace(/_/g, ' ').toUpperCase()"></span>
                                     </div>
                                     <!-- Platform Icons -->
                                     <div class="absolute top-2 left-2 flex gap-1">
@@ -1534,8 +1535,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         <button x-show="post.finalContent" @click.stop="downloadAsset(post)" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-2 rounded text-xs hover:bg-gray-300 dark:hover:bg-gray-600">Download</button>
                                         <button x-show="user.role === 'client' && (post.status === 'concept_review' || post.status === 'pending_approval' || post.status === 'needs_review')" @click="reviewPost(post)" class="flex-1 bg-indigo-600 text-white px-2 py-2 rounded text-xs hover:bg-indigo-700">Review</button>
                                         <button x-show="(user.role === 'admin' || user.role === 'brand_rep') && post.status === 'approved'" @click="markAsPosted(post)" class="flex-1 bg-green-600 text-white px-2 py-2 rounded text-xs hover:bg-green-700">Mark Posted</button>
-                                        <button x-show="(user.role === 'admin' || user.role === 'brand_rep') && (post.status === 'posted' || post.status === 'completed')" @click="addPostKPIs(post)" class="flex-1 bg-purple-600 text-white px-2 py-2 rounded text-xs hover:bg-purple-700" x-text="post.status === 'completed' ? 'Edit KPIs' : 'Add KPIs'"></button>
-                                        <button x-show="(user.role === 'admin' || user.role === 'brand_rep') && post.status === 'completed'" @click="showCreatePostModal = true; editPost(post)" class="flex-1 bg-blue-600 text-white px-2 py-2 rounded text-xs hover:bg-blue-700">Edit</button>
+                                        <button x-show="(user.role === 'admin' || user.role === 'brand_rep') && (post.status === 'posted' || post.status === 'completed' || post.syncedFromApi)" @click="addPostKPIs(post)" class="flex-1 bg-purple-600 text-white px-2 py-2 rounded text-xs hover:bg-purple-700" x-text="(post.status === 'completed' || post.syncedFromApi) ? 'Edit KPIs' : 'Add KPIs'"></button>
+                                        <button x-show="(user.role === 'admin' || user.role === 'brand_rep') && (post.status === 'completed' || post.syncedFromApi)" @click="showCreatePostModal = true; editPost(post)" class="flex-1 bg-blue-600 text-white px-2 py-2 rounded text-xs hover:bg-blue-700">Edit</button>
                                         <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="deletePost(post)" class="bg-red-600 text-white px-2 py-2 rounded text-xs hover:bg-red-700" title="Delete Post">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
@@ -3452,7 +3453,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 scheduledDate: canonicalPostDate,
                                 publishedDate: canonicalPostDate,
                                 caption: post.content?.text || '',
-                                status: post.status,
+                                status: post.status === 'published' ? 'completed' : post.status,
+                                syncedFromApi: post.status === 'published',
+                                platformPostId: post.platformPostId || null,
                                 conceptImage: null,
                                 finalContent: resolvedUrl,
                                 campaignId: post.campaignId,
@@ -3503,7 +3506,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
                 
                 inferContentType(post) {
-                    // Infer content type from post data
+                    const mt = (post.mediaType || '').toLowerCase();
+                    if (mt === 'reels' || mt === 'reel' || mt === 'video') return 'reel';
+                    if (mt === 'carousel_album' || mt === 'carousel') return 'carousel';
+                    if (Array.isArray(post.tags) && post.tags.includes('reel')) return 'reel';
+                    if (Array.isArray(post.tags) && post.tags.includes('carousel')) return 'carousel';
                     const first = Array.isArray(post.content?.media) ? post.content.media[0] : post.content?.media;
                     const src = typeof first === 'string' ? first : (first?.url || first?.src || '');
                     if (Array.isArray(post.content?.media) && post.content.media.length > 1) return 'carousel';

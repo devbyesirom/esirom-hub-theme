@@ -1,6 +1,19 @@
 [
   {
-    "id": 23,
+    "id": 24,
+    "title": "Instagram Sync & Published Posts Fix",
+    "version": "2.3.26",
+    "description": "Synced Instagram posts now show in Published Posts with reach, views, and engagement. Insights dashboard pulls live metrics after Sync Posts.",
+    "date": "2026-06-05",
+    "highlights": [
+      "API-synced posts display as SYNCED with KPIs in Published Posts",
+      "Reels and carousels detected from Instagram media type",
+      "Insights widgets aggregate synced post performance automatically",
+      "Run Sync Posts in Admin after updating to refresh metrics"
+    ],
+    "type": "fix"
+  },
+  {
     "title": "Social Media Hub Sections",
     "version": "2.3.23",
     "description": "Published Posts nav is now Social Media with Messages and Ads sections for Facebook Messenger, Instagram DMs, and post boosting.",
