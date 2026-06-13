@@ -1351,10 +1351,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </select>
                             
                             <select x-model="filterYear" class="border dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white">
+                                <option value="">All Years</option>
                                 <template x-for="year in getAvailableYears()" :key="year">
                                     <option :value="year" x-text="year"></option>
                                 </template>
                             </select>
+                            
+                            <p x-show="posts.length > filteredPosts.length" class="text-xs text-amber-600 dark:text-amber-400 col-span-full">
+                                Showing <span x-text="filteredPosts.length"></span> of <span x-text="posts.length"></span> posts — adjust year/month filters to see more.
+                            </p>
                             
                             <select x-model="filterContentType" class="border dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white">
                                 <option value="">All Content Types</option>
@@ -2300,7 +2305,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 selectedPosts: [],
                 filterPlatform: '',
                 filterMonth: '',
-                filterYear: new Date().getFullYear().toString(),
+                filterYear: '',
                 filterStatus: '',
                 filterContentType: '',
                 filterCampaign: '',

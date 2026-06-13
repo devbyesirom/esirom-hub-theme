@@ -1082,8 +1082,11 @@ show_admin_bar(false);
                                     <p class="text-xs text-green-600" x-show="socialMediaStatus.facebook?.connected">
                                         ✓ Connected: <span x-text="socialMediaStatus.facebook?.username"></span>
                                     </p>
-                                    <p class="text-xs text-green-600 mt-1" x-show="socialMediaStatus.instagram?.connected">
+                                    <p class="text-xs text-green-600 mt-1" x-show="socialMediaStatus.instagram?.connected && socialMediaStatus.instagram?.verified && socialMediaStatus.instagram?.username">
                                         ✓ Instagram: @<span x-text="socialMediaStatus.instagram?.username"></span>
+                                    </p>
+                                    <p class="text-xs text-amber-700 mt-1" x-show="socialMediaStatus.instagram?.connected && !socialMediaStatus.instagram?.verified">
+                                        ⚠ Instagram linked but not verified — run Test Connection or link IG to this Page in Meta Business Suite.
                                     </p>
                                     <p class="text-xs text-amber-700 mt-2" x-show="socialMediaStatus.facebook?.connected && !socialMediaStatus.instagram?.connected">
                                         Facebook is connected, but no Instagram Business account is stored yet. Run <strong>Sync Posts</strong> to auto-link from your Page, or enter the IG Business Account ID below (from Meta Business Suite / Graph API Explorer).
