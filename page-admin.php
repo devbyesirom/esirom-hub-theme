@@ -1114,9 +1114,9 @@ show_admin_bar(false);
                                 x-show="socialMediaStatus.facebook?.connected"
                                 @click="testMetaConnection(customizingClient._id)"
                                 :disabled="socialMediaDiagnosisLoading"
-                                class="bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition-colors disabled:opacity-60">
-                                <span x-show="!socialMediaDiagnosisLoading">Test Connection</span>
-                                <span x-show="socialMediaDiagnosisLoading">Testing...</span>
+                                class="bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200 transition-colors disabled:opacity-60 border border-gray-300">
+                                <span x-show="!socialMediaDiagnosisLoading">Check Connection</span>
+                                <span x-show="socialMediaDiagnosisLoading">Checking...</span>
                             </button>
                             <button 
                                 x-show="socialMediaStatus.facebook?.connected"
@@ -1125,53 +1125,49 @@ show_admin_bar(false);
                                 Disconnect
                             </button>
                         </div>
-                        <div x-show="socialMediaDiagnosis" class="mt-3 p-3 bg-white rounded border border-blue-100 text-xs space-y-2">
-                            <div x-show="socialMediaDiagnosis.metaSetup" class="rounded-lg p-3 border"
+                        <div x-show="socialMediaDiagnosis" class="mt-3 text-xs">
+                            <!-- Healthy: compact status -->
+                            <div x-show="socialMediaDiagnosis.metaSetup?.verdict === 'ok'" class="rounded-lg p-3 border bg-green-50 border-green-200 flex items-center justify-between gap-2">
+                                <p class="text-green-800 font-medium">✓ Facebook & Instagram connected — insights are working</p>
+                                <button type="button" @click="showSocialDiagnosticsDetails = !showSocialDiagnosticsDetails" class="text-green-700 underline whitespace-nowrap" x-text="showSocialDiagnosticsDetails ? 'Hide details' : 'Details'"></button>
+                            </div>
+                            <!-- Issues: show summary prominently -->
+                            <div x-show="socialMediaDiagnosis.metaSetup && socialMediaDiagnosis.metaSetup?.verdict !== 'ok'" class="rounded-lg p-3 border mb-2"
                                  :class="{
-                                     'bg-green-50 border-green-200': socialMediaDiagnosis.metaSetup?.verdict === 'ok',
                                      'bg-amber-50 border-amber-200': socialMediaDiagnosis.metaSetup?.verdict === 'partial',
                                      'bg-red-50 border-red-200': socialMediaDiagnosis.metaSetup?.verdict === 'blocked'
                                  }">
-                                <p class="font-semibold text-gray-900">What's blocking insights</p>
+                                <p class="font-semibold text-gray-900">Connection issue</p>
                                 <p class="mt-1 text-gray-800" x-text="socialMediaDiagnosis.metaSetup?.summary"></p>
-                                <p class="mt-2 text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.server?.oauthMode === 'scope_fallback_no_instagram'">
-                                    OAuth mode: fallback (no config ID) — Instagram permissions cannot be granted.
-                                </p>
-                                <p class="mt-1 text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes?.length">
+                                <button type="button" @click="showSocialDiagnosticsDetails = !showSocialDiagnosticsDetails" class="mt-2 text-indigo-700 underline" x-text="showSocialDiagnosticsDetails ? 'Hide details' : 'Show details'"></button>
+                            </div>
+                            <div x-show="showSocialDiagnosticsDetails || (socialMediaDiagnosis.metaSetup?.verdict && socialMediaDiagnosis.metaSetup?.verdict !== 'ok')" class="p-3 bg-white rounded border border-blue-100 space-y-2">
+                                <p class="text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes?.length">
                                     Missing on token:
                                     <span class="font-mono" x-text="(socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes || []).join(', ')"></span>
                                 </p>
-                                <p class="mt-1 text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.server?.loginConfigId">
-                                    Config ID on server:
-                                    <span class="font-mono" x-text="socialMediaDiagnosis.metaSetup?.server?.loginConfigId"></span>
-                                </p>
+                                <template x-for="check in (socialMediaDiagnosis.facebook?.checks || [])" :key="'fb-' + check.step">
+                                    <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
+                                        <span x-text="check.ok ? '✓' : '✗'"></span>
+                                        <span class="font-medium" x-text="' FB ' + check.step + ':'"></span>
+                                        <span x-text="check.message"></span>
+                                    </p>
+                                </template>
+                                <template x-for="check in (socialMediaDiagnosis.instagram?.checks || [])" :key="'ig-' + check.step">
+                                    <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
+                                        <span x-text="check.ok ? '✓' : '✗'"></span>
+                                        <span class="font-medium" x-text="' IG ' + check.step + ':'"></span>
+                                        <span x-text="check.message"></span>
+                                    </p>
+                                </template>
+                                <template x-for="(tip, idx) in (socialMediaDiagnosis.recommendations || [])" :key="'tip-' + idx">
+                                    <p class="text-amber-800">→ <span x-text="tip"></span></p>
+                                </template>
                             </div>
-                            <p class="font-semibold text-gray-800">Connection diagnostics</p>
-                            <template x-for="check in (socialMediaDiagnosis.facebook?.checks || [])" :key="'fb-' + check.step">
-                                <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
-                                    <span x-text="check.ok ? '✓' : '✗'"></span>
-                                    <span class="font-medium" x-text="' FB ' + check.step + ':'"></span>
-                                    <span x-text="check.message"></span>
-                                </p>
-                            </template>
-                            <template x-for="check in (socialMediaDiagnosis.instagram?.checks || [])" :key="'ig-' + check.step">
-                                <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
-                                    <span x-text="check.ok ? '✓' : '✗'"></span>
-                                    <span class="font-medium" x-text="' IG ' + check.step + ':'"></span>
-                                    <span x-text="check.message"></span>
-                                </p>
-                            </template>
-                            <p class="text-gray-600" x-show="socialMediaDiagnosis.database">
-                                Stored posts — IG: <span x-text="socialMediaDiagnosis.database?.instagramPosts || 0"></span>,
-                                FB: <span x-text="socialMediaDiagnosis.database?.facebookPosts || 0"></span>
-                            </p>
-                            <template x-for="(tip, idx) in (socialMediaDiagnosis.recommendations || [])" :key="'tip-' + idx">
-                                <p class="text-amber-800">→ <span x-text="tip"></span></p>
-                            </template>
                         </div>
-                        <div x-show="socialMediaStatus.facebook?.connected" class="mt-3 pt-3 border-t border-blue-200 space-y-2">
-                            <p class="text-xs font-medium text-gray-700">Manual Instagram link (optional)</p>
-                            <p class="text-xs text-gray-500">If auto-discovery fails, paste the numeric <strong>Instagram Business Account ID</strong> (not @handle). Page access token above must still be valid.</p>
+                        <div x-show="socialMediaStatus.facebook?.connected && !(socialMediaStatus.instagram?.connected && socialMediaStatus.instagram?.verified)" class="mt-3 pt-3 border-t border-blue-200 space-y-2">
+                            <p class="text-xs font-medium text-gray-700">Manual Instagram link</p>
+                            <p class="text-xs text-gray-500">Only needed if auto-discovery fails. Paste the numeric <strong>Instagram Business Account ID</strong> (not @handle).</p>
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <input type="text" x-model="manualIgAccountId" placeholder="e.g. 17841400008460056" class="flex-1 border rounded px-2 py-1.5 text-xs">
                                 <input type="text" x-model="manualIgUsername" placeholder="@username (optional)" class="flex-1 border rounded px-2 py-1.5 text-xs">
@@ -1356,6 +1352,7 @@ show_admin_bar(false);
                 socialMediaStatus: {},
                 socialMediaDiagnosis: null,
                 socialMediaDiagnosisLoading: false,
+                showSocialDiagnosticsDetails: false,
                 manualIgAccountId: '',
                 manualIgUsername: '',
                 bulkAddMetric: '',
@@ -1737,6 +1734,7 @@ show_admin_bar(false);
                 async customizeClient(client) {
                     this.customizingClient = client;
                     this.socialMediaDiagnosis = null;
+                    this.showSocialDiagnosticsDetails = false;
                     
                     // Load social media connection status
                     await this.loadSocialMediaStatus(client._id);
@@ -1812,6 +1810,7 @@ show_admin_bar(false);
                 async testMetaConnection(clientId) {
                     this.socialMediaDiagnosisLoading = true;
                     this.socialMediaDiagnosis = null;
+                    this.showSocialDiagnosticsDetails = false;
                     try {
                         const response = await fetch(`${API_URL}/social-media/diagnose/${clientId}`, {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -1819,12 +1818,14 @@ show_admin_bar(false);
                         const data = await response.json();
                         if (data.success) {
                             this.socialMediaDiagnosis = data.data;
+                            const verdict = data.data.metaSetup?.verdict;
+                            this.showSocialDiagnosticsDetails = verdict && verdict !== 'ok';
                             const failed = [
                                 ...(data.data.facebook?.checks || []),
                                 ...(data.data.instagram?.checks || [])
                             ].some((check) => !check.ok);
                             if (failed || (data.data.recommendations || []).length) {
-                                this.showToast('Connection test finished — review diagnostics below', 'error', 6000);
+                                this.showToast('Connection check found issues — see details below', 'error', 6000);
                             } else {
                                 this.showToast('Facebook and Instagram connections look healthy', 'success', 5000);
                             }

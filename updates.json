@@ -1,6 +1,18 @@
 [
   {
-    "id": 24,
+    "id": 25,
+    "title": "Insights Dashboard & Admin Cleanup",
+    "version": "2.3.29",
+    "description": "Insights defaults to current month with clearer platform filters, live FB/IG follower counts, and audience demographics. Admin social section is less cluttered when connections are healthy.",
+    "date": "2026-06-05",
+    "highlights": [
+      "FB & IG total followers with follow/unfollow this month",
+      "Age, top cities, and top countries from Instagram audience data",
+      "Platform filter pills show clear on/off states",
+      "Admin connection diagnostics collapsed when healthy"
+    ],
+    "type": "feature"
+  },
     "title": "Instagram Sync & Published Posts Fix",
     "version": "2.3.26",
     "description": "Synced Instagram posts now show in Published Posts with reach, views, and engagement. Insights dashboard pulls live metrics after Sync Posts.",

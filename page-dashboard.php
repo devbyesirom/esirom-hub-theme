@@ -490,27 +490,19 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <div class="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                                 <div class="flex items-center justify-between mb-3">
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Date Range</h3>
-                                    <div x-show="getTotalFollowers() > 0" class="flex items-center gap-3">
-                                        <template x-for="platform in Object.keys(platformFollowers).filter(p => platformFollowers[p] > 0)" :key="platform">
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                        <template x-for="platform in ['facebook', 'instagram'].filter(p => clientPlatforms.includes(p))" :key="'followers-' + platform">
                                             <div class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-2 shadow-sm">
                                                 <svg x-show="platform === 'instagram'" class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                                                 <svg x-show="platform === 'facebook'" class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                                                <svg x-show="platform === 'youtube'" class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                                                <svg x-show="platform === 'linkedin'" class="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                                                <svg x-show="platform === 'x' || platform === 'twitter'" class="w-5 h-5 text-black dark:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                                                 <div class="flex flex-col">
-                                                    <span class="text-base font-bold text-gray-900 dark:text-white leading-tight" x-text="formatNumber(platformFollowers[platform])"></span>
+                                                    <span class="text-base font-bold text-gray-900 dark:text-white leading-tight" x-text="formatNumber(calculatePlatformFollowers(platform))"></span>
                                                     <span class="text-xs text-gray-500 dark:text-gray-400 capitalize" x-text="platform + ' followers'"></span>
+                                                    <span class="text-xs text-green-600 dark:text-green-400" x-show="followerChanges[platform]?.gained > 0" x-text="'+' + formatNumber(followerChanges[platform]?.gained || 0) + ' this month'"></span>
+                                                    <span class="text-xs text-red-600 dark:text-red-400" x-show="followerChanges[platform]?.lost > 0" x-text="'-' + formatNumber(followerChanges[platform]?.lost || 0) + ' unfollows'"></span>
                                                 </div>
                                             </div>
                                         </template>
-                                        <div x-show="Object.keys(platformFollowers).filter(p => platformFollowers[p] > 0).length > 1" class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-lg px-4 py-2 shadow-sm">
-                                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
-                                            <div class="flex flex-col">
-                                                <span class="text-base font-bold text-indigo-700 dark:text-indigo-300 leading-tight" x-text="formatNumber(getTotalFollowers())"></span>
-                                                <span class="text-xs text-indigo-500 dark:text-indigo-400">Total followers</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2">
@@ -563,52 +555,37 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             
                             <!-- Platform Filter -->
                             <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Filter by Platform</h3>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Filter by Platform</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Highlighted = included in metrics. Click to toggle.</p>
+                                </div>
                                 <button @click="showCustomizeWidgets = !showCustomizeWidgets" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all" :class="showCustomizeWidgets ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                                     <span>Customize Widgets</span>
                                 </button>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <button x-show="clientPlatforms.includes('facebook')" @click="togglePlatformFilter('facebook')" :class="activePlatforms.length === clientPlatforms.length ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400' : (activePlatforms.includes('facebook') ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500')" class="px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-all">
+                                <button x-show="clientPlatforms.includes('facebook')" @click="togglePlatformFilter('facebook')" :class="platformFilterClasses('facebook')">
                                     Facebook
                                 </button>
-                                <button x-show="clientPlatforms.includes('instagram')" @click="togglePlatformFilter('instagram')" :class="activePlatforms.length === clientPlatforms.length ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400' : (activePlatforms.includes('instagram') ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500')" class="px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-all">
+                                <button x-show="clientPlatforms.includes('instagram')" @click="togglePlatformFilter('instagram')" :class="platformFilterClasses('instagram')">
                                     Instagram
                                 </button>
-                                <button x-show="clientPlatforms.includes('linkedin')" @click="togglePlatformFilter('linkedin')" :class="activePlatforms.length === clientPlatforms.length ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400' : (activePlatforms.includes('linkedin') ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500')" class="px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-all">
+                                <button x-show="clientPlatforms.includes('linkedin')" @click="togglePlatformFilter('linkedin')" :class="platformFilterClasses('linkedin')">
                                     LinkedIn
                                 </button>
-                                <button x-show="clientPlatforms.includes('youtube')" @click="togglePlatformFilter('youtube')" :class="activePlatforms.length === clientPlatforms.length ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400' : (activePlatforms.includes('youtube') ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500')" class="px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-all">
+                                <button x-show="clientPlatforms.includes('youtube')" @click="togglePlatformFilter('youtube')" :class="platformFilterClasses('youtube')">
                                     YouTube
                                 </button>
-                                <button x-show="clientPlatforms.includes('x')" @click="togglePlatformFilter('x')" :class="activePlatforms.length === clientPlatforms.length ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400' : (activePlatforms.includes('x') ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500')" class="px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-all">
+                                <button x-show="clientPlatforms.includes('x')" @click="togglePlatformFilter('x')" :class="platformFilterClasses('x')">
                                     X (Twitter)
                                 </button>
-                                <button x-show="clientPlatforms.includes('tiktok')" @click="togglePlatformFilter('tiktok')" :class="activePlatforms.length === clientPlatforms.length ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400' : (activePlatforms.includes('tiktok') ? 'bg-black text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500')" class="px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-all">
+                                <button x-show="clientPlatforms.includes('tiktok')" @click="togglePlatformFilter('tiktok')" :class="platformFilterClasses('tiktok')">
                                     TikTok
                                 </button>
-                                <button @click="activePlatforms = [...clientPlatforms]; updateDashboardMetrics()" :class="activePlatforms.length === clientPlatforms.length ? 'bg-indigo-700 ring-2 ring-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'" class="px-3 py-1 rounded-full text-sm font-medium text-white transition-all">
+                                <button @click="selectAllPlatforms()" :class="activePlatforms.length === clientPlatforms.length ? 'px-3 py-1.5 rounded-full text-sm font-medium border bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300 ring-offset-1' : 'px-3 py-1.5 rounded-full text-sm font-medium border bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700'" >
                                     All Platforms
                                 </button>
-                            </div>
-
-                            <!-- Connected channels & where to find synced content -->
-                            <div x-show="hasConnectedSocialChannels() || getPlatformPostCount('youtube') > 0" class="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Connected channels</p>
-                                <div class="flex flex-wrap gap-2 mb-2">
-                                    <span x-show="socialMediaStatus.facebook?.connected" class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Facebook · <span x-text="getPlatformPostCount('facebook')"></span> posts</span>
-                                    <span x-show="socialMediaStatus.instagram?.connected" class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Instagram · <span x-text="getPlatformPostCount('instagram')"></span> posts</span>
-                                    <span x-show="socialMediaStatus.youtube?.connected" class="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">YouTube · <span x-text="getPlatformPostCount('youtube')"></span> videos</span>
-                                </div>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                    Synced posts and video insights feed the metrics above. Use the platform pills to filter, or open <strong>Published Posts</strong> to browse individual items.
-                                </p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button @click="viewPlatformPosts('youtube')" x-show="clientPlatforms.includes('youtube')" class="text-xs px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700">View YouTube posts</button>
-                                    <button @click="viewPlatformPosts('instagram')" x-show="clientPlatforms.includes('instagram')" class="text-xs px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700">View Instagram posts</button>
-                                    <button @click="viewPlatformPosts('facebook')" x-show="clientPlatforms.includes('facebook')" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700">View Facebook posts</button>
-                                </div>
                             </div>
                             
                             <!-- Widget Customization Panel -->
@@ -786,7 +763,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
 
                         <!-- Additional Metrics - Row 3 (Video/Reel Specific) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                        <div x-show="hasVideoInsights()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
                             <div x-show="isWidgetVisible('watch_time')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
                                 <div class="flex justify-between items-start">
                                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Watch Time</h3>
@@ -823,18 +800,18 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
 
                         <!-- Audience Demographics & Advertising -->
-                        <div x-show="dashboardData.demographics || dashboardData.advertising" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        <div x-show="hasDemographicsData() || dashboardData.advertising" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                             
                             <!-- Audience Demographics -->
-                            <div x-show="dashboardData.demographics" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div x-show="hasDemographicsData()" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
                                 <h3 class="text-lg font-semibold mb-4 flex items-center">
                                     <svg class="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                     Audience Demographics
                                 </h3>
                                 
                                 <!-- Age & Gender -->
-                                <div class="mb-6">
-                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Age & Gender Distribution</h4>
+                                <div class="mb-6" x-show="dashboardData.demographics?.age && Object.keys(dashboardData.demographics.age).length > 0">
+                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Age Distribution</h4>
                                     <div style="height: 200px;">
                                         <canvas id="demographicsChart"></canvas>
                                     </div>
@@ -2266,7 +2243,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.loadCampaigns();
                     this.loadPlatformFollowers();
                     this.loadPageLevelMetrics();
-                    this.updateDashboardMetrics();
+                    await this.loadAudienceInsights();
+                    this.setDateRange('current_month');
                     this.initializeReportBuilder();
                 },
                 
@@ -2277,10 +2255,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 clientStartDate: null, // Will be loaded from client customization
                 mirrorIGToFB: false,
                 socialMediaStatus: {},
+                audienceInsights: null,
+                followerChanges: {
+                    facebook: { gained: 0, lost: 0 },
+                    instagram: { gained: 0, lost: 0 }
+                },
                 progressViewMode: 'month', // 'month' or 'year' for Monthly Post Progress widget
                 
                 // Date range filter
-                dateRange: 'ytd', // ytd, current_month, last_month, last_3_months, custom
+                dateRange: 'current_month',
                 showCustomDatePicker: false,
                 customStartDate: '',
                 customEndDate: '',
@@ -2403,7 +2386,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         await this.loadAvailableClients();
                     }
                     
-                    this.setDateRange('ytd');
                     await this.reloadClientScopedData();
 
                     // Watch for view changes
@@ -2873,7 +2855,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             if (this.user.role === 'admin' || this.user.role === 'brand_rep' || this.user.role === 'client') {
                                 await this.loadAvailableClients();
                             }
-                            this.setDateRange('ytd');
                             await this.reloadClientScopedData();
                         } else {
                             this.showToast(data.message || 'Failed to change password. Please check your current password.', 'error');
@@ -4649,15 +4630,93 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 togglePlatformFilter(platform) {
                     const index = this.activePlatforms.indexOf(platform);
                     if (index > -1) {
-                        // Don't allow removing all platforms
                         if (this.activePlatforms.length > 1) {
                             this.activePlatforms.splice(index, 1);
                         }
                     } else {
                         this.activePlatforms.push(platform);
                     }
-                    // Recalculate metrics
                     this.updateDashboardMetrics();
+                },
+
+                isPlatformFilterActive(platform) {
+                    return this.activePlatforms.includes(platform);
+                },
+
+                platformFilterClasses(platform) {
+                    const base = 'px-3 py-1.5 rounded-full text-sm font-medium transition-all border ';
+                    if (!this.isPlatformFilterActive(platform)) {
+                        return base + 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 opacity-60 line-through decoration-gray-400';
+                    }
+                    const activeMap = {
+                        facebook: 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-300 ring-offset-1 dark:ring-offset-gray-900',
+                        instagram: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent ring-2 ring-pink-300 ring-offset-1 dark:ring-offset-gray-900',
+                        linkedin: 'bg-blue-700 text-white border-blue-700 ring-2 ring-blue-300 ring-offset-1 dark:ring-offset-gray-900',
+                        youtube: 'bg-red-600 text-white border-red-600 ring-2 ring-red-300 ring-offset-1 dark:ring-offset-gray-900',
+                        x: 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white ring-2 ring-gray-400 ring-offset-1 dark:ring-offset-gray-900',
+                        tiktok: 'bg-black text-white border-black ring-2 ring-gray-400 ring-offset-1 dark:ring-offset-gray-900'
+                    };
+                    return base + (activeMap[platform] || 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300 ring-offset-1 dark:ring-offset-gray-900');
+                },
+
+                selectAllPlatforms() {
+                    this.activePlatforms = [...this.clientPlatforms];
+                    this.updateDashboardMetrics();
+                },
+
+                hasVideoInsights() {
+                    return (
+                        this.calculateFilteredKPI('watch_time') > 0 ||
+                        this.calculateFilteredKPI('views_followers') > 0 ||
+                        this.calculateFilteredKPI('views_non_followers') > 0 ||
+                        this.calculateAvgSkipRate() > 0
+                    );
+                },
+
+                hasDemographicsData() {
+                    const demo = this.dashboardData?.demographics;
+                    if (!demo) return false;
+                    const hasAge = demo.age && Object.keys(demo.age).length > 0;
+                    const hasCities = Array.isArray(demo.cities) && demo.cities.length > 0;
+                    const hasCountries = Array.isArray(demo.countries) && demo.countries.length > 0;
+                    return hasAge || hasCities || hasCountries;
+                },
+
+                async loadAudienceInsights() {
+                    const clientId = this.getClientId();
+                    if (!clientId) return;
+                    try {
+                        const response = await fetch(`${API_URL}/social-media/audience/${clientId}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (!response.ok) return;
+                        const result = await response.json();
+                        if (!result.success || !result.data) return;
+
+                        const snap = result.data;
+                        this.audienceInsights = snap;
+                        if (snap.followers) {
+                            Object.entries(snap.followers).forEach(([platform, count]) => {
+                                if (count > 0) {
+                                    this.platformFollowers[platform] = count;
+                                    this.savePlatformFollowers(platform, count);
+                                }
+                            });
+                        }
+                        if (snap.followerChanges) {
+                            this.followerChanges = snap.followerChanges;
+                        }
+                        if (snap.demographics) {
+                            this.dashboardData.demographics = {
+                                age: snap.demographics.age || {},
+                                countries: snap.demographics.countries || [],
+                                cities: snap.demographics.cities || []
+                            };
+                        }
+                        this.$nextTick(() => this.initCharts());
+                    } catch (error) {
+                        console.warn('loadAudienceInsights:', error);
+                    }
                 },
 
                 // Date range filtering
@@ -5033,7 +5092,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 updateDemographicsData() {
-                    // Aggregate demographics from the most recent posts with demographic data
+                    if (this.hasDemographicsData()) {
+                        return;
+                    }
+
                     const postsWithDemographics = this.posts
                         .filter(p => p.kpis?.demographics)
                         .sort((a, b) => new Date(b.scheduledDate) - new Date(a.scheduledDate));
@@ -5042,10 +5104,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         return;
                     }
                     
-                    // Use the most recent demographics data
                     const latestDemographics = postsWithDemographics[0].kpis.demographics;
                     
-                    // Format for dashboard display
                     this.dashboardData.demographics = {
                         age: {},
                         gender: latestDemographics.gender || {},
@@ -5053,14 +5113,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         countries: latestDemographics.topCountries || []
                     };
                     
-                    // Convert age groups to chart format
                     if (latestDemographics.ageGroups) {
                         latestDemographics.ageGroups.forEach(group => {
                             this.dashboardData.demographics.age[group.range] = group.percentage;
                         });
                     }
-                    
-                    console.log('📊 Updated demographics:', this.dashboardData.demographics);
                 },
 
                 calculatePlatformKPI(platform, metric) {
