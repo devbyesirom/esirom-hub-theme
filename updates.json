@@ -1,6 +1,18 @@
 [
   {
-    "id": 25,
+    "id": 26,
+    "title": "Modern Insights Dashboard Redesign",
+    "version": "2.3.30",
+    "description": "Insights page redesigned with a prominent audience overview, always-visible demographics section, and polished performance cards.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Gradient audience hero with followers, growth, and unfollows",
+      "Demographics & geography always shown with refresh and empty states",
+      "Modern stat cards with accent styling and clearer layout",
+      "Video performance section with helpful empty state"
+    ],
+    "type": "feature"
+  },
     "title": "Insights Dashboard & Admin Cleanup",
     "version": "2.3.29",
     "description": "Insights defaults to current month with clearer platform filters, live FB/IG follower counts, and audience demographics. Admin social section is less cluttered when connections are healthy.",

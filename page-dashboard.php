@@ -357,7 +357,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
 
                     <!-- Dashboard Content -->
-                    <div x-show="!loading">
+                    <div x-show="!loading" class="hub-insights-shell space-y-6">
                         <!-- Pending Approvals Alert (for clients) -->
                         <div x-show="user.role === 'client' && dashboardData.pendingPosts?.count > 0" class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                             <div class="flex items-center">
@@ -484,136 +484,121 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <!-- Date Range & Platform Filters -->
-                        <div class="mb-6 bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
-                            <!-- Date Range Filter -->
-                            <div class="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Date Range</h3>
-                                    <div class="flex items-center gap-3 flex-wrap">
-                                        <template x-for="platform in ['facebook', 'instagram'].filter(p => clientPlatforms.includes(p))" :key="'followers-' + platform">
-                                            <div class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-2 shadow-sm">
-                                                <svg x-show="platform === 'instagram'" class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                                                <svg x-show="platform === 'facebook'" class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                                                <div class="flex flex-col">
-                                                    <span class="text-base font-bold text-gray-900 dark:text-white leading-tight" x-text="formatNumber(calculatePlatformFollowers(platform))"></span>
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400 capitalize" x-text="platform + ' followers'"></span>
-                                                    <span class="text-xs text-green-600 dark:text-green-400" x-show="followerChanges[platform]?.gained > 0" x-text="'+' + formatNumber(followerChanges[platform]?.gained || 0) + ' this month'"></span>
-                                                    <span class="text-xs text-red-600 dark:text-red-400" x-show="followerChanges[platform]?.lost > 0" x-text="'-' + formatNumber(followerChanges[platform]?.lost || 0) + ' unfollows'"></span>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
+                        <!-- Controls: Date Range & Platform Filters -->
+                        <div class="hub-insights-panel p-4 md:p-5">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4 pb-4 border-b border-gray-200/80 dark:border-gray-700/80">
+                                <div>
+                                    <p class="hub-insights-section-title mb-1">Reporting period</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="currentPeriodLabel"></p>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <button @click="setDateRange('ytd')" :class="dateRange === 'ytd' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
-                                        Year to Date
-                                    </button>
-                                    <button @click="setDateRange('current_month')" :class="dateRange === 'current_month' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
-                                        Current Month
-                                    </button>
-                                    <button @click="setDateRange('last_month')" :class="dateRange === 'last_month' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
-                                        Last Month
-                                    </button>
-                                    <button @click="setDateRange('last_3_months')" :class="dateRange === 'last_3_months' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
-                                        Last 3 Months
-                                    </button>
-                                    <button @click="setDateRange('last_year')" :class="dateRange === 'last_year' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
-                                        Last Year
-                                    </button>
-                                    <select @change="setDateRange('full_year_' + $event.target.value)" :class="dateRange.startsWith('full_year_') ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer appearance-none pr-8" style="background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22%3E%3Cpath fill-rule=%22evenodd%22 d=%22M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z%22 clip-rule=%22evenodd%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em;">
-                                        <option value="" disabled selected>Select Year</option>
+                                    <button @click="setDateRange('current_month')" :class="dateRange === 'current_month' ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">Current Month</button>
+                                    <button @click="setDateRange('last_month')" :class="dateRange === 'last_month' ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">Last Month</button>
+                                    <button @click="setDateRange('last_3_months')" :class="dateRange === 'last_3_months' ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">3 Months</button>
+                                    <button @click="setDateRange('ytd')" :class="dateRange === 'ytd' ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">YTD</button>
+                                    <button @click="setDateRange('last_year')" :class="dateRange === 'last_year' ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">Last Year</button>
+                                    <select @change="setDateRange('full_year_' + $event.target.value)" :class="dateRange.startsWith('full_year_') ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'" class="cursor-pointer appearance-none pr-8" style="background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22%3E%3Cpath fill-rule=%22evenodd%22 d=%22M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z%22 clip-rule=%22evenodd%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em;">
+                                        <option value="" disabled selected>Year</option>
                                         <option :value="new Date().getFullYear()" x-text="new Date().getFullYear()"></option>
                                         <option :value="new Date().getFullYear() - 1" x-text="new Date().getFullYear() - 1"></option>
                                         <option :value="new Date().getFullYear() - 2" x-text="new Date().getFullYear() - 2"></option>
                                     </select>
-                                    <button @click="showCustomDatePicker = !showCustomDatePicker" :class="dateRange === 'custom' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
-                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                        Custom
-                                    </button>
+                                    <button @click="showCustomDatePicker = !showCustomDatePicker" :class="dateRange === 'custom' ? 'hub-date-pill is-active' : 'hub-date-pill bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">Custom</button>
                                 </div>
-                                
-                                <!-- Custom Date Picker -->
-                                <div x-show="showCustomDatePicker" x-collapse class="mt-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
-                                            <input type="date" x-model="customStartDate" @change="applyCustomDateRange()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-800 dark:text-white">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
-                                            <input type="date" x-model="customEndDate" @change="applyCustomDateRange()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-800 dark:text-white">
-                                        </div>
+                            </div>
+                            <div x-show="showCustomDatePicker" x-collapse class="mb-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                                        <input type="date" x-model="customStartDate" @change="applyCustomDateRange()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-800 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                                        <input type="date" x-model="customEndDate" @change="applyCustomDateRange()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-800 dark:text-white">
                                     </div>
                                 </div>
-                                
-                                <!-- Current Period Display -->
-                                <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                    <span x-text="currentPeriodLabel"></span>
-                                </div>
                             </div>
-                            
-                            <!-- Platform Filter -->
-                            <div class="flex justify-between items-center mb-3">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Filter by Platform</h3>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Highlighted = included in metrics. Click to toggle.</p>
+                                    <p class="hub-insights-section-title mb-1">Platforms</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Colored = included · Grey strikethrough = excluded</p>
                                 </div>
-                                <button @click="showCustomizeWidgets = !showCustomizeWidgets" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all" :class="showCustomizeWidgets ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                                    <span>Customize Widgets</span>
-                                </button>
+                                <div class="flex flex-wrap gap-2">
+                                    <button x-show="clientPlatforms.includes('facebook')" @click="togglePlatformFilter('facebook')" :class="platformFilterClasses('facebook')">Facebook</button>
+                                    <button x-show="clientPlatforms.includes('instagram')" @click="togglePlatformFilter('instagram')" :class="platformFilterClasses('instagram')">Instagram</button>
+                                    <button x-show="clientPlatforms.includes('linkedin')" @click="togglePlatformFilter('linkedin')" :class="platformFilterClasses('linkedin')">LinkedIn</button>
+                                    <button x-show="clientPlatforms.includes('youtube')" @click="togglePlatformFilter('youtube')" :class="platformFilterClasses('youtube')">YouTube</button>
+                                    <button x-show="clientPlatforms.includes('x')" @click="togglePlatformFilter('x')" :class="platformFilterClasses('x')">X</button>
+                                    <button x-show="clientPlatforms.includes('tiktok')" @click="togglePlatformFilter('tiktok')" :class="platformFilterClasses('tiktok')">TikTok</button>
+                                    <button @click="selectAllPlatforms()" :class="activePlatforms.length === clientPlatforms.length ? 'hub-filter-pill bg-indigo-600 text-white ring-2 ring-indigo-300 ring-offset-1 dark:ring-offset-gray-900' : 'hub-filter-pill bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'">All</button>
+                                    <button @click="showCustomizeWidgets = !showCustomizeWidgets" class="hub-filter-pill bg-gray-900 dark:bg-white text-white dark:text-gray-900">Customize</button>
+                                </div>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button x-show="clientPlatforms.includes('facebook')" @click="togglePlatformFilter('facebook')" :class="platformFilterClasses('facebook')">
-                                    Facebook
-                                </button>
-                                <button x-show="clientPlatforms.includes('instagram')" @click="togglePlatformFilter('instagram')" :class="platformFilterClasses('instagram')">
-                                    Instagram
-                                </button>
-                                <button x-show="clientPlatforms.includes('linkedin')" @click="togglePlatformFilter('linkedin')" :class="platformFilterClasses('linkedin')">
-                                    LinkedIn
-                                </button>
-                                <button x-show="clientPlatforms.includes('youtube')" @click="togglePlatformFilter('youtube')" :class="platformFilterClasses('youtube')">
-                                    YouTube
-                                </button>
-                                <button x-show="clientPlatforms.includes('x')" @click="togglePlatformFilter('x')" :class="platformFilterClasses('x')">
-                                    X (Twitter)
-                                </button>
-                                <button x-show="clientPlatforms.includes('tiktok')" @click="togglePlatformFilter('tiktok')" :class="platformFilterClasses('tiktok')">
-                                    TikTok
-                                </button>
-                                <button @click="selectAllPlatforms()" :class="activePlatforms.length === clientPlatforms.length ? 'px-3 py-1.5 rounded-full text-sm font-medium border bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300 ring-offset-1' : 'px-3 py-1.5 rounded-full text-sm font-medium border bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700'" >
-                                    All Platforms
-                                </button>
-                            </div>
-                            
-                            <!-- Widget Customization Panel -->
                             <div x-show="showCustomizeWidgets" x-collapse class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Show/Hide Dashboard Widgets</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Toggle which metrics you want to see on your dashboard</p>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <!-- Only show widgets that are enabled by admin -->
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Performance widgets</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                                     <template x-for="widget in getAvailableWidgets()" :key="widget.id">
-                                        <label class="flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors" :class="userWidgetPreferences.includes(widget.id) ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'">
+                                        <label class="flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors" :class="userWidgetPreferences.includes(widget.id) ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
                                             <input type="checkbox" :checked="userWidgetPreferences.includes(widget.id)" @change="toggleWidgetPreference(widget.id)" class="rounded text-indigo-600 focus:ring-indigo-500">
                                             <span class="text-xs font-medium text-gray-700 dark:text-gray-300" x-text="widget.name"></span>
                                         </label>
                                     </template>
                                 </div>
                                 <div class="mt-3 flex justify-end gap-2">
-                                    <button @click="resetWidgetPreferences()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
-                                        Reset to Default
-                                    </button>
-                                    <button @click="showCustomizeWidgets = false" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-                                        Done
-                                    </button>
+                                    <button @click="resetWidgetPreferences()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">Reset</button>
+                                    <button @click="showCustomizeWidgets = false" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Done</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- KPI Goals Section (TOP OF DASHBOARD) -->
-                        <div x-show="dashboardData.kpis && dashboardData.kpis.length > 0" class="mb-6 bg-white dark:bg-gray-800/50 rounded-lg p-6 shadow-sm">
+                        <!-- Audience Overview (always visible for connected social brands) -->
+                        <div x-show="hasSocialAudiencePlatforms()" class="hub-insights-hero">
+                            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                <div>
+                                    <p class="text-xs uppercase tracking-wider font-semibold opacity-80">Audience overview</p>
+                                    <h3 class="text-xl md:text-2xl font-bold mt-1">Total audience · <span x-text="formatNumber(getTotalAudienceFollowers())"></span></h3>
+                                    <p class="text-sm opacity-80 mt-1">Live follower counts from Meta · growth is month-to-date</p>
+                                </div>
+                                <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="self-start px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-sm font-semibold disabled:opacity-60">
+                                    <span x-show="!audienceInsightsLoading">Refresh audience</span>
+                                    <span x-show="audienceInsightsLoading">Refreshing…</span>
+                                </button>
+                            </div>
+                            <div class="hub-insights-hero__grid relative z-10">
+                                <template x-for="platform in ['facebook', 'instagram'].filter(p => clientPlatforms.includes(p))" :key="'audience-' + platform">
+                                    <div class="hub-insights-hero__stat">
+                                        <p class="hub-insights-hero__label" x-text="platform + ' followers'"></p>
+                                        <p class="hub-insights-hero__value" x-text="formatNumber(calculatePlatformFollowers(platform))"></p>
+                                        <p class="hub-insights-hero__sub text-emerald-200">
+                                            +<span x-text="formatNumber(followerChanges[platform]?.gained || 0)"></span> new
+                                            · <span x-text="formatNumber(followerChanges[platform]?.lost || 0)"></span> unfollows
+                                        </p>
+                                        <p class="hub-insights-hero__sub" x-show="getNetFollowerChange(platform) !== 0">
+                                            Net: <span x-text="(getNetFollowerChange(platform) >= 0 ? '+' : '') + formatNumber(getNetFollowerChange(platform))"></span> this month
+                                        </p>
+                                    </div>
+                                </template>
+                                <div class="hub-insights-hero__stat">
+                                    <p class="hub-insights-hero__label">Net growth</p>
+                                    <p class="hub-insights-hero__value" x-text="(getTotalNetFollowerChange() >= 0 ? '+' : '') + formatNumber(getTotalNetFollowerChange())"></p>
+                                    <p class="hub-insights-hero__sub">Combined FB + IG this month</p>
+                                </div>
+                                <div class="hub-insights-hero__stat">
+                                    <p class="hub-insights-hero__label">Last synced</p>
+                                    <p class="hub-insights-hero__value text-lg" x-text="formatAudienceSyncTime()"></p>
+                                    <p class="hub-insights-hero__sub">Auto-updates on Sync Posts</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Content performance</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Filtered by date range & platforms above</p>
+                            </div>
+
+                        <div x-show="dashboardData.kpis && dashboardData.kpis.length > 0" class="mb-6 hub-insights-panel p-6">
                             <h3 class="text-xl font-bold mb-5 text-gray-900 dark:text-white">Annual Goals Progress</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <template x-for="(kpi, index) in dashboardData.kpis" :key="index">
@@ -669,178 +654,156 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
 
                         <!-- Metric Cards -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div x-show="isWidgetVisible('reach')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div x-show="isWidgetVisible('reach')" class="hub-stat-card hub-stat-card--teal">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Reach</h3>
-                                    <svg class="h-6 w-6 text-teal-500 dark:text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Reach</h3>
+                                    <div class="hub-stat-card__icon text-teal-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg></div>
                                 </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(dashboardData.metrics?.reach?.current || 0)"></p>
-                                <p class="text-sm flex items-center mt-1" :class="(dashboardData.metrics?.reach?.change || 0) >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'">
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.metrics?.reach?.current || 0)"></p>
+                                <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.reach?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.reach?.change || 0)"></span>
                                 </p>
                             </div>
-                            <div x-show="isWidgetVisible('engagement_rate')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div x-show="isWidgetVisible('engagement_rate')" class="hub-stat-card hub-stat-card--pink">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Engagement Rate</h3>
-                                    <svg class="h-6 w-6 text-pink-500 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Engagement Rate</h3>
+                                    <div class="hub-stat-card__icon text-pink-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg></div>
                                 </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="(dashboardData.metrics?.engagementRate?.current || 0).toFixed(2) + '%'"></p>
-                                <p class="text-sm flex items-center mt-1" :class="(dashboardData.metrics?.engagementRate?.change || 0) >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'">
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="(dashboardData.metrics?.engagementRate?.current || 0).toFixed(2) + '%'"></p>
+                                <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.engagementRate?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.engagementRate?.change || 0)"></span>
                                 </p>
                             </div>
-                            <div x-show="isWidgetVisible('total_engagement')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div x-show="isWidgetVisible('total_engagement')" class="hub-stat-card hub-stat-card--blue">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Engagement</h3>
-                                    <svg class="h-6 w-6 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Engagement</h3>
+                                    <div class="hub-stat-card__icon text-blue-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg></div>
                                 </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(dashboardData.metrics?.engagement?.current || 0)"></p>
-                                <p class="text-sm flex items-center mt-1" :class="(dashboardData.metrics?.engagement?.change || 0) >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'">
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.metrics?.engagement?.current || 0)"></p>
+                                <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.engagement?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.engagement?.change || 0)"></span>
                                 </p>
                             </div>
-                            <div x-show="isWidgetVisible('ad_spend')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
+                            <div x-show="isWidgetVisible('ad_spend')" class="hub-stat-card hub-stat-card--amber">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Ad Spend</h3>
-                                    <svg class="h-6 w-6 text-yellow-500 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Ad Spend</h3>
+                                    <div class="hub-stat-card__icon text-amber-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                 </div>
-                                <p class="text-3xl font-semibold mt-2">$<span x-text="(dashboardData.metrics?.adSpend?.current || 0).toFixed(2)"></span></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">This month</p>
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white">$<span x-text="(dashboardData.metrics?.adSpend?.current || 0).toFixed(2)"></span></p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This period</p>
                             </div>
                         </div>
 
                         <!-- Additional Metrics - Row 2 -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mt-6">
-                            <div x-show="isWidgetVisible('impressions')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Impressions</h3>
-                                    <svg class="h-6 w-6 text-orange-500 dark:text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('impressions'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">Total impressions</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
+                            <div x-show="isWidgetVisible('impressions')" class="hub-stat-card hub-stat-card--orange">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Impressions</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('impressions'))"></p>
                             </div>
-                            <div x-show="isWidgetVisible('views')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Views</h3>
-                                    <svg class="h-6 w-6 text-cyan-500 dark:text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('views'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">Video/Reel views</p>
+                            <div x-show="isWidgetVisible('views')" class="hub-stat-card hub-stat-card--cyan">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Views</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('views'))"></p>
                             </div>
-                            <div x-show="isWidgetVisible('likes')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Likes</h3>
-                                    <svg class="h-6 w-6 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('likes'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">From completed posts</p>
+                            <div x-show="isWidgetVisible('likes')" class="hub-stat-card hub-stat-card--red">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Likes</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('likes'))"></p>
                             </div>
-                            <div x-show="isWidgetVisible('comments')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Comments</h3>
-                                    <svg class="h-6 w-6 text-indigo-500 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('comments'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">From completed posts</p>
+                            <div x-show="isWidgetVisible('comments')" class="hub-stat-card hub-stat-card--indigo">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Comments</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('comments'))"></p>
                             </div>
-                            <div x-show="isWidgetVisible('shares')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Shares</h3>
-                                    <svg class="h-6 w-6 text-green-500 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('shares'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">From completed posts</p>
+                            <div x-show="isWidgetVisible('shares')" class="hub-stat-card hub-stat-card--green">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Shares</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('shares'))"></p>
                             </div>
-                            <div x-show="isWidgetVisible('saves')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Saves</h3>
-                                    <svg class="h-6 w-6 text-purple-500 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('saves'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">From completed posts</p>
+                            <div x-show="isWidgetVisible('saves')" class="hub-stat-card hub-stat-card--purple">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Saves</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('saves'))"></p>
                             </div>
                         </div>
-
-                        <!-- Additional Metrics - Row 3 (Video/Reel Specific) -->
-                        <div x-show="hasVideoInsights()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-                            <div x-show="isWidgetVisible('watch_time')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Watch Time</h3>
-                                    <svg class="h-6 w-6 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatWatchTime(calculateFilteredKPI('watch_time'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">Total minutes watched</p>
-                            </div>
-                            <div x-show="isWidgetVisible('skip_rate')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Skip Rate</h3>
-                                    <svg class="h-6 w-6 text-amber-500 dark:text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8.688c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062A1.125 1.125 0 013 16.81V8.688zM12.75 8.688c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062a1.125 1.125 0 01-1.683-.977V8.688z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="calculateAvgSkipRate() + '%'"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">Video skip rate</p>
-                            </div>
-                            <div x-show="isWidgetVisible('follower_views')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Follower Views</h3>
-                                    <svg class="h-6 w-6 text-emerald-500 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('views_followers'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">Views from followers</p>
-                            </div>
-                            <div x-show="isWidgetVisible('non_follower_views')" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Non-Follower Views</h3>
-                                    <svg class="h-6 w-6 text-pink-500 dark:text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
-                                </div>
-                                <p class="text-3xl font-semibold mt-2" x-text="formatNumber(calculateFilteredKPI('views_non_followers'))"></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">Discovery potential</p>
-                            </div>
                         </div>
 
+                        <!-- Video Performance -->
+                        <div x-show="hasSocialAudiencePlatforms() || hasVideoInsights()" class="mt-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Video & reel performance</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400" x-show="!hasVideoInsights()">No video metrics in this period yet</p>
+                            </div>
+                            <div x-show="hasVideoInsights()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div x-show="isWidgetVisible('watch_time')" class="hub-stat-card hub-stat-card--blue">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Watch Time</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatWatchTime(calculateFilteredKPI('watch_time'))"></p>
+                                </div>
+                                <div x-show="isWidgetVisible('skip_rate')" class="hub-stat-card hub-stat-card--amber">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Skip Rate</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="calculateAvgSkipRate() + '%'"></p>
+                                </div>
+                                <div x-show="isWidgetVisible('follower_views')" class="hub-stat-card hub-stat-card--emerald">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Follower Views</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('views_followers'))"></p>
+                                </div>
+                                <div x-show="isWidgetVisible('non_follower_views')" class="hub-stat-card hub-stat-card--pink">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discovery Views</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('views_non_followers'))"></p>
+                                </div>
+                            </div>
+                            <div x-show="!hasVideoInsights()" class="hub-insights-empty text-sm">Video metrics appear here when reels or YouTube content has watch-time data in the selected period.</div>
+                        </div>
 
-                        <!-- Audience Demographics & Advertising -->
-                        <div x-show="hasDemographicsData() || dashboardData.advertising" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                            
-                            <!-- Audience Demographics -->
-                            <div x-show="hasDemographicsData()" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <h3 class="text-lg font-semibold mb-4 flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                    Audience Demographics
-                                </h3>
-                                
-                                <!-- Age & Gender -->
-                                <div class="mb-6" x-show="dashboardData.demographics?.age && Object.keys(dashboardData.demographics.age).length > 0">
-                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Age Distribution</h4>
-                                    <div style="height: 200px;">
-                                        <canvas id="demographicsChart"></canvas>
+                        <!-- Audience Intelligence (always visible for social brands) -->
+                        <div x-show="hasSocialAudiencePlatforms() || dashboardData.advertising" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                            <div x-show="hasSocialAudiencePlatforms()" class="hub-insights-panel p-5 md:p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p class="hub-insights-section-title mb-1">Audience intelligence</p>
+                                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Demographics & geography</h3>
+                                    </div>
+                                    <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">Refresh</button>
+                                </div>
+
+                                <div x-show="hasDemographicsData()">
+                                    <div class="mb-6" x-show="dashboardData.demographics?.age && Object.keys(dashboardData.demographics.age).length > 0">
+                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Age distribution</h4>
+                                        <div style="height: 220px;">
+                                            <canvas id="demographicsChart"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div>
+                                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Top cities</h4>
+                                            <div class="space-y-3">
+                                                <template x-for="city in dashboardData.demographics?.cities?.slice(0, 5)" :key="city.name">
+                                                    <div>
+                                                        <div class="flex justify-between text-sm mb-1">
+                                                            <span class="text-gray-700 dark:text-gray-300" x-text="city.name"></span>
+                                                            <span class="font-semibold text-gray-900 dark:text-white" x-text="formatDemographicPct(city)"></span>
+                                                        </div>
+                                                        <div class="hub-geo-bar"><div class="hub-geo-bar__fill" :style="'width:' + demographicBarWidth(city)"></div></div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Top countries</h4>
+                                            <div class="space-y-3">
+                                                <template x-for="country in dashboardData.demographics?.countries?.slice(0, 5)" :key="country.name">
+                                                    <div>
+                                                        <div class="flex justify-between text-sm mb-1">
+                                                            <span class="text-gray-700 dark:text-gray-300" x-text="country.name"></span>
+                                                            <span class="font-semibold text-gray-900 dark:text-white" x-text="formatDemographicPct(country)"></span>
+                                                        </div>
+                                                        <div class="hub-geo-bar"><div class="hub-geo-bar__fill" :style="'width:' + demographicBarWidth(country)"></div></div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Top Cities & Countries -->
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Cities</h4>
-                                        <div class="space-y-2">
-                                            <template x-for="city in dashboardData.demographics?.cities?.slice(0, 5)" :key="city.name">
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-600 dark:text-gray-400" x-text="city.name"></span>
-                                                    <span class="font-medium text-gray-900 dark:text-white" x-text="city.percentage + '%'"></span>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Countries</h4>
-                                        <div class="space-y-2">
-                                            <template x-for="country in dashboardData.demographics?.countries?.slice(0, 5)" :key="country.name">
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-600 dark:text-gray-400" x-text="country.name"></span>
-                                                    <span class="font-medium text-gray-900 dark:text-white" x-text="country.percentage + '%'"></span>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
+                                <div x-show="!hasDemographicsData()" class="hub-insights-empty">
+                                    <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Demographics not loaded yet</p>
+                                    <p class="text-sm">Tap <strong>Refresh audience</strong> above or run <strong>Sync Posts</strong> in Admin. Instagram age and location data requires a Business account and typically 100+ followers.</p>
                                 </div>
                             </div>
 
@@ -2256,6 +2219,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 mirrorIGToFB: false,
                 socialMediaStatus: {},
                 audienceInsights: null,
+                audienceInsightsLoading: false,
                 followerChanges: {
                     facebook: { gained: 0, lost: 0 },
                     instagram: { gained: 0, lost: 0 }
@@ -4644,7 +4608,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 platformFilterClasses(platform) {
-                    const base = 'px-3 py-1.5 rounded-full text-sm font-medium transition-all border ';
+                    const base = 'hub-filter-pill border ';
                     if (!this.isPlatformFilterActive(platform)) {
                         return base + 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 opacity-60 line-through decoration-gray-400';
                     }
@@ -4682,11 +4646,62 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return hasAge || hasCities || hasCountries;
                 },
 
-                async loadAudienceInsights() {
+                hasSocialAudiencePlatforms() {
+                    return ['facebook', 'instagram'].some((p) => this.clientPlatforms.includes(p));
+                },
+
+                getNetFollowerChange(platform) {
+                    const changes = this.followerChanges[platform] || {};
+                    return (Number(changes.gained) || 0) - (Number(changes.lost) || 0);
+                },
+
+                getTotalNetFollowerChange() {
+                    return ['facebook', 'instagram']
+                        .filter((p) => this.clientPlatforms.includes(p))
+                        .reduce((sum, platform) => sum + this.getNetFollowerChange(platform), 0);
+                },
+
+                getTotalAudienceFollowers() {
+                    return ['facebook', 'instagram']
+                        .filter((p) => this.clientPlatforms.includes(p))
+                        .reduce((sum, platform) => sum + (this.calculatePlatformFollowers(platform) || 0), 0);
+                },
+
+                formatAudienceSyncTime() {
+                    const ts = this.audienceInsights?.lastSyncedAt;
+                    if (!ts) return 'Not synced';
+                    try {
+                        return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                    } catch (e) {
+                        return 'Unknown';
+                    }
+                },
+
+                formatDemographicPct(item) {
+                    if (!item) return '0%';
+                    if (item.percentage != null) return item.percentage + '%';
+                    if (item.count != null) return item.count;
+                    return '0%';
+                },
+
+                demographicBarWidth(item) {
+                    const pct = item?.percentage;
+                    if (pct != null) return Math.min(100, pct) + '%';
+                    return '0%';
+                },
+
+                async refreshAudienceInsights() {
+                    await this.loadAudienceInsights(true);
+                    this.showToast('Audience data refreshed', 'success', 3000);
+                },
+
+                async loadAudienceInsights(forceRefresh = false) {
                     const clientId = this.getClientId();
                     if (!clientId) return;
+                    this.audienceInsightsLoading = true;
                     try {
-                        const response = await fetch(`${API_URL}/social-media/audience/${clientId}`, {
+                        const url = `${API_URL}/social-media/audience/${clientId}${forceRefresh ? '?refresh=1' : ''}`;
+                        const response = await fetch(url, {
                             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                         });
                         if (!response.ok) return;
@@ -4707,6 +4722,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.followerChanges = snap.followerChanges;
                         }
                         if (snap.demographics) {
+                            if (!this.dashboardData.demographics) this.dashboardData.demographics = {};
                             this.dashboardData.demographics = {
                                 age: snap.demographics.age || {},
                                 countries: snap.demographics.countries || [],
@@ -4716,6 +4732,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         this.$nextTick(() => this.initCharts());
                     } catch (error) {
                         console.warn('loadAudienceInsights:', error);
+                    } finally {
+                        this.audienceInsightsLoading = false;
                     }
                 },
 

@@ -4,7 +4,7 @@ Theme URI: https://esirom.com
 Author: Esirom
 Author URI: https://esirom.com
 Description: A comprehensive social media client hub theme with dashboard, reporting, and content management capabilities.
-Version: 2.3.29
+Version: 2.3.30
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: esirom-hub
@@ -23,4 +23,225 @@ This theme is designed for the Esirom Social Media Client Hub application.
   body.hub-has-mobile-nav {
     padding-bottom: 0 !important;
   }
+}
+
+/* ── Insights Dashboard ─────────────────────────────────────────────── */
+.hub-insights-shell {
+  --hub-accent: #6366f1;
+  --hub-accent-soft: rgba(99, 102, 241, 0.08);
+  --hub-card-bg: rgba(255, 255, 255, 0.92);
+  --hub-border: rgba(15, 23, 42, 0.06);
+  --hub-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dark .hub-insights-shell {
+  --hub-card-bg: rgba(30, 41, 59, 0.72);
+  --hub-border: rgba(148, 163, 184, 0.12);
+  --hub-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.hub-insights-hero {
+  background: linear-gradient(135deg, #312e81 0%, #4338ca 45%, #7c3aed 100%);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  color: #fff;
+  box-shadow: 0 20px 40px rgba(67, 56, 202, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.hub-insights-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 15%, rgba(255,255,255,0.18), transparent 42%);
+  pointer-events: none;
+}
+
+.hub-insights-hero__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .hub-insights-hero__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.hub-insights-hero__stat {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.hub-insights-hero__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.82;
+  font-weight: 600;
+}
+
+.hub-insights-hero__value {
+  font-size: 1.65rem;
+  line-height: 1.1;
+  font-weight: 700;
+  margin-top: 0.35rem;
+}
+
+.hub-insights-hero__sub {
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  opacity: 0.88;
+}
+
+.hub-insights-panel {
+  background: var(--hub-card-bg);
+  border: 1px solid var(--hub-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--hub-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.hub-insights-section-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.dark .hub-insights-section-title {
+  color: #94a3b8;
+}
+
+.hub-stat-card {
+  background: var(--hub-card-bg);
+  border: 1px solid var(--hub-border);
+  border-radius: 1rem;
+  padding: 1.15rem 1.25rem;
+  box-shadow: var(--hub-shadow);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hub-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+}
+
+.hub-stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--hub-stat-accent, var(--hub-accent));
+  opacity: 0.85;
+}
+
+.hub-stat-card--teal { --hub-stat-accent: #14b8a6; }
+.hub-stat-card--pink { --hub-stat-accent: #ec4899; }
+.hub-stat-card--blue { --hub-stat-accent: #3b82f6; }
+.hub-stat-card--amber { --hub-stat-accent: #f59e0b; }
+.hub-stat-card--orange { --hub-stat-accent: #f97316; }
+.hub-stat-card--cyan { --hub-stat-accent: #06b6d4; }
+.hub-stat-card--red { --hub-stat-accent: #ef4444; }
+.hub-stat-card--indigo { --hub-stat-accent: #6366f1; }
+.hub-stat-card--green { --hub-stat-accent: #22c55e; }
+.hub-stat-card--purple { --hub-stat-accent: #a855f7; }
+.hub-stat-card--emerald { --hub-stat-accent: #10b981; }
+
+.hub-stat-card__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hub-accent-soft);
+}
+
+.hub-audience-card {
+  border-radius: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--hub-border);
+  background: var(--hub-card-bg);
+  box-shadow: var(--hub-shadow);
+}
+
+.hub-audience-card--facebook {
+  background: linear-gradient(145deg, rgba(59,130,246,0.08), rgba(255,255,255,0.95));
+}
+
+.hub-audience-card--instagram {
+  background: linear-gradient(145deg, rgba(236,72,153,0.08), rgba(255,255,255,0.95));
+}
+
+.dark .hub-audience-card--facebook {
+  background: linear-gradient(145deg, rgba(59,130,246,0.15), rgba(30,41,59,0.85));
+}
+
+.dark .hub-audience-card--instagram {
+  background: linear-gradient(145deg, rgba(236,72,153,0.15), rgba(30,41,59,0.85));
+}
+
+.hub-geo-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.dark .hub-geo-bar {
+  background: #334155;
+}
+
+.hub-geo-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+}
+
+.hub-insights-empty {
+  border: 1px dashed #cbd5e1;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  color: #64748b;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.dark .hub-insights-empty {
+  border-color: #475569;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.hub-filter-pill {
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.hub-date-pill {
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.hub-date-pill.is-active {
+  background: #4338ca;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(67, 56, 202, 0.35);
 }
