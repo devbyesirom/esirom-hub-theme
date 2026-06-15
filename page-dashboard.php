@@ -311,14 +311,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="showUploadInsightsModal = true" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        <span class="hidden sm:inline">Upload Insights</span>
-                    </button>
-                    <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openUploadReportModal()" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <span class="hidden sm:inline">Upload Report</span>
-                    </button>
                     <button @click="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle theme">
                         <svg x-show="theme === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         <svg x-show="theme === 'dark'" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -373,45 +365,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     Review →
                                 </button>
                             </div>
-                        </div>
-
-                        <!-- Recent reports (saved / PDF) — #reports scrolls here -->
-                        <div id="client-reports-section" class="mb-6 bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700">
-                            <div class="flex items-center justify-between gap-3 mb-4">
-                                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    Reports
-                                </h3>
-                                <button
-                                    x-show="viewMode === 'client' || user.role === 'client'"
-                                    @click="generateOverviewReport()"
-                                    class="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                                    :disabled="generatingReport">
-                                    <span x-show="!generatingReport">Generate From Overview</span>
-                                    <span x-show="generatingReport">Generating...</span>
-                                </button>
-                            </div>
-                            <div x-show="!dashboardData.recentReports || dashboardData.recentReports.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
-                                <p class="mb-1">No saved reports yet. Your team can upload legacy PDF reports or generate new ones — they will appear here by month.</p>
-                            </div>
-                            <ul x-show="dashboardData.recentReports && dashboardData.recentReports.length > 0" class="divide-y divide-gray-200 dark:divide-gray-600">
-                                <template x-for="report in (dashboardData.recentReports || [])" :key="report._id">
-                                    <li class="py-3 first:pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                        <div>
-                                            <p class="font-medium text-gray-900 dark:text-white" x-text="report.name"></p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatReportPeriod(report)"></p>
-                                        </div>
-                                        <div class="flex items-center flex-wrap gap-2">
-                                            <span x-show="report.source === 'uploaded'" class="text-xs font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Uploaded PDF</span>
-                                            <span class="text-xs font-medium px-2 py-0.5 rounded capitalize"
-                                                :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
-                                                x-text="report.status || 'draft'"></span>
-                                            <button @click.prevent="openReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View</button>
-                                            <button @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download PDF</button>
-                                        </div>
-                                    </li>
-                                </template>
-                            </ul>
                         </div>
 
                         <!-- Controls: Date Range & Platform Filters -->
@@ -1868,150 +1821,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         </div>
     </div>
 
-    <!-- Upload Insights Modal -->
-    <div x-show="showUploadInsightsModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showUploadInsightsModal = false" @keydown.escape.window="showUploadInsightsModal = false">
-        <div class="relative top-10 mx-auto p-6 border w-full max-w-xl shadow-lg rounded-lg bg-white dark:bg-gray-800 mb-10">
-            <div class="flex items-center justify-between mb-5">
-                <h3 class="text-lg font-bold dark:text-white flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    Upload Insights
-                </h3>
-                <button @click="showUploadInsightsModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <!-- Step 1: Select platform -->
-            <div x-show="!insightsUploadParsed && !insightsUploadResults" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform</label>
-                    <select x-model="insightsUploadPlatform" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
-                        <option value="instagram">Instagram</option>
-                        <option value="facebook">Facebook</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand</label>
-                    <div class="flex items-center gap-2">
-                        <p class="flex-1 text-sm text-gray-600 dark:text-gray-400 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg" x-text="selectedClient?.brandName || selectedClient?.companyName || 'Select a client first'"></p>
-                        <button @click="deleteAllClientPosts()" class="px-3 py-2 text-xs font-medium text-red-600 hover:text-white border border-red-300 hover:bg-red-600 rounded-lg transition-colors" title="Delete all existing posts for this brand before re-uploading">Clear Posts</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload Insights</label>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Upload the entire Instagram/Facebook export folder, or just the posts.json file. The system will automatically find and parse the key insight files.</p>
-
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors cursor-pointer"
-                             @click="$refs.insightsFolderInput.click()">
-                            <input type="file" x-ref="insightsFolderInput" @change="handleInsightsFolderSelect($event)" webkitdirectory directory multiple class="hidden">
-                            <svg class="mx-auto w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Upload Folder</p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Entire IG/FB export</p>
-                        </div>
-                        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors cursor-pointer"
-                             @click="$refs.insightsFileInput.click()">
-                            <input type="file" x-ref="insightsFileInput" @change="handleInsightsFileSelect($event)" accept=".json,.csv" class="hidden">
-                            <svg class="mx-auto w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Upload File</p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Single .json or .csv</p>
-                        </div>
-                    </div>
-
-                    <div x-show="insightsUploadFile" class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
-                        <p class="text-sm text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
-                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span x-text="insightsUploadFile?.name || 'File selected'"></span>
-                        </p>
-                        <p x-show="insightsUploadFolderFiles?.length > 0" class="text-xs text-indigo-600 dark:text-indigo-400 mt-1" x-text="'Found ' + (insightsUploadFolderFiles?.length || 0) + ' insight file(s) in folder'"></p>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
-                    <button @click="showUploadInsightsModal = false; resetInsightsUpload()" class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Cancel</button>
-                    <button @click="parseInsightsFile()" :disabled="!insightsUploadFile || insightsUploadLoading" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                        <svg x-show="insightsUploadLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                        Parse & Preview
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 2: Preview parsed data -->
-            <div x-show="insightsUploadParsed && !insightsUploadResults" class="space-y-4">
-                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <h4 class="text-sm font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        File Parsed Successfully
-                    </h4>
-                    <p class="text-xs text-green-700 dark:text-green-400" x-text="insightsUploadFile?.name"></p>
-                </div>
-
-                <!-- Page-level metrics preview -->
-                <div x-show="insightsUploadParsed?.pageMetrics">
-                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Page-Level Metrics</h4>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <template x-for="[key, value] in Object.entries(insightsUploadParsed?.pageMetrics || {}).filter(([k, v]) => !['startDate','endDate'].includes(k) && v > 0)" :key="key">
-                            <div class="flex justify-between bg-gray-50 dark:bg-gray-700 rounded px-3 py-2">
-                                <span class="text-gray-600 dark:text-gray-400 capitalize" x-text="key.replace(/_/g, ' ')"></span>
-                                <span class="font-semibold text-gray-900 dark:text-white" x-text="typeof value === 'number' ? value.toLocaleString() : value"></span>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Post-level metrics preview -->
-                <div x-show="insightsUploadParsed?.postMetrics?.length > 0">
-                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                        Post-Level Metrics (<span x-text="insightsUploadParsed?.postMetrics?.length || 0"></span> posts)
-                    </h4>
-                    <div class="max-h-48 overflow-y-auto space-y-2">
-                        <template x-for="(pm, idx) in (insightsUploadParsed?.postMetrics || []).slice(0, 10)" :key="idx">
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm">
-                                <p class="font-medium text-gray-900 dark:text-white truncate" x-text="pm.caption ? pm.caption.substring(0, 80) + (pm.caption.length > 80 ? '...' : '') : '[No caption]'"></p>
-                                <div class="flex gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    <span x-show="pm.publishedDate" x-text="new Date(pm.publishedDate).toLocaleDateString()"></span>
-                                    <span x-show="pm.reach">Reach: <span class="text-gray-900 dark:text-white" x-text="(pm.reach || 0).toLocaleString()"></span></span>
-                                    <span x-show="pm.likes">Likes: <span class="text-gray-900 dark:text-white" x-text="(pm.likes || 0).toLocaleString()"></span></span>
-                                    <span x-show="pm.comments">Comments: <span class="text-gray-900 dark:text-white" x-text="(pm.comments || 0).toLocaleString()"></span></span>
-                                </div>
-                            </div>
-                        </template>
-                        <p x-show="(insightsUploadParsed?.postMetrics?.length || 0) > 10" class="text-xs text-gray-500 dark:text-gray-400 text-center">
-                            ...and <span x-text="insightsUploadParsed.postMetrics.length - 10"></span> more posts
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
-                    <button @click="insightsUploadParsed = null" class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Back</button>
-                    <button @click="submitInsightsUpload()" :disabled="insightsUploadLoading" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
-                        <svg x-show="insightsUploadLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                        Upload & Apply
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 3: Results -->
-            <div x-show="insightsUploadResults" class="space-y-4">
-                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-                    <svg class="mx-auto w-12 h-12 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <h4 class="text-lg font-semibold text-green-800 dark:text-green-300">Insights Uploaded!</h4>
-                    <div class="mt-3 space-y-1 text-sm text-green-700 dark:text-green-400">
-                        <p x-show="insightsUploadResults?.matched > 0" x-text="insightsUploadResults.matched + ' existing post(s) updated with metrics'"></p>
-                        <p x-show="insightsUploadResults?.created > 0" x-text="insightsUploadResults.created + ' new post(s) created with metrics'"></p>
-                        <p x-show="insightsUploadResults?.updatedPageMetrics">Page-level metrics distributed to posts</p>
-                        <p x-show="!insightsUploadResults?.matched && !insightsUploadResults?.created">No changes were made</p>
-                    </div>
-                </div>
-                <div class="flex justify-end pt-3 border-t dark:border-gray-700">
-                    <button @click="showUploadInsightsModal = false; resetInsightsUpload(); reloadClientScopedData();" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Done</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Upload PDF Report Modal -->
     <div x-show="showUploadReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showUploadReportModal = false" @keydown.escape.window="showUploadReportModal = false">
         <div class="relative top-10 mx-auto p-6 border w-full max-w-xl shadow-lg rounded-lg bg-white dark:bg-gray-800 mb-10">
@@ -2140,9 +1949,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.platformFollowers = {};
                     this.pageLevelMetrics = {};
                     this.posts = [];
-                    this.insightsUploadResults = null;
-                    this.resetInsightsUpload();
-
                     await this.loadDashboardData(token);
                     await this.loadSocialMediaStatusForDashboard();
                     await this.loadReports(token);
