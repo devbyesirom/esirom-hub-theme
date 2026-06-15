@@ -441,6 +441,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <p class="text-xs uppercase tracking-wider font-semibold text-indigo-100">Audience overview</p>
                                     <h3 class="text-2xl font-bold mt-1">Total audience · <span x-text="formatNumber(getTotalAudienceFollowers())"></span></h3>
                                     <p class="text-sm text-indigo-100 mt-1">Live follower counts from Meta · growth is month-to-date</p>
+                                    <p x-show="getFollowerGrowthNote()" class="text-xs text-indigo-200/90 mt-1" x-text="getFollowerGrowthNote()"></p>
                                 </div>
                                 <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="self-start rounded-xl border border-white/25 bg-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/25 disabled:opacity-60">
                                     <span x-show="!audienceInsightsLoading">Refresh audience</span>
@@ -4427,6 +4428,24 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return '';
                 },
 
+                getFollowerGrowthNote() {
+                    const meta = this.audienceInsights?.followerChangesMeta;
+                    if (meta?.errors?.length) {
+                        return 'Growth metrics may be delayed — tap Refresh audience to retry.';
+                    }
+                    const hasFollowers = this.getTotalAudienceFollowers() > 0;
+                    const hasGrowth =
+                        this.getTotalNetFollowerChange() !== 0 ||
+                        ['facebook', 'instagram'].some((platform) => {
+                            const changes = this.followerChanges[platform] || {};
+                            return (Number(changes.gained) || 0) > 0 || (Number(changes.lost) || 0) > 0;
+                        });
+                    if (hasFollowers && !hasGrowth) {
+                        return 'No new follows or unfollows recorded yet this month from Meta.';
+                    }
+                    return '';
+                },
+
                 sortedDemographicGeo(list) {
                     if (!Array.isArray(list)) return [];
                     return [...list]
@@ -4559,6 +4578,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
                         if (snap.followerChanges) {
                             this.followerChanges = snap.followerChanges;
+                        }
+                        if (snap.followerChangesMeta) {
+                            if (!this.audienceInsights) this.audienceInsights = {};
+                            this.audienceInsights.followerChangesMeta = snap.followerChangesMeta;
                         }
                         if (snap.demographics) {
                             if (!this.dashboardData.demographics) this.dashboardData.demographics = {};
