@@ -630,6 +630,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <div>
                                         <p class="hub-insights-section-title mb-1">Audience intelligence</p>
                                         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Demographics & geography</h3>
+                                        <p x-show="getDemographicsSourceLabel()" class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="getDemographicsSourceLabel()"></p>
                                     </div>
                                     <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">Refresh</button>
                                 </div>
@@ -645,7 +646,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         <div>
                                             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Top cities</h4>
                                             <div class="space-y-3">
-                                                <template x-for="city in dashboardData.demographics?.cities?.slice(0, 5)" :key="city.name">
+                                                <template x-for="city in sortedDemographicGeo(dashboardData.demographics?.cities)" :key="city.name">
                                                     <div>
                                                         <div class="flex justify-between text-sm mb-1">
                                                             <span class="text-gray-700 dark:text-gray-300" x-text="city.name"></span>
@@ -659,10 +660,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         <div>
                                             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Top countries</h4>
                                             <div class="space-y-3">
-                                                <template x-for="country in dashboardData.demographics?.countries?.slice(0, 5)" :key="country.name">
+                                                <template x-for="country in sortedDemographicGeo(dashboardData.demographics?.countries)" :key="country.name">
                                                     <div>
                                                         <div class="flex justify-between text-sm mb-1">
-                                                            <span class="text-gray-700 dark:text-gray-300" x-text="country.name"></span>
+                                                            <span class="text-gray-700 dark:text-gray-300" x-text="formatCountryName(country.name)"></span>
                                                             <span class="font-semibold text-gray-900 dark:text-white" x-text="formatDemographicPct(country)"></span>
                                                         </div>
                                                         <div class="hub-geo-bar"><div class="hub-geo-bar__fill" :style="'width:' + demographicBarWidth(country)"></div></div>
@@ -4414,6 +4415,43 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return 'Tap Refresh audience above or run Sync Posts in Admin. Instagram age and location data requires a Business account and typically 100+ followers.';
                 },
 
+                getDemographicsSourceLabel() {
+                    const source =
+                        this.audienceInsights?.demographicsSource ||
+                        this.audienceInsights?.demographicsMeta?.source;
+                    if (source === 'combined') {
+                        return 'Combined Facebook Page fans + Instagram followers (weighted by follower count).';
+                    }
+                    if (source === 'instagram') return 'Based on Instagram followers.';
+                    if (source === 'facebook') return 'Based on Facebook Page fans.';
+                    return '';
+                },
+
+                sortedDemographicGeo(list) {
+                    if (!Array.isArray(list)) return [];
+                    return [...list]
+                        .sort(
+                            (a, b) =>
+                                (Number(b.percentage) || 0) - (Number(a.percentage) || 0) ||
+                                (Number(b.count) || 0) - (Number(a.count) || 0)
+                        )
+                        .slice(0, 5);
+                },
+
+                formatCountryName(value) {
+                    const raw = String(value || '').trim();
+                    if (!raw) return raw;
+                    if (raw.length === 2 && /^[A-Z]{2}$/i.test(raw)) {
+                        try {
+                            const label = new Intl.DisplayNames(['en'], { type: 'region' }).of(raw.toUpperCase());
+                            return label || raw.toUpperCase();
+                        } catch (error) {
+                            return raw.toUpperCase();
+                        }
+                    }
+                    return raw;
+                },
+
                 formatInsightChange(change) {
                     const n = Number(change) || 0;
                     if (Math.abs(n) < 0.5) return '—';
@@ -4529,6 +4567,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 countries: snap.demographics.countries || [],
                                 cities: snap.demographics.cities || []
                             };
+                        }
+                        if (snap.demographicsSource) {
+                            if (!this.audienceInsights) this.audienceInsights = {};
+                            this.audienceInsights.demographicsSource = snap.demographicsSource;
                         }
                         if (snap.demographicsMeta?.message && !this.hasDemographicsData()) {
                             const status = snap.demographicsMeta.status;
