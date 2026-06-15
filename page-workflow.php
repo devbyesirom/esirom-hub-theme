@@ -3187,7 +3187,13 @@ show_admin_bar(false);
             return {
                 loading: true,
                 user: {},
-                viewMode: localStorage.getItem('viewMode') || 'admin',
+                viewMode: (() => {
+                    try {
+                        const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        if (cachedUser?.role === 'client') return 'client';
+                    } catch (_err) {}
+                    return localStorage.getItem('viewMode') || 'admin';
+                })(),
                 showPwModal: false,
                 pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 theme: localStorage.getItem('theme') || 'light',

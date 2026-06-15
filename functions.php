@@ -40,6 +40,20 @@ function esirom_hub_page_url($slug) {
 }
 
 /**
+ * Alpine x-show for client-facing navigation (real client users always see this).
+ */
+function esirom_hub_client_nav_show_attr() {
+    return 'x-show="viewMode === \'client\' || user?.role === \'client\'"';
+}
+
+/**
+ * Alpine x-show for agency staff navigation (hidden for real client users).
+ */
+function esirom_hub_staff_nav_show_attr() {
+    return 'x-show="viewMode !== \'client\' && user?.role !== \'client\'"';
+}
+
+/**
  * Render shared staff sidebar navigation (admin / brand_rep).
  */
 function esirom_hub_staff_sidebar_nav($active = '', $context = 'site', $alpine_labels = false) {

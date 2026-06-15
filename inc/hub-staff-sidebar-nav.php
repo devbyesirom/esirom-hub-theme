@@ -30,7 +30,7 @@ $hub_password_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 
 $hub_is_dashboard = ($hub_nav_context === 'dashboard');
 $hub_label_attrs = $hub_nav_alpine_labels ? ' x-show="isSidebarOpen"' : '';
-$hub_staff_show = 'x-show="viewMode !== \'client\'"';
+$hub_staff_show = esirom_hub_staff_nav_show_attr();
 
 $hub_group_has_active = function (array $keys) use ($hub_nav_active) {
     return in_array($hub_nav_active, $keys, true);

@@ -37,19 +37,19 @@ $hub_mobile_label_class = function ($key) use ($hub_mobile_active) {
 <nav class="hub-mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40"
      x-data="{ viewMode: localStorage.getItem('viewMode') || 'admin', user: (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })(), init() { window.addEventListener('viewModeChanged', (e) => { this.viewMode = e?.detail?.viewMode || (localStorage.getItem('viewMode') || 'admin'); }); } }">
     <div class="flex justify-around items-center h-16 overflow-x-auto">
-        <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_workflow_url); ?>" class="<?php echo esc_attr($hub_mobile_class('workflow')); ?>">
+        <a <?php echo esirom_hub_staff_nav_show_attr(); ?> href="<?php echo esc_url($hub_workflow_url); ?>" class="<?php echo esc_attr($hub_mobile_class('workflow')); ?>">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             <span class="<?php echo esc_attr($hub_mobile_label_class('workflow')); ?>">Workflow</span>
         </a>
-        <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_dashboard_url); ?>" class="<?php echo esc_attr($hub_mobile_class('dashboard')); ?>">
+        <a <?php echo esirom_hub_staff_nav_show_attr(); ?> href="<?php echo esc_url($hub_dashboard_url); ?>" class="<?php echo esc_attr($hub_mobile_class('dashboard')); ?>">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <span class="<?php echo esc_attr($hub_mobile_label_class('dashboard')); ?>">Insights</span>
         </a>
-        <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_website_projects_url); ?>" class="<?php echo esc_attr($hub_mobile_class('website_projects')); ?>">
+        <a <?php echo esirom_hub_staff_nav_show_attr(); ?> href="<?php echo esc_url($hub_website_projects_url); ?>" class="<?php echo esc_attr($hub_mobile_class('website_projects')); ?>">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
             <span class="<?php echo esc_attr($hub_mobile_label_class('website_projects')); ?>">Websites</span>
         </a>
-        <a x-show="viewMode !== 'client'" href="<?php echo esc_url($hub_progress_url); ?>" class="<?php echo esc_attr($hub_mobile_class('progress')); ?>">
+        <a <?php echo esirom_hub_staff_nav_show_attr(); ?> href="<?php echo esc_url($hub_progress_url); ?>" class="<?php echo esc_attr($hub_mobile_class('progress')); ?>">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <span class="<?php echo esc_attr($hub_mobile_label_class('progress')); ?>">Progress</span>
         </a>

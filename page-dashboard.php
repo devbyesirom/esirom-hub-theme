@@ -1909,7 +1909,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             Alpine.data('clientHub', () => ({
                 isSidebarOpen: true,
                 activeView: 'dashboard',
-                viewMode: localStorage.getItem('viewMode') || 'admin',
+                viewMode: (() => {
+                    try {
+                        const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        if (cachedUser?.role === 'client') return 'client';
+                    } catch (_err) {}
+                    return localStorage.getItem('viewMode') || 'admin';
+                })(),
                 selectedViewClient: localStorage.getItem('selectedViewClient') || null,
                 theme: localStorage.getItem('theme') || 'light',
                 currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
@@ -2092,7 +2098,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
 
                     this.user = JSON.parse(userStr);
-                    
+                    if (this.user?.role === 'client') {
+                        this.viewMode = 'client';
+                    }
+
                     // Check if password change is required
                     if (localStorage.getItem('requirePasswordChange') === 'true') {
                         this.showPasswordChangeModal = true;
@@ -2695,7 +2704,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 get pageTitle() {
                     switch (this.activeView) {
                         case 'dashboard':
-                            return this.viewMode === 'client' ? 'Page Overview' : 'Dashboard Overview';
+                            return 'Insights';
                         case 'calendar':
                             return this.viewMode === 'client' ? 'Published Posts' : (this.selectedClient?.brandName || this.selectedClient?.name || 'Dashboard');
                         case 'reports':
