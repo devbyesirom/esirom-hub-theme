@@ -675,78 +675,87 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                                 <div x-show="!hasDemographicsData()" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-gray-600 dark:bg-gray-900/40">
                                     <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Demographics not loaded yet</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Tap <strong>Refresh audience</strong> above or run <strong>Sync Posts</strong> in Admin. Instagram age and location data requires a Business account and typically 100+ followers.</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" x-text="getDemographicsMessage()"></p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Monthly Insights Summary -->
-                        <div x-show="dashboardData.insights" class="mt-6 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 shadow-sm border border-indigo-100 dark:border-indigo-800">
-                            <div class="flex items-center justify-between mb-4">
+                        <div x-show="dashboardData.insights" class="mt-6 hub-monthly-insights rounded-2xl p-6 shadow-sm border border-indigo-100 dark:border-indigo-800">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                                 <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                                     <svg class="w-6 h-6 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                                     Monthly Insights
                                 </h3>
-                                <span class="text-sm text-gray-600 dark:text-gray-400" x-text="dashboardData.insights?.month || 'Current Month'"></span>
+                                <span class="text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-white/70 dark:bg-gray-800/60 px-3 py-1 rounded-full" x-text="dashboardData.insights?.month || 'Current Month'"></span>
                             </div>
 
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <!-- Key Findings -->
-                                <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4">
-                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        Key Findings
-                                    </h4>
-                                    <ul class="space-y-2">
-                                        <template x-for="finding in dashboardData.insights?.keyFindings" :key="finding">
-                                            <li class="text-sm text-gray-700 dark:text-gray-300 flex items-start">
-                                                <span class="text-indigo-600 dark:text-indigo-400 mr-2">•</span>
-                                                <span x-text="finding"></span>
-                                            </li>
-                                        </template>
-                                    </ul>
+                            <!-- Summary stat row -->
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                                <div class="hub-insight-stat">
+                                    <p class="hub-insight-stat__label">Posts</p>
+                                    <p class="hub-insight-stat__value" x-text="dashboardData.insights?.summaryStats?.postCount ?? dashboardData.insights?.postCount ?? 0"></p>
                                 </div>
-
-                                <!-- Progress vs Last Month -->
-                                <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4">
-                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                        Progress vs Last Month
-                                    </h4>
-                                    <div class="space-y-3">
-                                        <div x-show="dashboardData.insights?.progressVsLastMonth?.improved?.length > 0">
-                                            <p class="text-xs font-medium text-green-600 dark:text-green-400 mb-1">↑ Improved</p>
-                                            <template x-for="item in dashboardData.insights?.progressVsLastMonth?.improved" :key="item">
-                                                <span class="inline-block text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded mr-1 mb-1" x-text="item"></span>
-                                            </template>
-                                        </div>
-                                        <div x-show="dashboardData.insights?.progressVsLastMonth?.declined?.length > 0">
-                                            <p class="text-xs font-medium text-red-600 dark:text-red-400 mb-1">↓ Declined</p>
-                                            <template x-for="item in dashboardData.insights?.progressVsLastMonth?.declined" :key="item">
-                                                <span class="inline-block text-xs bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-2 py-1 rounded mr-1 mb-1" x-text="item"></span>
-                                            </template>
-                                        </div>
-                                    </div>
+                                <div class="hub-insight-stat">
+                                    <p class="hub-insight-stat__label">Engagement</p>
+                                    <p class="hub-insight-stat__value" x-text="formatNumber(dashboardData.insights?.summaryStats?.totalEngagement || 0)"></p>
                                 </div>
+                                <div class="hub-insight-stat">
+                                    <p class="hub-insight-stat__label">Reach</p>
+                                    <p class="hub-insight-stat__value" x-text="formatNumber(dashboardData.insights?.summaryStats?.totalReach || 0)"></p>
+                                </div>
+                                <div class="hub-insight-stat">
+                                    <p class="hub-insight-stat__label">Top platform</p>
+                                    <p class="hub-insight-stat__value hub-insight-stat__value--sm" x-text="dashboardData.insights?.summaryStats?.topPlatform || '—'"></p>
+                                </div>
+                            </div>
 
-                                <!-- Top Performing Content -->
-                                <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4">
-                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                        <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                                        Top Content
-                                    </h4>
-                                    <div class="space-y-2">
-                                        <template x-for="(content, index) in dashboardData.insights?.topContent?.slice(0, 3)" :key="content.id">
-                                            <div class="text-sm">
-                                                <div class="flex items-center justify-between">
-                                                    <span class="font-medium text-gray-900 dark:text-white" x-text="(index + 1) + '. ' + (content.title || content.type)"></span>
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400" x-text="content.platform"></span>
-                                                </div>
-                                                <p class="text-xs text-gray-600 dark:text-gray-400" x-text="formatNumber(content.engagement) + ' engagements'"></p>
+                            <!-- Month-over-month progress -->
+                            <div class="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 mb-5">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-3 text-sm uppercase tracking-wide">Progress vs last month</h4>
+                                <div class="space-y-3">
+                                    <template x-for="metric in dashboardData.insights?.progressMetrics || []" :key="metric.label">
+                                        <div>
+                                            <div class="flex items-center justify-between text-sm mb-1">
+                                                <span class="text-gray-700 dark:text-gray-300" x-text="metric.label"></span>
+                                                <span class="font-semibold" :class="insightChangeClass(metric.change)" x-text="formatInsightChange(metric.change)"></span>
                                             </div>
-                                        </template>
-                                    </div>
+                                            <div class="hub-mom-bar">
+                                                <div class="hub-mom-bar__fill" :class="insightChangeClass(metric.change, true)" :style="'width:' + insightMoMBarWidth(metric.change)"></div>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
+                            </div>
+
+                            <!-- Top Content — visual cards -->
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                                    Top Content
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <template x-for="(content, index) in dashboardData.insights?.topContent?.slice(0, 3)" :key="content.id">
+                                        <a :href="content.permalink || '#'" :target="content.permalink ? '_blank' : null" :rel="content.permalink ? 'noopener noreferrer' : null" class="hub-top-content-card group" :class="content.permalink ? 'cursor-pointer' : 'cursor-default'">
+                                            <div class="hub-top-content-card__media">
+                                                <img x-show="content.imageUrl || content.thumbnailUrl" :src="content.imageUrl || content.thumbnailUrl" :alt="content.title" class="hub-top-content-card__img" loading="lazy">
+                                                <div x-show="!(content.imageUrl || content.thumbnailUrl)" class="hub-top-content-card__placeholder" :class="platformPlaceholderClass(content.platform)">
+                                                    <span class="text-2xl" x-text="platformEmoji(content.platform)"></span>
+                                                </div>
+                                                <span class="hub-top-content-card__rank" x-text="'#' + (index + 1)"></span>
+                                                <span class="hub-top-content-card__platform" x-text="content.platform"></span>
+                                            </div>
+                                            <div class="hub-top-content-card__body">
+                                                <p class="hub-top-content-card__caption" x-text="content.title"></p>
+                                                <div class="hub-top-content-card__metrics">
+                                                    <span x-text="formatNumber(content.engagement) + ' eng.'"></span>
+                                                    <span x-show="content.reach > 0" x-text="formatNumber(content.reach) + ' reach'"></span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </template>
+                                </div>
+                                <p x-show="!(dashboardData.insights?.topContent?.length)" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No engagement data yet — run Sync Posts to pull metrics.</p>
                             </div>
                         </div>
                     </div>
@@ -1548,7 +1557,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
 
-                <div x-show="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')" class="space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <template x-if="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')">
+                <div class="space-y-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">Edit Report</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
@@ -1565,6 +1575,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
                     </div>
                 </div>
+                </template>
 
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
                     <button type="button" @click="closeReportModal()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
@@ -4397,6 +4408,43 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return hasAge || hasCities || hasCountries;
                 },
 
+                getDemographicsMessage() {
+                    const meta = this.audienceInsights?.demographicsMeta;
+                    if (meta?.message) return meta.message;
+                    return 'Tap Refresh audience above or run Sync Posts in Admin. Instagram age and location data requires a Business account and typically 100+ followers.';
+                },
+
+                formatInsightChange(change) {
+                    const n = Number(change) || 0;
+                    if (Math.abs(n) < 0.5) return '—';
+                    return (n > 0 ? '+' : '') + n.toFixed(0) + '%';
+                },
+
+                insightChangeClass(change, forBar = false) {
+                    const n = Number(change) || 0;
+                    if (Math.abs(n) < 0.5) return forBar ? 'hub-mom-bar__fill--flat' : 'text-gray-500 dark:text-gray-400';
+                    if (n > 0) return forBar ? 'hub-mom-bar__fill--up' : 'text-green-600 dark:text-green-400';
+                    return forBar ? 'hub-mom-bar__fill--down' : 'text-red-600 dark:text-red-400';
+                },
+
+                insightMoMBarWidth(change) {
+                    const n = Math.abs(Number(change) || 0);
+                    return Math.min(100, Math.max(8, n)) + '%';
+                },
+
+                platformEmoji(platform) {
+                    const map = { instagram: '📸', facebook: '👍', youtube: '▶️', linkedin: '💼', x: '𝕏' };
+                    return map[platform] || '📱';
+                },
+
+                platformPlaceholderClass(platform) {
+                    const map = {
+                        instagram: 'hub-top-content-card__placeholder--ig',
+                        facebook: 'hub-top-content-card__placeholder--fb'
+                    };
+                    return map[platform] || '';
+                },
+
                 hasSocialAudiencePlatforms() {
                     return ['facebook', 'instagram'].some((p) => this.clientPlatforms.includes(p));
                 },
@@ -4443,7 +4491,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 async refreshAudienceInsights() {
                     await this.loadAudienceInsights(true);
-                    this.showToast('Audience data refreshed', 'success', 3000);
+                    if (this.hasDemographicsData()) {
+                        this.showToast('Audience demographics updated', 'success', 3000);
+                    }
                 },
 
                 async loadAudienceInsights(forceRefresh = false) {
@@ -4479,6 +4529,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 countries: snap.demographics.countries || [],
                                 cities: snap.demographics.cities || []
                             };
+                        }
+                        if (snap.demographicsMeta?.message && !this.hasDemographicsData()) {
+                            const status = snap.demographicsMeta.status;
+                            const toastType = status === 'error' ? 'error' : 'info';
+                            if (forceRefresh) {
+                                this.showToast(snap.demographicsMeta.message, toastType, 6000);
+                            }
                         }
                         this.$nextTick(() => this.initCharts());
                     } catch (error) {
