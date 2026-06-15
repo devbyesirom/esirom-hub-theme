@@ -63,7 +63,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 class="text-lg font-bold text-gray-900 dark:text-white">Password Vault</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="isClientView ? 'Your brand login details — click to view and copy' : 'Brand accounts grouped by client — click a brand to view all logins'"></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="isClientView ? 'Your brand login details — click to view and copy' : (isMultimediaBrandRep ? 'Shared company passwords — click a group to view logins' : 'Company-wide tools at top, brand social accounts below')"></p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <span x-show="overdueCount > 0 && user?.role !== 'client'" class="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" x-text="overdueCount + ' need verification'"></span>
@@ -82,7 +82,12 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                     <option value="active">Active</option>
                     <option value="archived">Archived</option>
                 </select>
-                <select x-model="categoryFilter" @change="loadGrouped()" class="px-3 py-2 border rounded-xl text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                <select x-model="vaultSectionFilter" @change="loadGrouped()" class="px-3 py-2 border rounded-xl text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                    <option value="">All Sections</option>
+                    <option value="company_wide">Company Wide</option>
+                    <option x-show="showSocialMediaSection" value="social_media">Social Media</option>
+                </select>
+                <select x-show="isAdmin" x-model="categoryFilter" @change="loadGrouped()" class="px-3 py-2 border rounded-xl text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white">
                     <option value="">All Categories</option>
                     <option value="social_media">Social Media</option>
                     <option value="email">Email</option>
@@ -99,59 +104,72 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
         <div class="p-4 sm:p-6 max-w-5xl mx-auto w-full">
             <div x-show="loading" class="py-16 text-center text-gray-500">Loading credentials…</div>
 
-            <div x-show="!loading && groups.length === 0" x-cloak class="py-16 text-center text-gray-500">
+            <div x-show="!loading && !hasAnyGroups" x-cloak class="py-16 text-center text-gray-500">
                 <p class="font-medium">No credentials found</p>
                 <p class="text-sm mt-1" x-show="isAdmin">Import your CSV or add accounts manually.</p>
                 <p class="text-sm mt-1" x-show="isClientView && !isAdmin">No active accounts are linked to your brand yet. Contact your account manager if you need access.</p>
             </div>
 
-            <div class="space-y-3" x-show="!loading && groups.length > 0" x-cloak>
-                <template x-for="group in groups" :key="group.key">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-                        <div class="flex items-center gap-2 px-4 py-4">
-                            <button type="button" @click="toggleGroup(group.key)" class="flex-1 min-w-0 flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors rounded-lg -m-1 p-1">
-                                <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="expanded[group.key] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <h2 class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></h2>
-                                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.total + ' accounts'"></span>
-                                        <span x-show="group.active > 0" class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" x-text="group.active + ' active'"></span>
-                                        <span x-show="group.archived > 0" class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300" x-text="group.archived + ' archived'"></span>
-                                        <span x-show="group.overdue > 0" class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" x-text="group.overdue + ' overdue'"></span>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-0.5" x-show="group.clientName" x-text="group.clientName"></p>
-                                </div>
-                            </button>
-                            <div x-show="isAdmin" class="flex flex-wrap gap-1 shrink-0">
-                                <button type="button" @click="bulkGroup(group, { status: 'active' })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg hover:bg-green-700">Activate</button>
-                                <button type="button" @click="bulkGroup(group, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-[11px] bg-gray-600 text-white rounded-lg hover:bg-gray-700">Archive</button>
-                                <button type="button" @click="openRenameGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Rename</button>
-                                <button type="button" @click="openMoveGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Move to…</button>
-                                <button type="button" @click="deleteGroup(group)" class="px-2 py-1 text-[11px] bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
-                            </div>
+            <div class="space-y-8" x-show="!loading && hasAnyGroups" x-cloak>
+                <template x-for="section in vaultSections" :key="section.key">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 pb-1 border-b border-gray-200 dark:border-gray-700">
+                            <h2 class="text-base font-bold text-gray-900 dark:text-white" x-text="section.label"></h2>
+                            <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300" x-text="sectionAccountCount(section) + ' accounts'"></span>
                         </div>
+                        <p class="text-xs text-gray-500 -mt-1" x-show="section.key === 'company_wide'">Shared company passwords and tools</p>
+                        <p class="text-xs text-gray-500 -mt-1" x-show="section.key === 'social_media'">Brand social media accounts grouped by client</p>
 
-                        <div x-show="expanded[group.key]" class="border-t border-gray-100 dark:border-gray-700 divide-y dark:divide-gray-700">
-                            <template x-for="account in group.accounts" :key="account._id">
-                                <div class="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <p class="font-medium text-sm text-gray-900 dark:text-white" x-text="account.accountName"></p>
-                                            <span class="text-xs capitalize text-gray-500" x-text="account.platform || formatCategory(account.category)"></span>
-                                            <span :class="statusClass(account.status)" class="px-2 py-0.5 text-[10px] rounded-full font-medium" x-text="statusLabel(account.status)"></span>
-                                            <span :class="verificationClass(account)" class="px-2 py-0.5 text-[10px] rounded-full" x-text="verificationLabel(account)"></span>
+                        <div x-show="section.groups.length === 0" class="py-8 text-center text-sm text-gray-400">No accounts in this section</div>
+
+                        <template x-for="group in section.groups" :key="section.key + ':' + group.key">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                                <div class="flex items-center gap-2 px-4 py-4">
+                                    <button type="button" @click="toggleGroup(section.key, group.key)" class="flex-1 min-w-0 flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors rounded-lg -m-1 p-1">
+                                        <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="expanded[groupKey(section.key, group.key)] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <h3 class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></h3>
+                                                <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.total + ' accounts'"></span>
+                                                <span x-show="group.active > 0" class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" x-text="group.active + ' active'"></span>
+                                                <span x-show="group.archived > 0" class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300" x-text="group.archived + ' archived'"></span>
+                                                <span x-show="group.overdue > 0" class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" x-text="group.overdue + ' overdue'"></span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-0.5" x-show="group.clientName" x-text="group.clientName"></p>
                                         </div>
-                                        <p class="text-xs font-mono text-gray-500 mt-1 truncate" x-text="account.username || 'No username'"></p>
-                                    </div>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <button type="button" @click="viewAccount(account)" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">View</button>
-                                        <button type="button" x-show="isStaff" @click="editAccount(account)" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Edit</button>
-                                        <button type="button" x-show="isAdmin" @click="openMoveAccount(account, group)" class="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40">Move</button>
-                                        <button type="button" x-show="isAdmin" @click="deleteAccount(account)" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 dark:border-red-900/40 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                                    </button>
+                                    <div x-show="isAdmin" class="flex flex-wrap gap-1 shrink-0">
+                                        <button type="button" @click="bulkGroup(group, { status: 'active' })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg hover:bg-green-700">Activate</button>
+                                        <button type="button" @click="bulkGroup(group, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-[11px] bg-gray-600 text-white rounded-lg hover:bg-gray-700">Archive</button>
+                                        <button type="button" @click="openRenameGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Rename</button>
+                                        <button type="button" @click="openMoveGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Move to…</button>
+                                        <button type="button" @click="deleteGroup(group)" class="px-2 py-1 text-[11px] bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
                                     </div>
                                 </div>
-                            </template>
-                        </div>
+
+                                <div x-show="expanded[groupKey(section.key, group.key)]" class="border-t border-gray-100 dark:border-gray-700 divide-y dark:divide-gray-700">
+                                    <template x-for="account in group.accounts" :key="account._id">
+                                        <div class="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <p class="font-medium text-sm text-gray-900 dark:text-white" x-text="account.accountName"></p>
+                                                    <span class="text-xs capitalize text-gray-500" x-text="account.platform || formatCategory(account.category)"></span>
+                                                    <span :class="statusClass(account.status)" class="px-2 py-0.5 text-[10px] rounded-full font-medium" x-text="statusLabel(account.status)"></span>
+                                                    <span :class="verificationClass(account)" class="px-2 py-0.5 text-[10px] rounded-full" x-text="verificationLabel(account)"></span>
+                                                </div>
+                                                <p class="text-xs font-mono text-gray-500 mt-1 truncate" x-text="account.username || 'No username'"></p>
+                                            </div>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <button type="button" @click="viewAccount(account)" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">View</button>
+                                                <button type="button" x-show="isStaff" @click="editAccount(account)" class="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Edit</button>
+                                                <button type="button" x-show="isAdmin" @click="openMoveAccount(account, group)" class="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40">Move</button>
+                                                <button type="button" x-show="isAdmin" @click="deleteAccount(account)" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 dark:border-red-900/40 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -208,13 +226,17 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                     <input type="text" x-model="form.groupName" placeholder="Brand / Group" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <input type="text" x-model="form.accountName" placeholder="Account name *" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <div class="grid grid-cols-2 gap-3">
+                        <select x-model="form.vaultSection" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="company_wide">Company Wide</option>
+                            <option value="social_media">Social Media</option>
+                        </select>
                         <select x-model="form.category" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="social_media">Social Media</option><option value="email">Email</option><option value="analytics">Analytics</option>
                             <option value="design_tools">Design Tools</option><option value="link_tools">Link Tools</option><option value="hosting">Hosting</option>
                             <option value="utilities">Utilities</option><option value="other">Other</option>
                         </select>
-                        <input type="text" x-model="form.platform" placeholder="Platform" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     </div>
+                    <input type="text" x-model="form.platform" placeholder="Platform" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <input type="text" x-model="form.username" placeholder="Username" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <input type="text" x-model="form.password" placeholder="Password" class="w-full px-3 py-2 border rounded-lg text-sm font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <textarea x-model="form.twoFactorNotes" rows="2" placeholder="2FA / recovery codes" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
@@ -287,10 +309,12 @@ function passwordVaultApp() {
         user: null,
         isSidebarOpen: true,
         loading: true,
+        vaultSections: [],
         groups: [],
         expanded: {},
         search: '',
         statusFilter: 'active',
+        vaultSectionFilter: '',
         categoryFilter: '',
         overdueCount: 0,
         selectedViewClient: localStorage.getItem('selectedViewClient') || '',
@@ -313,6 +337,24 @@ function passwordVaultApp() {
         get isAdmin() { return this.user?.role === 'admin' && this.viewMode !== 'client'; },
         get isStaff() { return this.user?.role === 'admin' || (this.user?.role === 'brand_rep' && this.viewMode !== 'client'); },
         get isClientView() { return this.user?.role === 'client' || this.viewMode === 'client'; },
+        get isMultimediaBrandRep() { return this.user?.role === 'brand_rep' && this.user?.department === 'multimedia'; },
+        get showSocialMediaSection() {
+            if (this.isClientView) return true;
+            if (this.user?.role === 'admin') return true;
+            if (this.user?.role === 'brand_rep') return this.user?.department === 'social_media_exec';
+            return false;
+        },
+        get hasAnyGroups() {
+            return (this.vaultSections || []).some((section) => (section.groups || []).length > 0);
+        },
+
+        groupKey(sectionKey, groupKey) {
+            return `${sectionKey}:${groupKey}`;
+        },
+
+        sectionAccountCount(section) {
+            return (section.groups || []).reduce((sum, group) => sum + (group.total || 0), 0);
+        },
 
         userClientIds() {
             const ids = [];
@@ -338,6 +380,7 @@ function passwordVaultApp() {
             const params = new URLSearchParams();
             if (this.search) params.append('search', this.search);
             if (this.statusFilter) params.append('status', this.statusFilter);
+            if (this.vaultSectionFilter) params.append('vaultSection', this.vaultSectionFilter);
             if (this.categoryFilter) params.append('category', this.categoryFilter);
             if (this.user?.role === 'admin' && this.viewMode !== 'admin') {
                 params.append('viewAs', this.viewMode);
@@ -431,8 +474,53 @@ function passwordVaultApp() {
             }
         },
 
-        toggleGroup(key) {
+        toggleGroup(sectionKey, groupKey) {
+            const key = this.groupKey(sectionKey, groupKey);
             this.expanded = { ...this.expanded, [key]: !this.expanded[key] };
+        },
+
+        resolveVaultSection(item) {
+            if (item?.vaultSection === 'company_wide' || item?.vaultSection === 'social_media') return item.vaultSection;
+            return item?.category === 'social_media' ? 'social_media' : 'company_wide';
+        },
+
+        buildVaultSectionsFromGroups(groups = []) {
+            const sectionDefs = [
+                { key: 'company_wide', label: 'Company Wide' },
+                { key: 'social_media', label: 'Social Media' }
+            ].filter((section) => this.showSocialMediaSection || section.key !== 'social_media');
+
+            return sectionDefs.map((section) => ({
+                ...section,
+                groups: groups.filter((group) => {
+                    const accounts = (group.accounts || []).filter((account) => this.resolveVaultSection(account) === section.key);
+                    return accounts.length > 0;
+                }).map((group) => {
+                    const accounts = (group.accounts || []).filter((account) => this.resolveVaultSection(account) === section.key);
+                    return {
+                        ...group,
+                        accounts,
+                        total: accounts.length,
+                        active: accounts.filter((a) => a.status === 'active').length,
+                        archived: accounts.filter((a) => a.status === 'archived').length,
+                        overdue: accounts.filter((a) => a.verification?.overdue).length
+                    };
+                })
+            }));
+        },
+
+        applySectionFilters(sections = []) {
+            let filtered = sections;
+            if (!this.showSocialMediaSection) {
+                filtered = filtered.filter((section) => section.key !== 'social_media');
+            }
+            if (this.vaultSectionFilter) {
+                filtered = filtered.filter((section) => section.key === this.vaultSectionFilter);
+            }
+            return filtered.map((section) => ({
+                ...section,
+                groups: this.filterGroupsByStatus(section.groups || [])
+            }));
         },
 
         async loadGrouped() {
@@ -444,9 +532,16 @@ function passwordVaultApp() {
                 try { data = await res.json(); } catch (e) { /* ignore */ }
 
                 if (res.ok && data.success) {
-                    let groups = this.applyClientScope(data.groups || []);
-                    groups = this.filterGroupsByStatus(groups);
-                    this.groups = groups;
+                    let sections = (data.sections || []).map((section) => ({
+                        ...section,
+                        groups: this.applyClientScope(section.groups || [])
+                    }));
+                    if (!sections.length && (data.groups || []).length) {
+                        sections = this.buildVaultSectionsFromGroups(this.applyClientScope(data.groups || []));
+                    }
+                    sections = this.applySectionFilters(sections);
+                    this.vaultSections = sections;
+                    this.groups = sections.flatMap((section) => section.groups || []);
                     this.overdueCount = this.groups.reduce((sum, group) => sum + (group.overdue || 0), 0);
                     return;
                 }
@@ -454,9 +549,15 @@ function passwordVaultApp() {
                 const fallback = await fetch(`${API_URL}/credentials?${params}`, { headers: this.headers() });
                 const flat = await fallback.json();
                 if (flat.success) {
-                    let groups = this.applyClientScope(this.groupCredentialsClient(flat.data || []));
+                    let items = (flat.data || []).filter((item) => {
+                        if (!this.showSocialMediaSection && this.resolveVaultSection(item) === 'social_media') return false;
+                        return true;
+                    });
+                    let groups = this.applyClientScope(this.groupCredentialsClient(items));
                     groups = this.filterGroupsByStatus(groups);
-                    this.groups = groups;
+                    const sections = this.applySectionFilters(this.buildVaultSectionsFromGroups(groups));
+                    this.vaultSections = sections;
+                    this.groups = sections.flatMap((section) => section.groups || []);
                     this.overdueCount = this.groups.reduce((sum, group) => sum + (group.overdue || 0), 0);
                     return;
                 }
@@ -670,8 +771,24 @@ function passwordVaultApp() {
 
         editAccount(account) { this.viewAccount(account).then(() => { this.accountModalView = false; this.form = { ...this.selected, password: '' }; }); },
 
-        openModal() {
-            this.form = { groupName: '', accountName: '', category: 'social_media', platform: '', username: '', password: '', twoFactorNotes: '', recoveryEmail: '', recoveryPhone: '', url: '', notes: '', status: 'archived', visibleToBrandReps: false };
+        openModal(vaultSection = null) {
+            const defaultSection = vaultSection || (this.isMultimediaBrandRep || !this.showSocialMediaSection ? 'company_wide' : 'social_media');
+            this.form = {
+                groupName: '',
+                accountName: '',
+                vaultSection: defaultSection,
+                category: defaultSection === 'social_media' ? 'social_media' : 'other',
+                platform: '',
+                username: '',
+                password: '',
+                twoFactorNotes: '',
+                recoveryEmail: '',
+                recoveryPhone: '',
+                url: '',
+                notes: '',
+                status: 'archived',
+                visibleToBrandReps: false
+            };
             this.selected = null;
             this.accountModalView = false;
             this.showModal = true;
