@@ -1,6 +1,17 @@
 [
   {
-    "id": 26,
+    "id": 27,
+    "title": "Insights Layout Fix & Remove Ads",
+    "version": "2.3.31",
+    "description": "Fixes insights dashboard styling by loading theme CSS properly, and removes ad spend widgets until ads are integrated.",
+    "date": "2026-06-05",
+    "highlights": [
+      "Theme stylesheet now loads on dashboard pages",
+      "Audience hero and stat cards render with proper layout",
+      "Ad Spend metric and advertising panel removed"
+    ],
+    "type": "fix"
+  },
     "title": "Modern Insights Dashboard Redesign",
     "version": "2.3.30",
     "description": "Insights page redesigned with a prominent audience overview, always-visible demographics section, and polished performance cards.",

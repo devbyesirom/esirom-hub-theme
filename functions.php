@@ -111,21 +111,41 @@ function esirom_hub_layout_styles() {
  * Enqueue scripts and styles
  */
 function esirom_hub_scripts() {
-    // Only load on specific pages
-    if (is_page_template('page-login.php') || is_page_template('page-dashboard.php') || is_page_template('page-admin.php')) {
-        // Tailwind CSS
+    if (
+        is_page_template('page-login.php') ||
+        is_page_template('page-dashboard.php') ||
+        is_page_template('page-admin.php') ||
+        is_page_template('page-password-vault.php')
+    ) {
+        wp_enqueue_style(
+            'esirom-hub-theme',
+            get_stylesheet_uri(),
+            array(),
+            wp_get_theme()->get('Version')
+        );
         wp_enqueue_style('tailwindcss', 'https://cdn.tailwindcss.com', array(), null);
-        
-        // Google Fonts
-        wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), null);
-        ?>
-        <script>
-            const ESIROM_API_URL = '<?php echo esc_js(get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api')); ?>';
-        </script>
-        <?php
+        wp_enqueue_style(
+            'google-fonts',
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+            array(),
+            null
+        );
     }
 }
-add_action('wp_head', 'esirom_hub_scripts');
+add_action('wp_enqueue_scripts', 'esirom_hub_scripts');
+
+function esirom_hub_api_url_script() {
+    if (
+        is_page_template('page-login.php') ||
+        is_page_template('page-dashboard.php') ||
+        is_page_template('page-admin.php') ||
+        is_page_template('page-password-vault.php')
+    ) {
+        $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
+        echo '<script>const ESIROM_API_URL = ' . wp_json_encode(esc_url_raw($api_url)) . ';</script>';
+    }
+}
+add_action('wp_head', 'esirom_hub_api_url_script');
 
 /**
  * Handle media upload via AJAX

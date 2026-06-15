@@ -485,7 +485,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
 
                         <!-- Controls: Date Range & Platform Filters -->
-                        <div class="hub-insights-panel p-4 md:p-5">
+                        <div class="hub-insights-panel rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-700/80 dark:bg-gray-800/80 md:p-5">
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4 pb-4 border-b border-gray-200/80 dark:border-gray-700/80">
                                 <div>
                                     <p class="hub-insights-section-title mb-1">Reporting period</p>
@@ -551,42 +551,39 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <!-- Audience Overview (always visible for connected social brands) -->
-                        <div x-show="hasSocialAudiencePlatforms()" class="hub-insights-hero">
-                            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                        <!-- Audience Overview -->
+                        <div x-show="hasSocialAudiencePlatforms()" class="hub-insights-hero rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-600 p-6 text-white shadow-xl">
+                            <div class="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
                                 <div>
-                                    <p class="text-xs uppercase tracking-wider font-semibold opacity-80">Audience overview</p>
-                                    <h3 class="text-xl md:text-2xl font-bold mt-1">Total audience · <span x-text="formatNumber(getTotalAudienceFollowers())"></span></h3>
-                                    <p class="text-sm opacity-80 mt-1">Live follower counts from Meta · growth is month-to-date</p>
+                                    <p class="text-xs uppercase tracking-wider font-semibold text-indigo-100">Audience overview</p>
+                                    <h3 class="text-2xl font-bold mt-1">Total audience · <span x-text="formatNumber(getTotalAudienceFollowers())"></span></h3>
+                                    <p class="text-sm text-indigo-100 mt-1">Live follower counts from Meta · growth is month-to-date</p>
                                 </div>
-                                <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="self-start px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-sm font-semibold disabled:opacity-60">
+                                <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="self-start rounded-xl border border-white/25 bg-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/25 disabled:opacity-60">
                                     <span x-show="!audienceInsightsLoading">Refresh audience</span>
                                     <span x-show="audienceInsightsLoading">Refreshing…</span>
                                 </button>
                             </div>
-                            <div class="hub-insights-hero__grid relative z-10">
+                            <div class="hub-insights-hero__grid relative z-10 grid grid-cols-2 gap-3 md:grid-cols-4">
                                 <template x-for="platform in ['facebook', 'instagram'].filter(p => clientPlatforms.includes(p))" :key="'audience-' + platform">
-                                    <div class="hub-insights-hero__stat">
-                                        <p class="hub-insights-hero__label" x-text="platform + ' followers'"></p>
-                                        <p class="hub-insights-hero__value" x-text="formatNumber(calculatePlatformFollowers(platform))"></p>
-                                        <p class="hub-insights-hero__sub text-emerald-200">
-                                            +<span x-text="formatNumber(followerChanges[platform]?.gained || 0)"></span> new
-                                            · <span x-text="formatNumber(followerChanges[platform]?.lost || 0)"></span> unfollows
-                                        </p>
-                                        <p class="hub-insights-hero__sub" x-show="getNetFollowerChange(platform) !== 0">
-                                            Net: <span x-text="(getNetFollowerChange(platform) >= 0 ? '+' : '') + formatNumber(getNetFollowerChange(platform))"></span> this month
+                                    <div class="hub-insights-hero__stat rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                                        <p class="hub-insights-hero__label text-xs uppercase tracking-wide text-indigo-100" x-text="platform + ' followers'"></p>
+                                        <p class="hub-insights-hero__value mt-1 text-2xl font-bold" x-text="formatNumber(calculatePlatformFollowers(platform))"></p>
+                                        <p class="mt-2 text-xs text-indigo-100">
+                                            +<span x-text="formatNumber(followerChanges[platform]?.gained || 0)"></span> new ·
+                                            <span x-text="formatNumber(followerChanges[platform]?.lost || 0)"></span> unfollows
                                         </p>
                                     </div>
                                 </template>
-                                <div class="hub-insights-hero__stat">
-                                    <p class="hub-insights-hero__label">Net growth</p>
-                                    <p class="hub-insights-hero__value" x-text="(getTotalNetFollowerChange() >= 0 ? '+' : '') + formatNumber(getTotalNetFollowerChange())"></p>
-                                    <p class="hub-insights-hero__sub">Combined FB + IG this month</p>
+                                <div class="hub-insights-hero__stat rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                                    <p class="text-xs uppercase tracking-wide text-indigo-100">Net growth</p>
+                                    <p class="mt-1 text-2xl font-bold" x-text="(getTotalNetFollowerChange() >= 0 ? '+' : '') + formatNumber(getTotalNetFollowerChange())"></p>
+                                    <p class="mt-2 text-xs text-indigo-100">Combined FB + IG this month</p>
                                 </div>
-                                <div class="hub-insights-hero__stat">
-                                    <p class="hub-insights-hero__label">Last synced</p>
-                                    <p class="hub-insights-hero__value text-lg" x-text="formatAudienceSyncTime()"></p>
-                                    <p class="hub-insights-hero__sub">Auto-updates on Sync Posts</p>
+                                <div class="hub-insights-hero__stat rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                                    <p class="text-xs uppercase tracking-wide text-indigo-100">Last synced</p>
+                                    <p class="mt-1 text-lg font-semibold" x-text="formatAudienceSyncTime()"></p>
+                                    <p class="mt-2 text-xs text-indigo-100">Updates on Sync Posts</p>
                                 </div>
                             </div>
                         </div>
@@ -654,8 +651,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
 
                         <!-- Metric Cards -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div x-show="isWidgetVisible('reach')" class="hub-stat-card hub-stat-card--teal">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <div x-show="isWidgetVisible('reach')" class="hub-stat-card hub-stat-card--teal rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <div class="flex justify-between items-start">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Reach</h3>
                                     <div class="hub-stat-card__icon text-teal-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg></div>
@@ -665,7 +662,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <span x-text="formatChange(dashboardData.metrics?.reach?.change || 0)"></span>
                                 </p>
                             </div>
-                            <div x-show="isWidgetVisible('engagement_rate')" class="hub-stat-card hub-stat-card--pink">
+                            <div x-show="isWidgetVisible('engagement_rate')" class="hub-stat-card hub-stat-card--pink rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <div class="flex justify-between items-start">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Engagement Rate</h3>
                                     <div class="hub-stat-card__icon text-pink-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg></div>
@@ -675,7 +672,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <span x-text="formatChange(dashboardData.metrics?.engagementRate?.change || 0)"></span>
                                 </p>
                             </div>
-                            <div x-show="isWidgetVisible('total_engagement')" class="hub-stat-card hub-stat-card--blue">
+                            <div x-show="isWidgetVisible('total_engagement')" class="hub-stat-card hub-stat-card--blue rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <div class="flex justify-between items-start">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Engagement</h3>
                                     <div class="hub-stat-card__icon text-blue-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg></div>
@@ -685,19 +682,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <span x-text="formatChange(dashboardData.metrics?.engagement?.change || 0)"></span>
                                 </p>
                             </div>
-                            <div x-show="isWidgetVisible('ad_spend')" class="hub-stat-card hub-stat-card--amber">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Ad Spend</h3>
-                                    <div class="hub-stat-card__icon text-amber-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
-                                </div>
-                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white">$<span x-text="(dashboardData.metrics?.adSpend?.current || 0).toFixed(2)"></span></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This period</p>
-                            </div>
                         </div>
 
                         <!-- Additional Metrics - Row 2 -->
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
-                            <div x-show="isWidgetVisible('impressions')" class="hub-stat-card hub-stat-card--orange">
+                            <div x-show="isWidgetVisible('impressions')" class="hub-stat-card hub-stat-card--orange rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Impressions</h3>
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('impressions'))"></p>
                             </div>
@@ -751,9 +740,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <div x-show="!hasVideoInsights()" class="hub-insights-empty text-sm">Video metrics appear here when reels or YouTube content has watch-time data in the selected period.</div>
                         </div>
 
-                        <!-- Audience Intelligence (always visible for social brands) -->
-                        <div x-show="hasSocialAudiencePlatforms() || dashboardData.advertising" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                            <div x-show="hasSocialAudiencePlatforms()" class="hub-insights-panel p-5 md:p-6">
+                        <!-- Audience Intelligence -->
+                        <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
+                            <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
                                 <div class="flex items-center justify-between mb-4">
                                     <div>
                                         <p class="hub-insights-section-title mb-1">Audience intelligence</p>
@@ -801,53 +790,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     </div>
                                 </div>
 
-                                <div x-show="!hasDemographicsData()" class="hub-insights-empty">
+                                <div x-show="!hasDemographicsData()" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-gray-600 dark:bg-gray-900/40">
                                     <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Demographics not loaded yet</p>
-                                    <p class="text-sm">Tap <strong>Refresh audience</strong> above or run <strong>Sync Posts</strong> in Admin. Instagram age and location data requires a Business account and typically 100+ followers.</p>
-                                </div>
-                            </div>
-
-                            <!-- Advertising Insights -->
-                            <div x-show="dashboardData.advertising" class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm">
-                                <h3 class="text-lg font-semibold mb-4 flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    Advertising Insights & Spend
-                                </h3>
-
-                                <!-- Ad Metrics Grid -->
-                                <div class="grid grid-cols-2 gap-3 mb-4">
-                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">Total Spend</p>
-                                        <p class="text-xl font-bold text-gray-900 dark:text-white">$<span x-text="(dashboardData.advertising?.totalSpend || 0).toFixed(2)"></span></p>
-                                    </div>
-                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">Reach</p>
-                                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.advertising?.reach || 0)"></p>
-                                    </div>
-                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">Engagement</p>
-                                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.advertising?.engagement || 0)"></p>
-                                    </div>
-                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">Clicks</p>
-                                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.advertising?.clicks || 0)"></p>
-                                    </div>
-                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">Impressions</p>
-                                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.advertising?.impressions || 0)"></p>
-                                    </div>
-                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">ROAS</p>
-                                        <p class="text-xl font-bold text-green-600 dark:text-green-400" x-text="(dashboardData.advertising?.roas || 0).toFixed(1) + 'x'"></p>
-                                    </div>
-                                </div>
-
-                                <!-- Spend by Platform -->
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Spend by Platform</h4>
-                                    <div style="height: 180px;">
-                                        <canvas id="adSpendChart"></canvas>
-                                    </div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Tap <strong>Refresh audience</strong> above or run <strong>Sync Posts</strong> in Admin. Instagram age and location data requires a Business account and typically 100+ followers.</p>
                                 </div>
                             </div>
                         </div>
@@ -2240,7 +2185,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 // Widget customization
                 showCustomizeWidgets: false,
                 userWidgetPreferences: [
-                    'reach', 'engagement_rate', 'total_engagement', 'ad_spend',
+                    'reach', 'engagement_rate', 'total_engagement',
                     'impressions', 'views', 'likes', 'comments', 'shares', 'saves',
                     'watch_time', 'skip_rate', 'follower_views', 'non_follower_views', 'followers'
                 ], // User's personal widget visibility preferences (default: all visible)
@@ -2474,7 +2419,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 this.userWidgetPreferences = JSON.parse(savedPreferences);
                             } else {
                                 this.userWidgetPreferences = [
-                                    'reach', 'engagement_rate', 'total_engagement', 'ad_spend',
+                                    'reach', 'engagement_rate', 'total_engagement',
                                     'impressions', 'views', 'likes', 'comments', 'shares', 'saves',
                                     'watch_time', 'skip_rate', 'follower_views', 'non_follower_views', 'followers'
                                 ];
@@ -2583,7 +2528,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             } else {
                                 // Default: all widgets visible (set all widget IDs)
                                 this.userWidgetPreferences = [
-                                    'reach', 'engagement_rate', 'total_engagement', 'ad_spend',
+                                    'reach', 'engagement_rate', 'total_engagement',
                                     'impressions', 'views', 'likes', 'comments', 'shares', 'saves',
                                     'watch_time', 'skip_rate', 'follower_views', 'non_follower_views', 'followers'
                                 ];
@@ -4896,7 +4841,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         { id: 'reach', name: 'Total Reach' },
                         { id: 'engagement_rate', name: 'Engagement Rate' },
                         { id: 'total_engagement', name: 'Total Engagement' },
-                        { id: 'ad_spend', name: 'Ad Spend' },
                         { id: 'impressions', name: 'Total Impressions' },
                         { id: 'views', name: 'Total Views' },
                         { id: 'likes', name: 'Total Likes' },
@@ -5684,51 +5628,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 },
                                 plugins: {
                                     legend: { display: false }
-                                }
-                            }
-                        });
-                    }
-
-                    // Ad Spend by Platform Chart
-                    const adSpendCtx = document.getElementById('adSpendChart')?.getContext('2d');
-                    if (adSpendCtx && this.dashboardData.advertising?.byPlatform) {
-                        const platforms = Object.keys(this.dashboardData.advertising.byPlatform);
-                        const spends = platforms.map(p => this.dashboardData.advertising.byPlatform[p].spend);
-                        
-                        const colors = isDarkMode 
-                            ? ['#3b82f6', '#ec4899', '#0ea5e9', '#64748b', '#8b5cf6']
-                            : ['#60a5fa', '#f472b6', '#38bdf8', '#94a3b8', '#a78bfa'];
-
-                        window.adSpendChartInstance = new Chart(adSpendCtx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)),
-                                datasets: [{
-                                    data: spends,
-                                    backgroundColor: colors,
-                                    borderColor: isDarkMode ? '#1f2937' : '#ffffff',
-                                    borderWidth: 3
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom',
-                                        labels: { 
-                                            color: chartFontColor,
-                                            padding: 10,
-                                            font: { size: 10 }
-                                        }
-                                    },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: function(context) {
-                                                return context.label + ': $' + context.parsed.toFixed(2);
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         });
