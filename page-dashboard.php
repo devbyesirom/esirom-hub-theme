@@ -261,20 +261,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
         <!-- Main content -->
         <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
-            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
+            <header class="hub-sticky-header hidden md:flex items-center justify-between p-4 min-h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/50 shadow-sm gap-4 flex-wrap">
                 <div class="flex items-center gap-4 flex-wrap min-w-0">
                     <div class="min-w-0">
                         <h1 class="text-lg font-bold text-gray-900 dark:text-white" x-text="pageTitle"></h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="currentDate"></p>
                     </div>
                     <!-- Client Selector (for admins and brand reps) -->
-                    <div x-show="user.role === 'admin' || user.role === 'brand_rep'" x-data="{ clientDropdownOpen: false }" class="relative">
-                        <button @click="clientDropdownOpen = !clientDropdownOpen" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-100 dark:border-indigo-800/50">
+                    <div x-show="user.role === 'admin' || user.role === 'brand_rep'" x-data="{ clientDropdownOpen: false, clientDropdownStyle: '' }" class="relative">
+                        <button x-ref="clientDropdownBtn" @click="clientDropdownOpen = !clientDropdownOpen; if (clientDropdownOpen && $refs.clientDropdownBtn) { const r = $refs.clientDropdownBtn.getBoundingClientRect(); clientDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + r.left + 'px;width:' + Math.max(r.width, 256) + 'px'; }" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-100 dark:border-indigo-800/50">
                             <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                             <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-300" x-text="selectedClient?.brandName || selectedClient?.companyName || 'Select Client'"></span>
                             <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <div x-show="clientDropdownOpen" @click.away="clientDropdownOpen = false" x-cloak class="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 max-h-96 overflow-y-auto">
+                        <div x-show="clientDropdownOpen" @click.away="clientDropdownOpen = false" x-cloak :style="clientDropdownStyle" class="hub-menu-dropdown py-1">
                             <template x-for="client in availableClients" :key="client._id">
                                 <button @click="switchClient(client); clientDropdownOpen = false" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2">
                                     <img :src="client.logo || 'https://placehold.co/40x40/4a5568/ffffff?text=' + (client.brandName || client.companyName || client.name || 'C').charAt(0)" class="h-8 w-8 rounded-full" :alt="client.brandName || client.companyName || client.name">
@@ -294,11 +294,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors">
                             All Brands
                         </button>
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <div class="relative" x-data="{ open: false, brandDropdownStyle: '' }">
+                            <button x-ref="brandDropdownBtn" @click="open = !open; if (open && $refs.brandDropdownBtn) { const r = $refs.brandDropdownBtn.getBoundingClientRect(); brandDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + r.left + 'px;width:' + Math.max(r.width, 224) + 'px'; }" class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
                                 Choose Brand
                             </button>
-                            <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-30 max-h-72 overflow-y-auto">
+                            <div x-show="open" @click.away="open = false" x-cloak :style="brandDropdownStyle" class="hub-menu-dropdown py-1">
                                 <template x-for="client in availableClients" :key="`client-scope-${client._id}`">
                                     <button @click="setClientBrandScope(client._id); open = false"
                                             :class="selectedViewClient === client._id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
@@ -315,13 +315,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         <svg x-show="theme === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         <svg x-show="theme === 'dark'" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </button>
-                    <div x-data="{ dropdownOpen: false }" class="relative">
-                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div x-data="{ dropdownOpen: false, userDropdownStyle: '' }" class="relative">
+                        <button x-ref="userDropdownBtn" @click="dropdownOpen = !dropdownOpen; if (dropdownOpen && $refs.userDropdownBtn) { const r = $refs.userDropdownBtn.getBoundingClientRect(); userDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + (r.right - 208) + 'px;width:208px'; }" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                             <img class="h-7 w-7 rounded-full object-cover" :src="user.clientId?.logo || 'https://placehold.co/100x100/4a5568/ffffff?text=' + (user.firstName?.[0] || 'U')" :alt="user.fullName">
                             <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="user.clientId?.brandName || user.clientId?.companyName || user.fullName"></span>
                             <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-20">
+                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak :style="userDropdownStyle" class="hub-menu-dropdown py-1 rounded-2xl">
                             <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
                                 <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="user.fullName"></p>
                                 <p class="text-xs text-gray-500 mt-0.5" x-text="user.email"></p>
@@ -436,7 +436,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                         <!-- Audience Overview -->
                         <div x-show="hasSocialAudiencePlatforms()" class="hub-insights-hero rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-600 p-6 text-white shadow-xl">
-                            <div class="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
+                            <div class="relative z-[1] flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
                                 <div>
                                     <p class="text-xs uppercase tracking-wider font-semibold text-indigo-100">Audience overview</p>
                                     <h3 class="text-2xl font-bold mt-1">Total audience · <span x-text="formatNumber(getTotalAudienceFollowers())"></span></h3>
@@ -447,7 +447,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <span x-show="audienceInsightsLoading">Refreshing…</span>
                                 </button>
                             </div>
-                            <div class="hub-insights-hero__grid relative z-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+                            <div class="hub-insights-hero__grid relative z-[1] grid grid-cols-2 gap-3 md:grid-cols-4">
                                 <template x-for="platform in ['facebook', 'instagram'].filter(p => clientPlatforms.includes(p))" :key="'audience-' + platform">
                                     <div class="hub-insights-hero__stat rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
                                         <p class="hub-insights-hero__label text-xs uppercase tracking-wide text-indigo-100" x-text="platform + ' followers'"></p>

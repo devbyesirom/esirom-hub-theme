@@ -27,7 +27,30 @@ body.admin-bar { margin-top: 0 !important; padding-top: 0 !important; }
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
+.hub-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    overflow: visible;
+}
+.hub-menu-dropdown {
+    position: fixed;
+    z-index: 100;
+    max-height: min(24rem, calc(100dvh - 6rem));
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.75rem;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.14);
+}
+.dark .hub-menu-dropdown {
+    background: rgb(31, 41, 55);
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
 .hub-page-content {
+    position: relative;
+    z-index: 0;
     padding-bottom: 2.5rem;
 }
 @media (min-width: 768px) {
