@@ -25,6 +25,7 @@ $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_is_dashboard = ($hub_client_nav_context === 'dashboard');
 
 $hub_client_show = esirom_hub_client_nav_show_attr();
+$hub_website_projects_show = 'x-show="$store.clientNav.hasWebsiteProjects"';
 
 $hub_link_class = function ($key) use ($hub_client_nav_active) {
     $base = 'flex items-center p-3 rounded-lg transition-colors duration-200';
@@ -33,18 +34,28 @@ $hub_link_class = function ($key) use ($hub_client_nav_active) {
     }
     return $base . ' text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
 };
+
+$hub_sub_link_class = function ($key) use ($hub_client_nav_active) {
+    $base = 'flex items-center py-2 pl-11 pr-3 rounded-lg transition-colors duration-200 text-sm';
+    if ($hub_client_nav_active === $key) {
+        return $base . ' bg-indigo-500 text-white';
+    }
+    return $base . ' text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
+};
 ?>
 
-<a <?php echo $hub_client_show; ?> href="<?php echo ($hub_client_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>" class="<?php echo esc_attr($hub_link_class('website_projects')); ?>">
-    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
-</a>
+<div <?php echo $hub_client_show; ?> class="space-y-0.5">
+    <a href="<?php echo $hub_workflow_url; ?>" class="<?php echo esc_attr($hub_link_class('content_bank')); ?>">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Content Bank</span>
+    </a>
+    <a <?php echo $hub_client_show; ?> <?php echo $hub_website_projects_show; ?> href="<?php echo ($hub_client_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>" class="<?php echo esc_attr($hub_sub_link_class('website_projects')); ?>">
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+        <span class="ml-3 nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
+    </a>
+</div>
 
-<div <?php echo $hub_client_show; ?> x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient">
-<a href="<?php echo $hub_workflow_url; ?>" class="<?php echo esc_attr($hub_link_class('content_bank')); ?>">
-    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-    <span class="ml-4 nav-text"<?php echo $hub_label_attrs; ?>>Content Bank</span>
-</a>
+<div <?php echo $hub_client_show; ?> x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient" class="space-y-0.5">
 
 <?php if ($hub_is_dashboard) : ?>
 <a <?php echo $hub_client_show; ?> href="#overview" @click="activeView = 'dashboard'" class="flex items-center p-3 rounded-lg transition-colors duration-200" :class="activeView === 'dashboard' ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">

@@ -54,6 +54,18 @@ function esirom_hub_staff_nav_show_attr() {
 }
 
 /**
+ * Bootstrap Alpine clientNav store (website project visibility for client menu).
+ */
+function esirom_hub_client_nav_bootstrap() {
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    include get_template_directory() . '/inc/hub-client-nav-bootstrap.php';
+}
+
+/**
  * Render shared staff sidebar navigation (admin / brand_rep).
  */
 function esirom_hub_staff_sidebar_nav($active = '', $context = 'site', $alpine_labels = false) {
@@ -104,6 +116,7 @@ function esirom_hub_client_sidebar_nav($active = '', $context = 'site', $alpine_
     $hub_client_nav_context = $context;
     $hub_nav_alpine_labels = $alpine_labels;
     include get_template_directory() . '/inc/hub-client-sidebar-nav.php';
+    esirom_hub_client_nav_bootstrap();
 }
 
 /**

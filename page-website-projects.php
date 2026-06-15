@@ -518,10 +518,12 @@ function websiteProjectsApp() {
         },
         get visibleTabs() {
             const tabs = [
-                { id: 'dashboard', label: 'Dashboard' },
-                { id: 'projects', label: 'Projects' },
-                { id: 'tasks', label: this.isClient ? 'My Requests' : 'All Tasks' }
+                { id: 'dashboard', label: 'Dashboard' }
             ];
+            if (!this.isClient || this.projects.length > 0) {
+                tabs.push({ id: 'projects', label: this.isClient ? 'My Websites' : 'Projects' });
+            }
+            tabs.push({ id: 'tasks', label: this.isClient ? 'My Requests' : 'All Tasks' });
             if (this.canManageTasks) tabs.push({ id: 'queue', label: 'My Queue' });
             return tabs;
         },
@@ -619,7 +621,18 @@ function websiteProjectsApp() {
         async loadProjects() {
             const res = await fetch(`${API_URL}/website-projects/projects`, { headers: this.headers() });
             const data = await res.json();
-            if (data.success) this.projects = data.projects || [];
+            if (data.success) {
+                this.projects = data.projects || [];
+                this.syncClientNavStore();
+            }
+        },
+
+        syncClientNavStore() {
+            if (!this.isClient || typeof Alpine === 'undefined' || !Alpine.store('clientNav')) return;
+            const store = Alpine.store('clientNav');
+            store.hasWebsiteProjects = this.projects.length > 0;
+            store.websiteProjectCount = this.projects.length;
+            store.loaded = true;
         },
 
         async loadTasks() {
