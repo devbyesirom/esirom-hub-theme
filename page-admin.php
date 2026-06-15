@@ -1126,6 +1126,26 @@ show_admin_bar(false);
                             </button>
                         </div>
                         <div x-show="socialMediaDiagnosis" class="mt-3 p-3 bg-white rounded border border-blue-100 text-xs space-y-2">
+                            <div x-show="socialMediaDiagnosis.metaSetup" class="rounded-lg p-3 border"
+                                 :class="{
+                                     'bg-green-50 border-green-200': socialMediaDiagnosis.metaSetup?.verdict === 'ok',
+                                     'bg-amber-50 border-amber-200': socialMediaDiagnosis.metaSetup?.verdict === 'partial',
+                                     'bg-red-50 border-red-200': socialMediaDiagnosis.metaSetup?.verdict === 'blocked'
+                                 }">
+                                <p class="font-semibold text-gray-900">What's blocking insights</p>
+                                <p class="mt-1 text-gray-800" x-text="socialMediaDiagnosis.metaSetup?.summary"></p>
+                                <p class="mt-2 text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.server?.oauthMode === 'scope_fallback_no_instagram'">
+                                    OAuth mode: fallback (no config ID) — Instagram permissions cannot be granted.
+                                </p>
+                                <p class="mt-1 text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes?.length">
+                                    Missing on token:
+                                    <span class="font-mono" x-text="(socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes || []).join(', ')"></span>
+                                </p>
+                                <p class="mt-1 text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.server?.loginConfigId">
+                                    Config ID on server:
+                                    <span class="font-mono" x-text="socialMediaDiagnosis.metaSetup?.server?.loginConfigId"></span>
+                                </p>
+                            </div>
                             <p class="font-semibold text-gray-800">Connection diagnostics</p>
                             <template x-for="check in (socialMediaDiagnosis.facebook?.checks || [])" :key="'fb-' + check.step">
                                 <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
