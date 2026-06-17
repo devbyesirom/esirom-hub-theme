@@ -425,8 +425,25 @@ $progress_url = esc_url(get_permalink(get_page_by_path('progress')));
                     <div class="space-y-2 max-h-40 overflow-y-auto mb-3">
                         <template x-for="c in (selectedTask.comments || [])" :key="c._id">
                             <div class="text-sm p-2 rounded-lg bg-gray-50 dark:bg-gray-900/40">
-                                <p class="text-xs text-gray-500 mb-1" x-text="(c.user?.firstName || 'User') + ' · ' + formatDate(c.createdAt)"></p>
-                                <p x-text="c.text"></p>
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <p class="text-xs text-gray-500" x-text="(c.user?.firstName || 'User') + ' · ' + formatDate(c.createdAt)"></p>
+                                    <template x-if="canEditComment(c) && !(editingComment?.id === c._id)">
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" @click="startEditComment(c)" class="text-xs text-indigo-600 hover:text-indigo-800">Edit</button>
+                                            <button type="button" @click="deleteComment(c)" class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div x-show="editingComment?.id !== c._id">
+                                    <p x-text="c.text"></p>
+                                </div>
+                                <div x-show="editingComment?.id === c._id" class="space-y-2">
+                                    <input x-model="editingComment.text" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700">
+                                    <div class="flex gap-2 justify-end">
+                                        <button type="button" @click="cancelEditComment()" class="px-2 py-1 text-xs border rounded-lg">Cancel</button>
+                                        <button type="button" @click="saveEditComment()" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded-lg">Save</button>
+                                    </div>
+                                </div>
                             </div>
                         </template>
                     </div>
@@ -480,6 +497,7 @@ function websiteProjectsApp() {
         selectedTask: null,
         taskUpdate: {},
         newComment: '',
+        editingComment: null,
         toast: { show: false, message: '', type: 'info' },
 
         typeOptions: [
@@ -764,6 +782,51 @@ function websiteProjectsApp() {
                 this.newComment = '';
             } else {
                 this.showToast(data.message || 'Comment failed', 'error');
+            }
+        },
+
+        canEditComment(item) {
+            if (!this.user || !item?.user) return false;
+            const authorId = item.user._id || item.user;
+            const uid = String(this.user._id || this.user.id);
+            return this.user.role === 'admin' || uid === String(authorId);
+        },
+
+        startEditComment(item) {
+            this.editingComment = { id: item._id, text: item.text || '' };
+        },
+
+        cancelEditComment() {
+            this.editingComment = null;
+        },
+
+        async saveEditComment() {
+            if (!this.editingComment?.text?.trim() || !this.selectedTask) return;
+            const res = await fetch(`${API_URL}/website-projects/tasks/${this.selectedTask._id}/comments/${this.editingComment.id}`, {
+                method: 'PUT', headers: this.headers(), body: JSON.stringify({ text: this.editingComment.text.trim() })
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.selectedTask = data.task;
+                this.editingComment = null;
+                this.showToast('Comment updated', 'success');
+            } else {
+                this.showToast(data.message || 'Update failed', 'error');
+            }
+        },
+
+        async deleteComment(item) {
+            if (!confirm('Delete this comment?') || !this.selectedTask) return;
+            const res = await fetch(`${API_URL}/website-projects/tasks/${this.selectedTask._id}/comments/${item._id}`, {
+                method: 'DELETE', headers: this.headers()
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.selectedTask = data.task;
+                if (this.editingComment?.id === item._id) this.editingComment = null;
+                this.showToast('Comment deleted', 'success');
+            } else {
+                this.showToast(data.message || 'Delete failed', 'error');
             }
         },
 

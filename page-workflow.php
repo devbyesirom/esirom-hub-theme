@@ -1504,14 +1504,31 @@ show_admin_bar(false);
                                     </button>
                                 </div>
                                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
-                                    <template x-for="(comment, ci) in (activePlan?.comments || [])" :key="ci">
+                                    <template x-for="(comment, ci) in (activePlan?.comments || [])" :key="comment._id || ci">
                                         <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                                            <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center justify-between mb-1 gap-2">
                                                 <span class="text-xs font-medium text-gray-900 dark:text-white" x-text="(comment.userId?.firstName || '') + ' ' + (comment.userId?.lastName || '')"></span>
-                                                <span class="text-xs text-gray-400" x-text="new Date(comment.createdAt).toLocaleDateString()"></span>
+                                                <div class="flex items-center gap-2 shrink-0">
+                                                    <span class="text-xs text-gray-400" x-text="new Date(comment.createdAt).toLocaleDateString()"></span>
+                                                    <template x-if="canEditComment(comment, 'userId') && !(editingComment?.id === comment._id && editingComment?.scope === 'planner')">
+                                                        <div class="flex items-center gap-1">
+                                                            <button type="button" @click="startEditComment(comment, 'planner', 'message')" class="text-xs text-indigo-600 hover:text-indigo-800">Edit</button>
+                                                            <button type="button" @click="deleteComment(comment, 'planner')" class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                                                        </div>
+                                                    </template>
+                                                </div>
                                             </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-300" x-text="comment.message"></p>
-                                            <span x-show="comment.slideIndex !== null && comment.slideIndex !== undefined" class="text-xs text-indigo-500 mt-1 inline-block cursor-pointer hover:underline" @click="activeSlideIndex = comment.slideIndex" x-text="'Slide ' + ((comment.slideIndex || 0) + 1)"></span>
+                                            <div x-show="!(editingComment?.id === comment._id && editingComment?.scope === 'planner')">
+                                                <p class="text-sm text-gray-600 dark:text-gray-300" x-text="comment.message"></p>
+                                                <span x-show="comment.slideIndex !== null && comment.slideIndex !== undefined" class="text-xs text-indigo-500 mt-1 inline-block cursor-pointer hover:underline" @click="activeSlideIndex = comment.slideIndex" x-text="'Slide ' + ((comment.slideIndex || 0) + 1)"></span>
+                                            </div>
+                                            <div x-show="editingComment?.id === comment._id && editingComment?.scope === 'planner'" class="space-y-2">
+                                                <input type="text" x-model="editingComment.text" class="w-full text-sm px-3 py-1.5 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                                                <div class="flex gap-2 justify-end">
+                                                    <button type="button" @click="cancelEditComment()" class="px-2 py-1 text-xs border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">Cancel</button>
+                                                    <button type="button" @click="saveEditComment()" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </template>
                                     <div x-show="!activePlan?.comments?.length" class="text-center text-sm text-gray-400 py-4">No comments yet</div>
@@ -2267,11 +2284,28 @@ show_admin_bar(false);
                             <div class="space-y-4 mb-4 max-h-60 overflow-y-auto">
                                 <template x-for="fb in selectedConcept?.feedback" :key="fb._id">
                                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                        <div class="flex justify-between items-start mb-2">
+                                        <div class="flex justify-between items-start mb-2 gap-2">
                                             <span class="font-medium text-gray-900 dark:text-white" x-text="fb.from?.firstName + ' ' + fb.from?.lastName"></span>
-                                            <span class="text-xs text-gray-500" x-text="formatDate(fb.createdAt)"></span>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <span class="text-xs text-gray-500" x-text="formatDate(fb.createdAt)"></span>
+                                                <template x-if="canEditComment(fb, 'from') && !(editingComment?.id === fb._id && editingComment?.scope === 'workflow-feedback')">
+                                                    <div class="flex items-center gap-1">
+                                                        <button type="button" @click="startEditComment(fb, 'workflow-feedback', 'message')" class="text-xs text-indigo-600 hover:text-indigo-800">Edit</button>
+                                                        <button type="button" @click="deleteComment(fb, 'workflow-feedback')" class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
-                                        <p class="text-gray-700 dark:text-gray-300" x-html="formatMessageWithMentions(fb.message)"></p>
+                                        <div x-show="!(editingComment?.id === fb._id && editingComment?.scope === 'workflow-feedback')">
+                                            <p class="text-gray-700 dark:text-gray-300" x-html="formatMessageWithMentions(fb.message)"></p>
+                                        </div>
+                                        <div x-show="editingComment?.id === fb._id && editingComment?.scope === 'workflow-feedback'" class="space-y-2">
+                                            <textarea x-model="editingComment.text" rows="3" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white text-sm"></textarea>
+                                            <div class="flex gap-2 justify-end">
+                                                <button type="button" @click="cancelEditComment()" class="px-3 py-1.5 text-xs border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600">Cancel</button>
+                                                <button type="button" @click="saveEditComment()" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                                 <div x-show="!selectedConcept?.feedback?.length" class="text-center text-gray-500 py-4">No feedback yet</div>
@@ -2737,16 +2771,29 @@ show_admin_bar(false);
                                         <span x-text="(comment.from?.firstName?.[0] || '') + (comment.from?.lastName?.[0] || '')"></span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-2 mb-1">
+                                        <div class="flex items-center gap-2 mb-1 flex-wrap">
                                             <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="comment.from?.firstName + ' ' + comment.from?.lastName"></span>
                                             <span x-show="comment.isClientComment" class="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded">Client</span>
                                             <span x-show="comment.timestamp" class="text-xs text-indigo-500 dark:text-indigo-400 font-mono" x-text="'⏱ '+comment.timestamp"></span>
                                             <span class="text-xs text-gray-400 ml-auto" x-text="formatDate(comment.createdAt)"></span>
+                                            <template x-if="canEditComment(comment, 'from') && !(editingComment?.id === comment._id && editingComment?.scope === 'production')">
+                                                <div class="flex items-center gap-1">
+                                                    <button type="button" @click="startEditComment(comment, 'production', 'message')" class="text-xs text-indigo-600 hover:text-indigo-800">Edit</button>
+                                                    <button type="button" @click="deleteComment(comment, 'production')" class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                                                </div>
+                                            </template>
                                         </div>
-                                        <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-xl rounded-tl-none px-4 py-2.5 break-words">
+                                        <div x-show="!(editingComment?.id === comment._id && editingComment?.scope === 'production')" class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-xl rounded-tl-none px-4 py-2.5 break-words">
                                             <span x-text="comment.message"></span>
                                         </div>
-                                        <div x-show="comment.mentions?.length" class="mt-1 flex gap-1">
+                                        <div x-show="editingComment?.id === comment._id && editingComment?.scope === 'production'" class="space-y-2">
+                                            <textarea x-model="editingComment.text" rows="3" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"></textarea>
+                                            <div class="flex gap-2 justify-end">
+                                                <button type="button" @click="cancelEditComment()" class="px-3 py-1.5 text-xs border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                                                <button type="button" @click="saveEditComment()" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                                            </div>
+                                        </div>
+                                        <div x-show="comment.mentions?.length && !(editingComment?.id === comment._id && editingComment?.scope === 'production')" class="mt-1 flex gap-1">
                                             <template x-for="m in comment.mentions" :key="m._id">
                                                 <span class="text-xs text-indigo-500 dark:text-indigo-400" x-text="'@'+(m.firstName||'')"></span>
                                             </template>
@@ -3062,14 +3109,29 @@ show_admin_bar(false);
                                         <!-- Combined feed: client feedback + team comments sorted by date -->
                                         <template x-for="fb in [...(selectedContentBankItem?.clientFeedback || []).map(f => ({...f, _source: 'client'})), ...(selectedContentBankItem?.feedback || []).map(f => ({...f, _source: 'team'}))].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))" :key="fb._id">
                                             <div class="p-3 rounded-lg" :class="fb._source === 'client' ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800' : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'">
-                                                <div class="flex justify-between items-start mb-1">
+                                                <div class="flex justify-between items-start mb-1 gap-2">
                                                     <span class="font-medium text-sm text-gray-900 dark:text-white" x-text="fb.from?.firstName ? fb.from.firstName + ' ' + (fb.from.lastName || '') : (fb._source === 'client' ? 'Client' : 'Team')"></span>
-                                                    <div class="flex items-center gap-2">
+                                                    <div class="flex items-center gap-2 shrink-0">
                                                         <span class="text-[10px] px-1.5 py-0.5 rounded-full" :class="fb._source === 'client' ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200' : 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200'" x-text="fb._source === 'client' ? 'Client' : 'Team'"></span>
                                                         <span class="text-xs text-gray-500" x-text="formatDateTime(fb.createdAt)"></span>
+                                                        <template x-if="canEditComment(fb, 'from') && !(editingComment?.id === fb._id && editingComment?.scope === (fb._source === 'client' ? 'content-bank-client' : 'content-bank-team'))">
+                                                            <div class="flex items-center gap-1">
+                                                                <button type="button" @click="startEditComment(fb, fb._source === 'client' ? 'content-bank-client' : 'content-bank-team', 'message')" class="text-xs text-indigo-600 hover:text-indigo-800">Edit</button>
+                                                                <button type="button" @click="deleteComment(fb, fb._source === 'client' ? 'content-bank-client' : 'content-bank-team')" class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                                                            </div>
+                                                        </template>
                                                     </div>
                                                 </div>
-                                                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" x-html="formatMessageWithMentions(fb.message)"></p>
+                                                <div x-show="!(editingComment?.id === fb._id && editingComment?.scope === (fb._source === 'client' ? 'content-bank-client' : 'content-bank-team'))">
+                                                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap" x-html="formatMessageWithMentions(fb.message)"></p>
+                                                </div>
+                                                <div x-show="editingComment?.id === fb._id && editingComment?.scope === (fb._source === 'client' ? 'content-bank-client' : 'content-bank-team')" class="space-y-2">
+                                                    <textarea x-model="editingComment.text" rows="3" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"></textarea>
+                                                    <div class="flex gap-2 justify-end">
+                                                        <button type="button" @click="cancelEditComment()" class="px-3 py-1.5 text-xs border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                                                        <button type="button" @click="saveEditComment()" class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </template>
                                         <div x-show="!selectedContentBankItem?.clientFeedback?.length && !selectedContentBankItem?.feedback?.length" class="text-center text-gray-500 py-4 text-sm">No feedback yet</div>
@@ -3258,6 +3320,7 @@ show_admin_bar(false);
                 youtubeLinkInput: '',
                 videoDriveLinkInput: '',
                 newFeedback: '',
+                editingComment: null,
                 selectedConceptMentions: [],
                 showConceptMentionDropdown: false,
                 filteredConceptUsers: [],
@@ -4193,6 +4256,135 @@ show_admin_bar(false);
                             this.showConceptMentionDropdown = false;
                         }
                     } catch (error) { console.error('Add feedback error:', error); }
+                },
+
+                commentAuthorId(item, field = 'from') {
+                    const val = item?.[field];
+                    return val?._id || val || null;
+                },
+
+                canEditComment(item, field = 'from') {
+                    if (!this.user || !item) return false;
+                    const authorId = this.commentAuthorId(item, field);
+                    if (!authorId) return false;
+                    const uid = String(this.user._id || this.user.id);
+                    return this.user.role === 'admin' || uid === String(authorId);
+                },
+
+                startEditComment(item, scope, textField = 'message') {
+                    this.editingComment = {
+                        id: item._id,
+                        text: item[textField] || item.message || item.text || '',
+                        scope,
+                        textField
+                    };
+                },
+
+                cancelEditComment() {
+                    this.editingComment = null;
+                },
+
+                async saveEditComment() {
+                    if (!this.editingComment?.text?.trim()) return;
+                    const token = localStorage.getItem('token');
+                    const { id, text, scope, textField } = this.editingComment;
+                    const bodyKey = textField === 'text' ? 'text' : 'message';
+                    let url = '';
+                    let updateSelected = null;
+
+                    switch (scope) {
+                        case 'workflow-feedback':
+                            url = `${API_URL}/workflow/concepts/${this.selectedConcept._id}/feedback/${id}`;
+                            updateSelected = (data) => { this.selectedConcept = data.concept; };
+                            break;
+                        case 'content-bank-team':
+                            url = `${API_URL}/content-bank/${this.selectedContentBankItem._id}/feedback/${id}`;
+                            updateSelected = (data) => { this.selectedContentBankItem = data.concept; };
+                            break;
+                        case 'content-bank-client':
+                            url = `${API_URL}/content-bank/${this.selectedContentBankItem._id}/client-feedback/${id}`;
+                            updateSelected = (data) => { this.selectedContentBankItem = data.concept; };
+                            break;
+                        case 'production':
+                            url = `${API_URL}/production/projects/${this.selectedProduction._id}/comments/${id}`;
+                            updateSelected = (data) => { this.selectedProduction = data.project; };
+                            break;
+                        case 'planner':
+                            url = `${API_URL}/planner/plans/${this.activePlan._id}/comments/${id}`;
+                            updateSelected = (data) => { this.activePlan.comments = data.comments; };
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ [bodyKey]: text.trim() })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            updateSelected(data);
+                            this.editingComment = null;
+                            this.showToast('Comment updated', 'success');
+                        } else {
+                            this.showToast(data.message || 'Could not update comment', 'error');
+                        }
+                    } catch (error) {
+                        console.error('saveEditComment:', error);
+                        this.showToast('Could not update comment', 'error');
+                    }
+                },
+
+                async deleteComment(item, scope) {
+                    if (!confirm('Delete this comment?')) return;
+                    const token = localStorage.getItem('token');
+                    let url = '';
+                    let updateSelected = null;
+
+                    switch (scope) {
+                        case 'workflow-feedback':
+                            url = `${API_URL}/workflow/concepts/${this.selectedConcept._id}/feedback/${item._id}`;
+                            updateSelected = (data) => { this.selectedConcept = data.concept; };
+                            break;
+                        case 'content-bank-team':
+                            url = `${API_URL}/content-bank/${this.selectedContentBankItem._id}/feedback/${item._id}`;
+                            updateSelected = (data) => { this.selectedContentBankItem = data.concept; };
+                            break;
+                        case 'content-bank-client':
+                            url = `${API_URL}/content-bank/${this.selectedContentBankItem._id}/client-feedback/${item._id}`;
+                            updateSelected = (data) => { this.selectedContentBankItem = data.concept; };
+                            break;
+                        case 'production':
+                            url = `${API_URL}/production/projects/${this.selectedProduction._id}/comments/${item._id}`;
+                            updateSelected = (data) => { this.selectedProduction = data.project; };
+                            break;
+                        case 'planner':
+                            url = `${API_URL}/planner/plans/${this.activePlan._id}/comments/${item._id}`;
+                            updateSelected = (data) => { this.activePlan.comments = data.comments; };
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            updateSelected(data);
+                            if (this.editingComment?.id === item._id) this.editingComment = null;
+                            this.showToast('Comment deleted', 'success');
+                        } else {
+                            this.showToast(data.message || 'Could not delete comment', 'error');
+                        }
+                    } catch (error) {
+                        console.error('deleteComment:', error);
+                        this.showToast('Could not delete comment', 'error');
+                    }
                 },
 
                 async handleConceptFileDrop(event) {

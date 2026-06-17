@@ -89,7 +89,7 @@ show_admin_bar(false);
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
                     <span class="nav-text">Clients</span>
                 </a>
-                <a @click.prevent="activeTab = 'emails'; loadClientReminders()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
+                <a @click.prevent="activeTab = 'emails'; loadClientReminders(); loadFeatureMailblast()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                     <span class="nav-text">Emails</span>
                 </a>
@@ -374,6 +374,77 @@ show_admin_bar(false);
                                         </td>
                                         <td class="px-4 py-3 text-xs text-gray-500 max-w-md">
                                             <span x-text="brand.items.map(i => i.title).join(' · ')"></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">Feature Announcements — Live Insights</h3>
+                            <p class="text-xs text-gray-500 mt-1">Tell selected clients that live audience and content metrics are now available in the Hub.</p>
+                            <p class="text-xs text-indigo-600 mt-2" x-show="mailblastTotals.brands > 0">
+                                <span x-text="mailblastTotals.brandsWithContacts"></span> brand(s) with contacts ·
+                                <span x-text="mailblastTotals.recipients"></span> unique recipient(s)
+                            </p>
+                            <p class="text-xs text-gray-400 mt-2" x-show="!mailblastLoading && mailblastBrands.length === 0">No eligible social media clients found.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button @click="loadFeatureMailblast()" :disabled="mailblastLoading"
+                                    class="px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
+                                Refresh
+                            </button>
+                            <button @click="sendMailblastTest()"
+                                    :disabled="mailblastTesting || mailblastLoading"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-xl hover:bg-indigo-50 disabled:opacity-50">
+                                <span x-show="!mailblastTesting">Send Test to Me</span>
+                                <span x-show="mailblastTesting">Sending…</span>
+                            </button>
+                            <button @click="sendFeatureMailblast()"
+                                    :disabled="mailblastSending || mailblastLoading || selectedMailblastClients.length === 0"
+                                    class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!mailblastSending">Send to Selected Clients</span>
+                                <span x-show="mailblastSending">Sending…</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="mailblastLoading" class="p-8 text-center text-sm text-gray-500">Loading eligible clients…</div>
+
+                    <div x-show="!mailblastLoading && mailblastBrands.length > 0" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">
+                                        <input type="checkbox" class="rounded border-gray-300"
+                                               :checked="selectedMailblastClients.length === mailblastBrands.filter(b => b.clientUsers.length).length && mailblastBrands.filter(b => b.clientUsers.length).length > 0"
+                                               @change="toggleAllMailblastClients($event.target.checked)">
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <template x-for="brand in mailblastBrands" :key="brand.clientId">
+                                    <tr class="hover:bg-gray-50" :class="!brand.clientUsers.length ? 'opacity-50' : ''">
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="rounded border-gray-300"
+                                                   :disabled="!brand.clientUsers.length"
+                                                   :checked="selectedMailblastClients.includes(brand.clientId)"
+                                                   @change="toggleMailblastClient(brand.clientId, $event.target.checked)">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
+                                        <td class="px-4 py-3 text-xs text-gray-500 capitalize" x-text="(brand.serviceType || 'social_media').replace('_', ' ')"></td>
+                                        <td class="px-4 py-3 text-xs text-gray-600">
+                                            <template x-if="brand.clientUsers.length">
+                                                <span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span>
+                                            </template>
+                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
                                         </td>
                                     </tr>
                                 </template>
@@ -1338,6 +1409,14 @@ show_admin_bar(false);
                 selectedReminderClients: [],
                 reminderLoading: false,
                 reminderSending: false,
+                mailblastFeature: 'live_insights',
+                mailblastBrands: [],
+                mailblastTotals: { brands: 0, recipients: 0, brandsWithContacts: 0 },
+                mailblastFeatureMeta: null,
+                selectedMailblastClients: [],
+                mailblastLoading: false,
+                mailblastSending: false,
+                mailblastTesting: false,
                 showCustomizeModal: false,
                 showBulkAddModal: false,
                 showApprovalModal: false,
@@ -2101,6 +2180,110 @@ show_admin_bar(false);
                     }
                 },
 
+                async loadFeatureMailblast() {
+                    this.mailblastLoading = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/mailblast/preview?feature=${encodeURIComponent(this.mailblastFeature)}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.mailblastBrands = data.brands || [];
+                            this.mailblastTotals = data.totals || { brands: 0, recipients: 0, brandsWithContacts: 0 };
+                            this.mailblastFeatureMeta = data.feature || null;
+                            this.selectedMailblastClients = this.mailblastBrands
+                                .filter(b => b.clientUsers && b.clientUsers.length)
+                                .map(b => b.clientId);
+                        } else {
+                            this.showToast(data.message || 'Failed to load mailblast preview', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadFeatureMailblast:', error);
+                        this.showToast('Could not load feature announcement preview', 'error', 5000);
+                    } finally {
+                        this.mailblastLoading = false;
+                    }
+                },
+
+                toggleMailblastClient(clientId, checked) {
+                    if (checked) {
+                        if (!this.selectedMailblastClients.includes(clientId)) {
+                            this.selectedMailblastClients.push(clientId);
+                        }
+                    } else {
+                        this.selectedMailblastClients = this.selectedMailblastClients.filter(id => id !== clientId);
+                    }
+                },
+
+                toggleAllMailblastClients(checked) {
+                    const eligible = this.mailblastBrands.filter(b => b.clientUsers && b.clientUsers.length);
+                    if (checked) {
+                        this.selectedMailblastClients = eligible.map(b => b.clientId);
+                    } else {
+                        this.selectedMailblastClients = [];
+                    }
+                },
+
+                async sendMailblastTest() {
+                    if (!confirm('Send a test Live Insights announcement to your account email?')) return;
+                    this.mailblastTesting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/mailblast/test`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ feature: this.mailblastFeature })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || 'Test email sent — check your inbox', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'Test email could not be sent', 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendMailblastTest:', error);
+                        this.showToast('Could not send test email', 'error', 5000);
+                    } finally {
+                        this.mailblastTesting = false;
+                    }
+                },
+
+                async sendFeatureMailblast() {
+                    if (!this.selectedMailblastClients.length) return;
+                    const brands = this.mailblastBrands.filter(b => this.selectedMailblastClients.includes(b.clientId));
+                    const emails = new Set();
+                    brands.forEach(b => (b.clientUsers || []).forEach(u => emails.add(u.email)));
+                    if (!confirm(`Send Live Insights announcement to ${emails.size} client contact(s) across ${brands.length} brand(s)?`)) return;
+
+                    this.mailblastSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/mailblast/send`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                feature: this.mailblastFeature,
+                                clientIds: this.selectedMailblastClients
+                            })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.emailsSent > 0) {
+                            this.showToast(data.message || 'Feature announcement sent', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'No emails were sent', data.emailsSent === 0 ? 'info' : 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendFeatureMailblast:', error);
+                        this.showToast('Could not send feature announcement', 'error', 5000);
+                    } finally {
+                        this.mailblastSending = false;
+                    }
+                },
+
                 async testWorkflowDigest() {
                     if (!confirm('Send the workflow digest to the Google Space now? (Overdue, due today, due in 3 days)')) return;
                     this.workflowDigestLoading = true;
@@ -2321,7 +2504,7 @@ show_admin_bar(false);
                         case 'clients':
                             return 'Manage brands, dashboards, and client settings';
                         case 'emails':
-                            return 'Client Content Bank reminders and team workflow digest';
+                            return 'Feature announcements, Content Bank reminders, and workflow digest';
                         case 'import':
                             return 'Import historical posts and performance data';
                         default:
