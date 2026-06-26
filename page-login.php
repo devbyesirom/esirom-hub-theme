@@ -218,7 +218,6 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                                 <h3 class="text-lg font-bold text-gray-900">Collective Impact</h3>
                                 <p class="text-xs text-gray-500 mt-0.5" id="showcasePeriod">Results across our client portfolio</p>
                             </div>
-                            <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold" id="showcaseBrandCount">— brands</span>
                         </div>
 
                         <div id="showcaseLoading" class="py-10 text-center text-sm text-gray-400">
@@ -274,7 +273,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                             </div>
 
                             <p class="text-[11px] text-gray-400 text-center leading-relaxed" id="showcaseFootnote">
-                                Aggregated metrics only — individual client names are never shown here.
+                                Aggregated portfolio performance.
                             </p>
                         </div>
                     </div>
@@ -570,8 +569,6 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
 
                 document.getElementById('showcasePeriod').textContent =
                     data.period?.label ? `${data.period.label} · aggregated results` : 'Results across our client portfolio';
-                document.getElementById('showcaseBrandCount').textContent =
-                    `${data.portfolio?.brandCount || 0} brand${data.portfolio?.brandCount === 1 ? '' : 's'}`;
 
                 document.getElementById('metricReach').textContent = formatShowcaseNumber(metrics.reach);
                 document.getElementById('metricViews').textContent = formatShowcaseNumber(metrics.views);
@@ -590,7 +587,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                     formatChangeEl(document.getElementById('changeEngagement'), data.comparison.engagement);
                     if (data.comparisonLabel) {
                         document.getElementById('showcaseFootnote').textContent =
-                            `${data.comparisonLabel} · aggregated metrics only — no client names shown.`;
+                            `${data.comparisonLabel} · aggregated portfolio performance.`;
                     }
                 }
             } catch (error) {
