@@ -595,6 +595,43 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('saves'))"></p>
                             </div>
                         </div>
+
+                        <!-- Engagement breakdown (organic + paid from Meta sync) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
+                            <div x-show="isWidgetVisible('interactions')" class="hub-stat-card hub-stat-card--blue rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Interactions</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedInteractions())"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('clicks')" class="hub-stat-card hub-stat-card--indigo rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Link Clicks</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedLinkClicks())"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('plays_3s')" class="hub-stat-card hub-stat-card--cyan rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">3s Plays</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('plays_3s'))"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('profile_activity')" class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Profile Activity</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedProfileActivity())"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('profile_visits')" class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Profile Visits</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedProfileVisits())"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('follows')" class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Net Follows</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getNetFollows())"></p>
+                                <p class="text-[10px] text-gray-400 mt-1">Month to date</p>
+                            </div>
+                        </div>
+
+                        <div x-show="getCombinedMessagingConversations() > 0" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Messaging Conversations</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedMessagingConversations())"></p>
+                                <p class="text-[10px] text-gray-400 mt-1">Started this month · Meta account activity</p>
+                            </div>
+                        </div>
                         </div>
 
                         <!-- Video Performance -->
@@ -3171,7 +3208,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 [`${platform}_skip_rate`]: perf.skip_rate || 0,
                                 [`${platform}_views_followers`]: perf.views_followers || 0,
                                 [`${platform}_views_non_followers`]: perf.views_non_followers || 0,
-                                [`${platform}_interactions`]: perf.interactions || 0
+                                [`${platform}_interactions`]: perf.interactions || perf.engagement || 0,
+                                [`${platform}_clicks`]: perf.clicks || 0,
+                                [`${platform}_plays_3s`]: perf.plays_3s || perf.views || 0,
+                                [`${platform}_profile_activity`]: perf.profile_activity || 0,
+                                [`${platform}_profile_visits`]: perf.profile_visits || 0,
+                                [`${platform}_follows`]: perf.follows || 0,
+                                [`${platform}_messaging_conversations`]: perf.messaging_conversations || 0
                             };
                             
                             const mediaUrlRaw = this.extractMediaUrl(post.content?.media);
@@ -4361,6 +4404,51 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
                     return total;
                 },
+
+                getAccountActivityForPlatforms(bucket) {
+                    const activity = this.audienceInsights?.accountActivity;
+                    if (!activity?.[bucket]) return 0;
+                    let total = 0;
+                    this.activePlatforms.forEach((platform) => {
+                        total += Number(activity[bucket][platform]) || 0;
+                    });
+                    return total;
+                },
+
+                getCombinedInteractions() {
+                    const postTotal = this.calculateFilteredKPI('interactions');
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('interactions'));
+                },
+
+                getCombinedLinkClicks() {
+                    const postTotal = this.calculateFilteredKPI('clicks');
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('link_clicks'));
+                },
+
+                getCombinedProfileVisits() {
+                    const postTotal = this.calculateFilteredKPI('profile_visits');
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('profile_visits'));
+                },
+
+                getCombinedProfileActivity() {
+                    const postTotal = this.calculateFilteredKPI('profile_activity');
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('profile_activity'));
+                },
+
+                getCombinedMessagingConversations() {
+                    const postTotal = this.calculateFilteredKPI('messaging_conversations');
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('messaging_conversations'));
+                },
+
+                getNetFollows() {
+                    let net = 0;
+                    this.activePlatforms.forEach((platform) => {
+                        const changes = this.followerChanges[platform] || {};
+                        net += (Number(changes.gained) || 0) - (Number(changes.lost) || 0);
+                    });
+                    if (net !== 0) return net;
+                    return this.calculateFilteredKPI('follows');
+                },
                 
                 calculatePercentageChange(currentValue, previousValue) {
                     if (previousValue === 0) {
@@ -4794,6 +4882,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         { id: 'comments', name: 'Total Comments' },
                         { id: 'shares', name: 'Total Shares' },
                         { id: 'saves', name: 'Total Saves' },
+                        { id: 'interactions', name: 'Interactions' },
+                        { id: 'clicks', name: 'Link Clicks' },
+                        { id: 'plays_3s', name: '3s Plays' },
+                        { id: 'profile_activity', name: 'Profile Activity' },
+                        { id: 'profile_visits', name: 'Profile Visits' },
+                        { id: 'follows', name: 'Net Follows' },
                         { id: 'watch_time', name: 'Watch Time' },
                         { id: 'skip_rate', name: 'Skip Rate' },
                         { id: 'follower_views', name: 'Follower Views' },
