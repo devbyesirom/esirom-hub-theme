@@ -236,15 +236,16 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                                     <p class="text-2xl font-bold text-gray-900 mt-1" id="metricReach">—</p>
                                     <p class="text-xs mt-1 hidden" id="changeReach"></p>
                                 </div>
+                                <div class="rounded-xl p-3.5 border-t-[3px] border-cyan-500 bg-gray-50">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Content Views</p>
+                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricViews">—</p>
+                                    <p class="text-xs mt-1 hidden" id="changeViews"></p>
+                                    <p class="text-[10px] text-gray-400 mt-1">Reels &amp; video · all platforms</p>
+                                </div>
                                 <div class="rounded-xl p-3.5 border-t-[3px] border-pink-500 bg-gray-50">
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Engagement</p>
                                     <p class="text-2xl font-bold text-gray-900 mt-1" id="metricEngagement">—</p>
                                     <p class="text-xs mt-1 hidden" id="changeEngagement"></p>
-                                </div>
-                                <div class="rounded-xl p-3.5 border-t-[3px] border-indigo-500 bg-gray-50">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Posts Published</p>
-                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricPosts">—</p>
-                                    <p class="text-xs mt-1 hidden" id="changePosts"></p>
                                 </div>
                                 <div class="rounded-xl p-3.5 border-t-[3px] border-violet-500 bg-gray-50">
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Combined Audience</p>
@@ -253,18 +254,22 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="grid grid-cols-4 gap-2 text-center">
+                                <div class="rounded-lg bg-gray-50 px-2 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Posts</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="metricPosts">—</p>
+                                </div>
                                 <div class="rounded-lg bg-gray-50 px-2 py-2">
                                     <p class="text-[10px] uppercase tracking-wide text-gray-400">Impressions</p>
                                     <p class="text-sm font-semibold text-gray-800" id="metricImpressions">—</p>
                                 </div>
                                 <div class="rounded-lg bg-gray-50 px-2 py-2">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Eng. Rate</p>
-                                    <p class="text-sm font-semibold text-gray-800" id="metricEngRate">—</p>
+                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">All-time views</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="metricAllTimeViews">—</p>
                                 </div>
                                 <div class="rounded-lg bg-gray-50 px-2 py-2">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">All-time reach</p>
-                                    <p class="text-sm font-semibold text-gray-800" id="metricAllTimeReach">—</p>
+                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Eng. rate</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="metricEngRate">—</p>
                                 </div>
                             </div>
 
@@ -552,6 +557,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                 const hasData =
                     (metrics.postCount || 0) > 0 ||
                     (metrics.reach || 0) > 0 ||
+                    (metrics.views || 0) > 0 ||
                     (metrics.engagement || 0) > 0 ||
                     (data.audience?.total || 0) > 0;
 
@@ -568,19 +574,20 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                     `${data.portfolio?.brandCount || 0} brand${data.portfolio?.brandCount === 1 ? '' : 's'}`;
 
                 document.getElementById('metricReach').textContent = formatShowcaseNumber(metrics.reach);
+                document.getElementById('metricViews').textContent = formatShowcaseNumber(metrics.views);
                 document.getElementById('metricEngagement').textContent = formatShowcaseNumber(metrics.engagement);
                 document.getElementById('metricPosts').textContent = formatShowcaseNumber(metrics.postCount);
                 document.getElementById('metricAudience').textContent = formatShowcaseNumber(data.audience?.total || 0);
                 document.getElementById('metricImpressions').textContent = formatShowcaseNumber(metrics.impressions);
                 document.getElementById('metricEngRate').textContent =
                     metrics.engagementRate ? `${metrics.engagementRate.toFixed(2)}%` : '—';
-                document.getElementById('metricAllTimeReach').textContent =
-                    formatShowcaseNumber(data.allTime?.reach || 0);
+                document.getElementById('metricAllTimeViews').textContent =
+                    formatShowcaseNumber(data.allTime?.views || 0);
 
                 if (data.comparison) {
                     formatChangeEl(document.getElementById('changeReach'), data.comparison.reach);
+                    formatChangeEl(document.getElementById('changeViews'), data.comparison.views);
                     formatChangeEl(document.getElementById('changeEngagement'), data.comparison.engagement);
-                    formatChangeEl(document.getElementById('changePosts'), data.comparison.postCount);
                     if (data.comparisonLabel) {
                         document.getElementById('showcaseFootnote').textContent =
                             `${data.comparisonLabel} · aggregated metrics only — no client names shown.`;
