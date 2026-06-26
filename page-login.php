@@ -211,21 +211,67 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                         </div>
                     </div>
 
-                    <!-- What's New -->
-                    <div class="bg-white rounded-2xl shadow-xl p-6">
-                        <div class="flex items-center justify-between mb-5">
+                    <!-- Collective Impact -->
+                    <div class="bg-white rounded-2xl shadow-xl p-6" id="showcaseCard">
+                        <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h3 class="text-lg font-bold text-gray-900">What's New</h3>
-                                <p class="text-xs text-gray-500 mt-0.5">Latest platform updates</p>
+                                <h3 class="text-lg font-bold text-gray-900">Collective Impact</h3>
+                                <p class="text-xs text-gray-500 mt-0.5" id="showcasePeriod">Results across our client portfolio</p>
                             </div>
-                            <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-semibold" id="currentVersion">v1.0.0</span>
+                            <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold" id="showcaseBrandCount">— brands</span>
                         </div>
-                        <div class="space-y-3" id="updatesContainer">
-                            <!-- Updates injected by JS -->
+
+                        <div id="showcaseLoading" class="py-10 text-center text-sm text-gray-400">
+                            Loading portfolio insights…
                         </div>
-                        <button id="viewMoreBtn" class="hidden w-full mt-4 text-sm text-indigo-600 hover:text-indigo-700 font-medium py-2 hover:bg-indigo-50 rounded-lg transition-colors">
-                            View Update History →
-                        </button>
+
+                        <div id="showcaseEmpty" class="hidden py-8 text-center text-sm text-gray-500">
+                            Performance data will appear here as posts are synced across client accounts.
+                        </div>
+
+                        <div id="showcaseContent" class="hidden space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="rounded-xl p-3.5 border-t-[3px] border-emerald-500 bg-gray-50">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total Reach</p>
+                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricReach">—</p>
+                                    <p class="text-xs mt-1 hidden" id="changeReach"></p>
+                                </div>
+                                <div class="rounded-xl p-3.5 border-t-[3px] border-pink-500 bg-gray-50">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Engagement</p>
+                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricEngagement">—</p>
+                                    <p class="text-xs mt-1 hidden" id="changeEngagement"></p>
+                                </div>
+                                <div class="rounded-xl p-3.5 border-t-[3px] border-indigo-500 bg-gray-50">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Posts Published</p>
+                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricPosts">—</p>
+                                    <p class="text-xs mt-1 hidden" id="changePosts"></p>
+                                </div>
+                                <div class="rounded-xl p-3.5 border-t-[3px] border-violet-500 bg-gray-50">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Combined Audience</p>
+                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricAudience">—</p>
+                                    <p class="text-xs text-gray-400 mt-1">Live follower counts</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="rounded-lg bg-gray-50 px-2 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Impressions</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="metricImpressions">—</p>
+                                </div>
+                                <div class="rounded-lg bg-gray-50 px-2 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Eng. Rate</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="metricEngRate">—</p>
+                                </div>
+                                <div class="rounded-lg bg-gray-50 px-2 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">All-time reach</p>
+                                    <p class="text-sm font-semibold text-gray-800" id="metricAllTimeReach">—</p>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] text-gray-400 text-center leading-relaxed" id="showcaseFootnote">
+                                Aggregated metrics only — individual client names are never shown here.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -466,77 +512,89 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
             });
         });
 
-        // Load platform updates from JSON file
-        async function loadPlatformUpdates() {
-            try {
-                const response = await fetch('<?php echo get_template_directory_uri(); ?>/updates.json?v=<?php echo time(); ?>');
-                const updates = await response.json();
+        // Load anonymous portfolio showcase
+        function formatShowcaseNumber(value) {
+            const n = Number(value) || 0;
+            if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+            if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+            if (n >= 1e4) return `${(n / 1e3).toFixed(1)}K`;
+            if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+            return n.toLocaleString();
+        }
 
-                const container = document.getElementById('updatesContainer');
-                const versionEl = document.getElementById('currentVersion');
-                const viewMoreBtn = document.getElementById('viewMoreBtn');
-                let showingAll = false;
-                
-                if (updates && updates.length > 0) {
-                    // Display the latest version
-                    versionEl.textContent = 'v' + updates[0].version;
-                    
-                    // Function to render updates
-                    const renderUpdates = (count) => {
-                        const updatesToShow = updates.slice(0, count);
-                        container.innerHTML = updatesToShow.map((update, index) => `
-                            <div class="relative pl-5 ${index < updatesToShow.length - 1 ? 'pb-3 border-l-2 border-indigo-100' : ''}">
-                                <div class="absolute left-0 top-1 w-2.5 h-2.5 rounded-full bg-indigo-500 -translate-x-[7px] ring-2 ring-white"></div>
-                                <div class="bg-gray-50 rounded-xl p-3.5 hover:bg-indigo-50/50 transition-colors">
-                                    <div class="flex items-start justify-between gap-2 mb-1">
-                                        <h4 class="font-semibold text-gray-900 text-sm leading-tight">${update.title}</h4>
-                                        <span class="text-xs text-indigo-600 font-semibold bg-indigo-100 px-2 py-0.5 rounded-full flex-shrink-0">v${update.version}</span>
-                                    </div>
-                                    <p class="text-xs text-gray-500 leading-relaxed mb-1.5">${update.description}</p>
-                                    <p class="text-xs text-gray-400 flex items-center gap-1">
-                                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                        ${new Date(update.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    </p>
-                                </div>
-                            </div>
-                        `).join('');
-                    };
-                    
-                    // Initially show only the most recent update
-                    renderUpdates(1);
-                    
-                    // Show "View More" button if there are more updates
-                    if (updates.length > 1) {
-                        viewMoreBtn.classList.remove('hidden');
-                        
-                        viewMoreBtn.addEventListener('click', () => {
-                            if (showingAll) {
-                                renderUpdates(1);
-                                viewMoreBtn.textContent = 'View Update History →';
-                                showingAll = false;
-                            } else {
-                                renderUpdates(updates.length);
-                                viewMoreBtn.textContent = '← Show Less';
-                                showingAll = true;
-                            }
-                        });
+        function formatChangeEl(el, change) {
+            if (change === null || change === undefined || !el) return;
+            const rounded = Math.round(change * 10) / 10;
+            const positive = rounded >= 0;
+            el.textContent = `${positive ? '+' : ''}${rounded}% vs last year`;
+            el.className = `text-xs mt-1 font-medium ${positive ? 'text-emerald-600' : 'text-rose-600'}`;
+            el.classList.remove('hidden');
+        }
+
+        async function loadShowcaseInsights() {
+            const loading = document.getElementById('showcaseLoading');
+            const empty = document.getElementById('showcaseEmpty');
+            const content = document.getElementById('showcaseContent');
+
+            try {
+                const response = await fetch(`${API_URL}/public/showcase-insights`);
+                const data = await response.json();
+
+                loading.classList.add('hidden');
+
+                if (!response.ok || !data.success) {
+                    empty.classList.remove('hidden');
+                    empty.textContent = 'Unable to load portfolio insights right now.';
+                    return;
+                }
+
+                const metrics = data.yearToDate || {};
+                const hasData =
+                    (metrics.postCount || 0) > 0 ||
+                    (metrics.reach || 0) > 0 ||
+                    (metrics.engagement || 0) > 0 ||
+                    (data.audience?.total || 0) > 0;
+
+                if (!hasData) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                content.classList.remove('hidden');
+
+                document.getElementById('showcasePeriod').textContent =
+                    data.period?.label ? `${data.period.label} · aggregated results` : 'Results across our client portfolio';
+                document.getElementById('showcaseBrandCount').textContent =
+                    `${data.portfolio?.brandCount || 0} brand${data.portfolio?.brandCount === 1 ? '' : 's'}`;
+
+                document.getElementById('metricReach').textContent = formatShowcaseNumber(metrics.reach);
+                document.getElementById('metricEngagement').textContent = formatShowcaseNumber(metrics.engagement);
+                document.getElementById('metricPosts').textContent = formatShowcaseNumber(metrics.postCount);
+                document.getElementById('metricAudience').textContent = formatShowcaseNumber(data.audience?.total || 0);
+                document.getElementById('metricImpressions').textContent = formatShowcaseNumber(metrics.impressions);
+                document.getElementById('metricEngRate').textContent =
+                    metrics.engagementRate ? `${metrics.engagementRate.toFixed(2)}%` : '—';
+                document.getElementById('metricAllTimeReach').textContent =
+                    formatShowcaseNumber(data.allTime?.reach || 0);
+
+                if (data.comparison) {
+                    formatChangeEl(document.getElementById('changeReach'), data.comparison.reach);
+                    formatChangeEl(document.getElementById('changeEngagement'), data.comparison.engagement);
+                    formatChangeEl(document.getElementById('changePosts'), data.comparison.postCount);
+                    if (data.comparisonLabel) {
+                        document.getElementById('showcaseFootnote').textContent =
+                            `${data.comparisonLabel} · aggregated metrics only — no client names shown.`;
                     }
                 }
             } catch (error) {
-                console.error('Error loading updates:', error);
-                // Fallback to default message if JSON fails to load
-                const container = document.getElementById('updatesContainer');
-                container.innerHTML = `
-                    <div class="text-center text-gray-500 py-8">
-                        <p class="text-sm">Unable to load updates. Please refresh the page.</p>
-                    </div>
-                `;
+                console.error('Showcase load error:', error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+                empty.textContent = 'Unable to load portfolio insights right now.';
             }
         }
 
-        loadPlatformUpdates();
+        loadShowcaseInsights();
 
         // Forgot Password Modal Functions
         function showForgotPasswordModal() {
