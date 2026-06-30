@@ -4926,10 +4926,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return postDate >= this.previousPeriodStart && postDate <= this.previousPeriodEnd;
                 },
 
-                    this.updateDashboardMetrics();
-                    this.loadWebsiteAnalytics();
-                },
-
                 formatDuration(seconds) {
                     const s = Math.round(Number(seconds) || 0);
                     if (s < 60) return `${s}s`;
