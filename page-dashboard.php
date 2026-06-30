@@ -535,7 +535,18 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
 
                         <!-- Metric Cards -->
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <div x-show="isWidgetVisible('views')" class="hub-stat-card hub-stat-card--cyan rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <div class="flex justify-between items-start">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Views</h3>
+                                    <div class="hub-stat-card__icon text-cyan-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+                                </div>
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedViews())"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Content views · account + posts</p>
+                                <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.views?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                                    <span x-text="formatChange(dashboardData.metrics?.views?.change || 0)"></span>
+                                </p>
+                            </div>
                             <div x-show="isWidgetVisible('reach')" class="hub-stat-card hub-stat-card--teal rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <div class="flex justify-between items-start">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Reach</h3>
@@ -574,10 +585,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <div x-show="isWidgetVisible('impressions')" class="hub-stat-card hub-stat-card--orange rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Impressions</h3>
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedImpressions())"></p>
-                            </div>
-                            <div x-show="isWidgetVisible('views')" class="hub-stat-card hub-stat-card--cyan">
-                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Views</h3>
-                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedViews())"></p>
+                                <p class="text-xs mt-1" :class="(dashboardData.metrics?.impressions?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                                    <span x-text="formatChange(dashboardData.metrics?.impressions?.change || 0)"></span>
+                                </p>
                             </div>
                             <div x-show="isWidgetVisible('likes')" class="hub-stat-card hub-stat-card--red">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Likes</h3>
@@ -604,8 +614,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedInteractions())"></p>
                             </div>
                             <div x-show="isWidgetVisible('clicks')" class="hub-stat-card hub-stat-card--indigo rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
-                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Link Clicks</h3>
-                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedLinkClicks())"></p>
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">External Link Taps</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedExternalLinkTaps())"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('address_taps')" class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Address Taps</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedAddressTaps())"></p>
+                            </div>
+                            <div x-show="isWidgetVisible('stories')" class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Story Views</h3>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedStoriesViews())"></p>
+                                <p class="text-[10px] text-gray-400 mt-1" x-show="getCombinedStoriesReach() > 0"><span x-text="formatNumber(getCombinedStoriesReach())"></span> story reach</p>
                             </div>
                             <div x-show="isWidgetVisible('plays_3s')" class="hub-stat-card hub-stat-card--cyan rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">3s Plays</h3>
@@ -720,6 +739,50 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
+                        <!-- Follower Active Times -->
+                        <div x-show="getOnlineFollowers().length > 0" class="mt-6">
+                            <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
+                                <div class="mb-4">
+                                    <p class="hub-insights-section-title mb-1">Audience activity</p>
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Follower active times</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">When your followers are most active on Instagram</p>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                    <template x-for="slot in getOnlineFollowers().slice(0, 12)" :key="'hour-' + slot.hour">
+                                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatHourLabel(slot.hour)"></p>
+                                            <p class="text-lg font-bold text-gray-900 dark:text-white mt-1" x-text="formatNumber(slot.count)"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Activity (IG-style) -->
+                        <div x-show="getCombinedProfileVisits() > 0 || getCombinedExternalLinkTaps() > 0 || getCombinedAddressTaps() > 0" class="mt-6">
+                            <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
+                                <div class="mb-4">
+                                    <p class="hub-insights-section-title mb-1">Profile activity</p>
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Visits, links & actions</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Account-level profile metrics from Meta · <span x-text="currentPeriodLabel"></span></p>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Profile visits</p>
+                                        <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedProfileVisits())"></p>
+                                    </div>
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">External link taps</p>
+                                        <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedExternalLinkTaps())"></p>
+                                    </div>
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Business address taps</p>
+                                        <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedAddressTaps())"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Monthly Insights Summary -->
                         <div x-show="dashboardData.insights" class="mt-6 hub-monthly-insights rounded-2xl p-6 shadow-sm border border-indigo-100 dark:border-indigo-800">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
@@ -731,10 +794,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
 
                             <!-- Summary stat row -->
-                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
                                 <div class="hub-insight-stat">
                                     <p class="hub-insight-stat__label">Posts</p>
                                     <p class="hub-insight-stat__value" x-text="dashboardData.insights?.summaryStats?.postCount ?? dashboardData.insights?.postCount ?? 0"></p>
+                                </div>
+                                <div class="hub-insight-stat">
+                                    <p class="hub-insight-stat__label">Views</p>
+                                    <p class="hub-insight-stat__value" x-text="formatNumber(dashboardData.insights?.summaryStats?.totalViews || getCombinedViews())"></p>
                                 </div>
                                 <div class="hub-insight-stat">
                                     <p class="hub-insight-stat__label">Engagement</p>
@@ -770,12 +837,25 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                             <!-- Top Content — visual cards -->
                             <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                                    Top Content
-                                </h4>
+                                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                                    <h4 class="font-semibold text-gray-900 dark:text-white flex items-center">
+                                        <svg class="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                                        Top Content
+                                    </h4>
+                                    <select x-model="topContentSortBy" @change="updateMonthlyInsightsProgress()" class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <option value="score">Overall score</option>
+                                        <option value="views">Most views</option>
+                                        <option value="engagement">Most engagement</option>
+                                        <option value="reach">Most reach</option>
+                                        <option value="shares">Most shares</option>
+                                        <option value="comments">Most comments</option>
+                                        <option value="likes">Most likes</option>
+                                        <option value="saves">Most saves</option>
+                                    </select>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3" x-text="'Sorted by ' + topContentMetricLabel(topContentSortBy) + ' · ' + currentPeriodLabel"></p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <template x-for="(content, index) in dashboardData.insights?.topContent?.slice(0, 3)" :key="content.id">
+                                    <template x-for="(content, index) in getSortedTopContent()" :key="content.id + '-' + topContentSortBy">
                                         <a :href="content.permalink || '#'" :target="content.permalink ? '_blank' : null" :rel="content.permalink ? 'noopener noreferrer' : null" class="hub-top-content-card group" :class="content.permalink ? 'cursor-pointer' : 'cursor-default'">
                                             <div class="hub-top-content-card__media">
                                                 <img x-show="content.imageUrl || content.thumbnailUrl" :src="content.imageUrl || content.thumbnailUrl" :alt="content.title" class="hub-top-content-card__img" loading="lazy">
@@ -787,15 +867,18 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             </div>
                                             <div class="hub-top-content-card__body">
                                                 <p class="hub-top-content-card__caption" x-text="content.title"></p>
-                                                <div class="hub-top-content-card__metrics">
-                                                    <span x-text="formatNumber(content.engagement) + ' eng.'"></span>
+                                                <div class="hub-top-content-card__metrics flex flex-wrap gap-x-3 gap-y-1">
+                                                    <span x-show="content.views > 0" x-text="formatNumber(content.views) + ' views'"></span>
+                                                    <span x-show="content.engagement > 0" x-text="formatNumber(content.engagement) + ' eng.'"></span>
                                                     <span x-show="content.reach > 0" x-text="formatNumber(content.reach) + ' reach'"></span>
+                                                    <span x-show="content.shares > 0" x-text="formatNumber(content.shares) + ' shares'"></span>
+                                                    <span x-show="content.comments > 0" x-text="formatNumber(content.comments) + ' comments'"></span>
                                                 </div>
                                             </div>
                                         </a>
                                     </template>
                                 </div>
-                                <p x-show="!(dashboardData.insights?.topContent?.length)" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No engagement data yet — run Sync Posts to pull metrics.</p>
+                                <p x-show="!(getSortedTopContent().length)" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No content data yet — run Sync Posts to pull metrics.</p>
                             </div>
                         </div>
 
@@ -2159,14 +2242,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 // Widget customization
                 showCustomizeWidgets: false,
                 userWidgetPreferences: [
-                    'reach', 'engagement_rate', 'total_engagement',
-                    'impressions', 'views', 'likes', 'comments', 'shares', 'saves',
-                    'watch_time', 'skip_rate', 'follower_views', 'non_follower_views', 'followers'
-                ], // User's personal widget visibility preferences (default: all visible)
+                    'reach', 'engagement_rate', 'total_engagement', 'views',
+                    'impressions', 'likes', 'comments', 'shares', 'saves',
+                    'interactions', 'clicks', 'profile_visits', 'profile_activity',
+                    'address_taps', 'stories', 'watch_time', 'skip_rate', 'follower_views', 'non_follower_views', 'followers'
+                ],
                 adminEnabledWidgets: [], // Widgets enabled by admin for this client
                 
-                // Content Calendar
-                posts: [],
+                topContentSortBy: 'score',
                 campaigns: [],
                 selectedPosts: [],
                 filterPlatform: '',
@@ -3299,8 +3382,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             const organicReach = perf.organic_reach || 0;
                             const paidReach = perf.paid_reach || 0;
                             const engagement = perf.engagement || perf.interactions || (likes + comments + shares + saves);
-                            const impressions = Math.max(perf.impressions || 0, views || 0);
-                            const reach = Math.max(perf.reach || 0, organicReach + paidReach, impressions, views);
+                            const impressions = perf.impressions || 0;
+                            const reach = perf.reach || organicReach + paidReach || 0;
                             const kpis = {
                                 [`${platform}_reach`]: reach,
                                 [`${platform}_organic_reach`]: organicReach,
@@ -3342,6 +3425,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 platformPostId: post.platformPostId || null,
                                 conceptImage: null,
                                 finalContent: resolvedUrl,
+                                permalink: post.content?.link || '',
+                                mediaType: post.mediaType || this.inferContentType(post),
                                 campaignId: post.campaignId,
                                 createdBy: post.createdBy,
                                 createdAt: post.createdAt,
@@ -4577,13 +4662,134 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 getCombinedImpressions(usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI('impressions', usePreviousPeriod);
                     if (usePreviousPeriod) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('views'));
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('impressions'));
                 },
 
                 getCombinedViews(usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI('views', usePreviousPeriod);
                     if (usePreviousPeriod) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('views'));
+                },
+
+                getCombinedAddressTaps() {
+                    const activity = this.audienceInsights?.accountActivity;
+                    if (!activity?.address_taps) return 0;
+                    let total = 0;
+                    this.activePlatforms.forEach((platform) => {
+                        total += Number(activity.address_taps[platform]) || 0;
+                    });
+                    return total;
+                },
+
+                getCombinedExternalLinkTaps() {
+                    const postTotal = this.calculateFilteredKPI('clicks');
+                    const activity = this.audienceInsights?.accountActivity;
+                    let accountTotal = 0;
+                    if (activity?.external_link_taps) {
+                        this.activePlatforms.forEach((platform) => {
+                            accountTotal += Number(activity.external_link_taps[platform]) || 0;
+                        });
+                    }
+                    return Math.max(postTotal, accountTotal, this.getCombinedLinkClicks());
+                },
+
+                getCombinedStoriesViews() {
+                    const activity = this.audienceInsights?.accountActivity;
+                    const accountViews = Number(activity?.stories?.views) || 0;
+                    const storyPostViews = this.posts
+                        .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post))
+                        .filter((post) => post.contentType === 'story' || (post.platforms || []).includes('story') || (post.tags || []).includes('story'))
+                        .reduce((sum, post) => {
+                            let views = 0;
+                            (post.platforms || []).forEach((platform) => {
+                                if (this.activePlatforms.includes(platform)) {
+                                    views += Number(post.kpis?.[`${platform}_views`]) || 0;
+                                }
+                            });
+                            return sum + views;
+                        }, 0);
+                    return Math.max(accountViews, storyPostViews);
+                },
+
+                getCombinedStoriesReach() {
+                    return Number(this.audienceInsights?.accountActivity?.stories?.reach) || 0;
+                },
+
+                getOnlineFollowers() {
+                    return this.audienceInsights?.onlineFollowers || [];
+                },
+
+                formatHourLabel(hour) {
+                    const h = Number(hour);
+                    if (Number.isNaN(h)) return String(hour);
+                    const suffix = h >= 12 ? 'PM' : 'AM';
+                    const normalized = h % 12 || 12;
+                    return `${normalized}:00 ${suffix}`;
+                },
+
+                getTopContentMetricValue(content, metric) {
+                    if (metric === 'score') {
+                        return (Number(content.views) || 0) + (Number(content.engagement) || 0) + (Number(content.reach) || 0);
+                    }
+                    return Number(content[metric]) || 0;
+                },
+
+                getSortedTopContent() {
+                    const sortBy = this.topContentSortBy || 'score';
+                    const fromPosts = this.posts
+                        .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post))
+                        .map((post) => {
+                            const platform = (post.platforms || [])[0] || 'instagram';
+                            if (!this.activePlatforms.includes(platform)) return null;
+                            const likes = Number(post.kpis?.[`${platform}_likes`]) || 0;
+                            const comments = Number(post.kpis?.[`${platform}_comments`]) || 0;
+                            const shares = Number(post.kpis?.[`${platform}_shares`]) || 0;
+                            const saves = Number(post.kpis?.[`${platform}_saves`]) || 0;
+                            const views = Number(post.kpis?.[`${platform}_views`]) || 0;
+                            const reach = Number(post.kpis?.[`${platform}_reach`]) || 0;
+                            const engagement = Number(post.kpis?.[`${platform}_engagement`]) || (likes + comments + shares + saves);
+                            return {
+                                id: post.id || post._id,
+                                title: ((post.caption || '').slice(0, 120) || 'Post') + ((post.caption || '').length > 120 ? '…' : ''),
+                                platform,
+                                engagement,
+                                reach,
+                                views,
+                                likes,
+                                comments,
+                                shares,
+                                saves,
+                                score: views + engagement + reach,
+                                imageUrl: post.finalContent || null,
+                                thumbnailUrl: post.finalContent || null,
+                                permalink: post.permalink || null
+                            };
+                        })
+                        .filter(Boolean);
+
+                    const apiContent = (this.dashboardData.insights?.topContent || []).map((item) => ({
+                        ...item,
+                        score: (Number(item.views) || 0) + (Number(item.engagement) || 0) + (Number(item.reach) || 0)
+                    }));
+
+                    const merged = fromPosts.length ? fromPosts : apiContent;
+                    return [...merged]
+                        .sort((a, b) => this.getTopContentMetricValue(b, sortBy) - this.getTopContentMetricValue(a, sortBy))
+                        .slice(0, 6);
+                },
+
+                topContentMetricLabel(metric) {
+                    const labels = {
+                        score: 'Overall score',
+                        views: 'Most views',
+                        engagement: 'Most engagement',
+                        reach: 'Most reach',
+                        shares: 'Most shares',
+                        comments: 'Most comments',
+                        likes: 'Most likes',
+                        saves: 'Most saves'
+                    };
+                    return labels[metric] || metric;
                 },
 
                 getCombinedEngagement(usePreviousPeriod = false) {
@@ -4893,7 +5099,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 this.showToast(snap.demographicsMeta.message, toastType, 6000);
                             }
                         }
-                        this.$nextTick(() => this.initCharts());
+                        this.$nextTick(() => {
+                            this.initCharts();
+                            this.updateDashboardMetrics();
+                        });
                     } catch (error) {
                         console.warn('loadAudienceInsights:', error);
                     } finally {
@@ -5229,6 +5438,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     const previousReach = this.getCombinedReach(true);
                     const currentImpressions = this.getCombinedImpressions(false);
                     const previousImpressions = this.getCombinedImpressions(true);
+                    const currentViews = this.getCombinedViews(false);
+                    const previousViews = this.getCombinedViews(true);
                     
                     let currentEngagement = this.getCombinedEngagement(false);
                     let previousEngagement = this.getCombinedEngagement(true);
@@ -5241,20 +5452,26 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         current: currentImpressions,
                         change: this.calculatePercentageChange(currentImpressions, previousImpressions)
                     };
+                    this.dashboardData.metrics.views = {
+                        current: currentViews,
+                        change: this.calculatePercentageChange(currentViews, previousViews)
+                    };
                     this.dashboardData.metrics.engagement = {
                         current: currentEngagement,
                         change: this.calculatePercentageChange(currentEngagement, previousEngagement)
                     };
                     
-                    // Engagement rate: prefer impressions, then reach (YouTube often has views but no reach)
-                    const currentRateBase = currentImpressions || currentReach;
-                    const previousRateBase = previousImpressions || previousReach;
+                    // Engagement rate: prefer views (IG native), then impressions, then reach
+                    const currentRateBase = currentViews || currentImpressions || currentReach;
+                    const previousRateBase = previousViews || previousImpressions || previousReach;
                     const currentEngagementRate = currentRateBase > 0 ? (currentEngagement / currentRateBase) * 100 : 0;
                     const previousEngagementRate = previousRateBase > 0 ? (previousEngagement / previousRateBase) * 100 : 0;
                     this.dashboardData.metrics.engagementRate = {
                         current: currentEngagementRate,
                         change: this.calculatePercentageChange(currentEngagementRate, previousEngagementRate)
                     };
+
+                    this.updateMonthlyInsightsProgress();
                     
                     // Calculate platform breakdown for charts
                     this.dashboardData.platformBreakdown = {};
@@ -5276,6 +5493,30 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.$nextTick(() => {
                         this.initCharts();
                     });
+                },
+
+                updateMonthlyInsightsProgress() {
+                    if (!this.dashboardData.insights) {
+                        this.dashboardData.insights = {};
+                    }
+                    const pct = (cur, prev) => this.calculatePercentageChange(cur, prev);
+                    const currentEngagementRate = this.dashboardData.metrics?.engagementRate?.current || 0;
+                    const previousRateBase = this.getCombinedViews(true) || this.getCombinedImpressions(true) || this.getCombinedReach(true);
+                    const previousEngagement = this.getCombinedEngagement(true);
+                    const previousEngagementRate = previousRateBase > 0 ? (previousEngagement / previousRateBase) * 100 : 0;
+                    this.dashboardData.insights.progressMetrics = [
+                        { label: 'Views', change: pct(this.getCombinedViews(false), this.getCombinedViews(true)) },
+                        { label: 'Reach', change: pct(this.getCombinedReach(false), this.getCombinedReach(true)) },
+                        { label: 'Impressions', change: pct(this.getCombinedImpressions(false), this.getCombinedImpressions(true)) },
+                        { label: 'Engagement', change: pct(this.getCombinedEngagement(false), this.getCombinedEngagement(true)) },
+                        { label: 'Engagement rate', change: pct(currentEngagementRate, previousEngagementRate) }
+                    ];
+                    if (!this.dashboardData.insights.summaryStats) {
+                        this.dashboardData.insights.summaryStats = {};
+                    }
+                    this.dashboardData.insights.summaryStats.totalViews = this.getCombinedViews(false);
+                    this.dashboardData.insights.summaryStats.totalReach = this.getCombinedReach(false);
+                    this.dashboardData.insights.summaryStats.totalEngagement = this.getCombinedEngagement(false);
                 },
 
                 getTotalFollowers() {
