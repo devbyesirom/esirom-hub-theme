@@ -763,7 +763,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             </template>
                                         </div>
                                         <div x-show="getInstagramOnlineFollowers().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
-                                            Instagram active times are not available yet. Meta usually requires 100+ followers and a Business/Creator account. Click <strong>Refresh audience</strong> after syncing posts.
+                                            <p x-show="!getAudienceActivityErrors().length">Instagram active times are not available yet. Meta may withhold this breakdown, or the account needs 100+ followers. Click <strong>Refresh audience</strong> after syncing posts.</p>
+                                            <template x-for="err in getAudienceActivityErrors().filter(e => /instagram/i.test(e)).slice(0,2)" :key="err">
+                                                <p class="text-amber-700 dark:text-amber-300 mt-2" x-text="err"></p>
+                                            </template>
                                         </div>
                                     </div>
 
@@ -778,7 +781,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             </template>
                                         </div>
                                         <div x-show="getFacebookFansOnline().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
-                                            Facebook fan active times are not available yet. Ensure the Page is connected and refresh audience data from Meta.
+                                            <p>Facebook fan active times are no longer provided by Meta for most pages. Use Instagram active times and account metrics above for scheduling guidance.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -818,6 +821,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <div x-show="!hasMetaAccountActivity()" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-gray-600 dark:bg-gray-900/40">
                                     <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Account activity not loaded yet</p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Connect Facebook/Instagram and click <strong>Refresh audience</strong> or run <strong>Sync Posts</strong> to pull Meta account metrics.</p>
+                                    <template x-if="getAudienceActivityErrors().length">
+                                        <div class="mt-3 text-left text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
+                                            <p class="font-semibold mb-1">Meta API notes</p>
+                                            <template x-for="err in getAudienceActivityErrors().slice(0, 4)" :key="err">
+                                                <p x-text="err"></p>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -4807,6 +4818,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 hasMetaAccountActivity() {
                     return this.getMetaAccountActivityRows().some((row) => row.total > 0);
+                },
+
+                getAudienceActivityErrors() {
+                    return this.audienceInsights?.accountActivity?.errors || [];
                 },
 
                 getMetaAccountActivityRows() {
