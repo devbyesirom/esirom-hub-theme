@@ -4721,15 +4721,18 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
                     });
                     
-                    // Use page-level metrics as a floor only when per-post sums are lower
-                    // (page-level covers reels, stories, etc. that may not be in per-post data)
-                    if (!usePreviousPeriod) {
+                    // Page-level Meta totals only apply to the current calendar month.
+                    if (!usePreviousPeriod && this.shouldUseAccountActivityTotals()) {
                         const pageTotal = this.getPageLevelTotal(metric);
                         if (pageTotal > total) {
                             total = pageTotal;
                         }
                     }
                     return total;
+                },
+
+                shouldUseAccountActivityTotals() {
+                    return this.dateRange === 'current_month';
                 },
 
                 getAccountActivityForPlatforms(bucket) {
@@ -4744,19 +4747,19 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 getCombinedReach(usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI('reach', usePreviousPeriod);
-                    if (usePreviousPeriod) return postTotal;
+                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('reach'));
                 },
 
                 getCombinedImpressions(usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI('impressions', usePreviousPeriod);
-                    if (usePreviousPeriod) return postTotal;
+                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('impressions'));
                 },
 
                 getCombinedViews(usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI('views', usePreviousPeriod);
-                    if (usePreviousPeriod) return postTotal;
+                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('views'));
                 },
 
@@ -4772,6 +4775,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 getCombinedExternalLinkTaps() {
                     const postTotal = this.calculateFilteredKPI('clicks');
+                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
                     const activity = this.audienceInsights?.accountActivity;
                     let accountTotal = 0;
                     if (activity?.external_link_taps) {
@@ -4784,7 +4788,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 getCombinedStoriesViews() {
                     const activity = this.audienceInsights?.accountActivity;
-                    const accountViews = Number(activity?.stories?.views) || 0;
+                    const accountViews = this.shouldUseAccountActivityTotals()
+                        ? (Number(activity?.stories?.views) || 0)
+                        : 0;
                     const storyPostViews = this.posts
                         .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post))
                         .filter((post) => post.contentType === 'story' || (post.platforms || []).includes('story') || (post.tags || []).includes('story'))
@@ -4801,6 +4807,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 getCombinedStoriesReach() {
+                    if (!this.shouldUseAccountActivityTotals()) return 0;
                     return Number(this.audienceInsights?.accountActivity?.stories?.reach) || 0;
                 },
 
@@ -4952,32 +4959,37 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.calculateFilteredKPI('shares', usePreviousPeriod) +
                             this.calculateFilteredKPI('saves', usePreviousPeriod);
                     }
-                    if (usePreviousPeriod) return postTotal;
+                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getCombinedInteractions());
                 },
 
                 getCombinedInteractions() {
                     const postTotal = this.calculateFilteredKPI('interactions');
+                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('interactions'));
                 },
 
                 getCombinedLinkClicks() {
                     const postTotal = this.calculateFilteredKPI('clicks');
+                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('link_clicks'));
                 },
 
                 getCombinedProfileVisits() {
                     const postTotal = this.calculateFilteredKPI('profile_visits');
+                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('profile_visits'));
                 },
 
                 getCombinedProfileActivity() {
                     const postTotal = this.calculateFilteredKPI('profile_activity');
+                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('profile_activity'));
                 },
 
                 getCombinedMessagingConversations() {
                     const postTotal = this.calculateFilteredKPI('messaging_conversations');
+                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('messaging_conversations'));
                 },
 
@@ -5806,7 +5818,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             total += Number(post.kpis[key] || 0);
                         }
                     });
-                    if (metric === 'reach' || metric === 'impressions') {
+                    if ((metric === 'reach' || metric === 'impressions') && this.shouldUseAccountActivityTotals()) {
                         const pageTotal = this.pageLevelMetrics?.[platform]?.[metric] || 0;
                         if (pageTotal > total) total = pageTotal;
                     }
