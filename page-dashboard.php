@@ -804,8 +804,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <div class="flex items-center justify-between mb-3">
                                 <div>
                                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Website Analytics</h3>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-show="websiteAnalytics?.propertyName">
-                                        <span x-text="websiteAnalytics?.propertyName"></span> · Google Analytics 4
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-show="websiteAnalytics?.propertyName || gaAnalyticsStatus?.propertyName">
+                                        <span x-text="websiteAnalytics?.propertyName || gaAnalyticsStatus?.propertyName"></span> · Google Analytics 4
+                                    </p>
+                                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-1" x-show="websiteAnalyticsBrandId && getClientId() !== websiteAnalyticsBrandId">
+                                        Showing stats for <span class="font-semibold" x-text="availableClients.find(c => c._id === websiteAnalyticsBrandId)?.brandName || 'connected brand'"></span>. Select a specific brand above to view another site.
                                     </p>
                                 </div>
                                 <button @click="loadWebsiteAnalytics(true)" :disabled="websiteAnalyticsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">
@@ -813,6 +816,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <span x-show="websiteAnalyticsLoading">Loading…</span>
                                 </button>
                             </div>
+
+                            <p x-show="websiteAnalyticsError" class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg px-3 py-2 mb-3" x-text="websiteAnalyticsError"></p>
 
                             <div x-show="websiteAnalyticsLoading && !websiteAnalytics?.summary" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
                                 Loading website stats…
@@ -2128,8 +2133,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 mirrorIGToFB: false,
                 socialMediaStatus: {},
                 gaAnalyticsStatus: {},
+                websiteAnalyticsBrandId: '',
                 websiteAnalytics: null,
                 websiteAnalyticsLoading: false,
+                websiteAnalyticsError: '',
                 audienceInsights: null,
                 audienceInsightsLoading: false,
                 followerChanges: {
@@ -2271,6 +2278,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.$watch('activeView', () => {
                         if (this.activeView === 'dashboard') {
                            setTimeout(() => this.initCharts(), 100);
+                           this.loadWebsiteAnalytics();
                         }
                     });
                     
@@ -2304,7 +2312,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 async loadAvailableClients() {
                     try {
-                        const response = await fetch(`${API_URL}/clients?serviceType=social_media`, {
+                        const response = await fetch(`${API_URL}/clients`, {
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
                             }
@@ -2810,7 +2818,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         const ids = (this.availableClients || []).map(c => c?._id).filter(Boolean);
                         if (ids.length > 0) return ids;
                         const fallbackId = this.user?.clientId?._id || this.user?.clientId;
-                        return fallbackId ? [fallbackId] : [];
+                        if (fallbackId) return [fallbackId];
+                        return (this.user?.clientIds || []).map((entry) => entry?._id || entry).filter(Boolean);
                     }
 
                     if (this.viewMode === 'client') {
@@ -3418,7 +3427,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         if (this.selectedViewClient) return this.selectedViewClient;
                         const clientCount = (this.availableClients || []).length;
                         if (clientCount > 1) return '';
-                        return this.user?.clientId?._id || this.user?.clientId || '';
+                        if (clientCount === 1) return this.availableClients[0]._id;
+                        const primaryId = this.user?.clientId?._id || this.user?.clientId;
+                        if (primaryId) return primaryId;
+                        const linkedIds = (this.user?.clientIds || []).map((entry) => entry?._id || entry).filter(Boolean);
+                        if (linkedIds.length === 1) return linkedIds[0];
+                        if (linkedIds.length > 1) return '';
+                        return '';
                     } else if (this.viewMode === 'client') {
                         return this.selectedViewClient || '';
                     } else if (this.selectedClient) {
@@ -3426,6 +3441,45 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     } else {
                         return this.user.clientId;
                     }
+                },
+
+                resolveWebsiteAnalyticsClientId() {
+                    const explicit = this.getClientId();
+                    if (explicit) return explicit;
+
+                    const connectedBrand = (this.availableClients || []).find(
+                        (client) => client?.googleAnalytics?.connected && client?.googleAnalytics?.propertyId
+                    );
+                    if (connectedBrand?._id) return connectedBrand._id;
+
+                    const activeIds = this.getActiveClientIds();
+                    if (activeIds.length === 1) return activeIds[0];
+
+                    const primaryId = this.user?.clientId?._id || this.user?.clientId;
+                    if (primaryId) return primaryId;
+
+                    return '';
+                },
+
+                async findWebsiteAnalyticsClientId() {
+                    let clientId = this.resolveWebsiteAnalyticsClientId();
+                    if (clientId) return clientId;
+
+                    const ids = this.getActiveClientIds();
+                    for (const id of ids) {
+                        try {
+                            const response = await fetch(`${API_URL}/google-analytics/status/${id}`, {
+                                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                            });
+                            if (!response.ok) continue;
+                            const result = await response.json();
+                            if (result.success && result.data?.connected) return id;
+                        } catch (error) {
+                            console.warn('findWebsiteAnalyticsClientId:', error);
+                        }
+                    }
+
+                    return '';
                 },
 
                 createPost() {
@@ -4971,8 +5025,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 async loadGAAnalyticsStatusForDashboard() {
-                    const clientId = this.getClientId();
+                    this.gaAnalyticsStatus = {};
+                    this.websiteAnalyticsBrandId = '';
+                    this.websiteAnalyticsError = '';
+
+                    const clientId = await this.findWebsiteAnalyticsClientId();
                     if (!clientId) return;
+
+                    this.websiteAnalyticsBrandId = clientId;
                     try {
                         const response = await fetch(`${API_URL}/google-analytics/status/${clientId}`, {
                             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -4981,6 +5041,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         const result = await response.json();
                         if (result.success) {
                             this.gaAnalyticsStatus = result.data;
+                            if (result.data?.cachedMetrics?.summary) {
+                                this.websiteAnalytics = result.data.cachedMetrics;
+                            }
                         }
                     } catch (error) {
                         console.warn('loadGAAnalyticsStatusForDashboard:', error);
@@ -4988,14 +5051,38 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 async loadWebsiteAnalytics(forceRefresh = false) {
-                    const clientId = this.getClientId();
-                    if (!clientId || !this.gaAnalyticsStatus?.connected) {
+                    const clientId = this.websiteAnalyticsBrandId || await this.findWebsiteAnalyticsClientId();
+                    if (!clientId) {
+                        this.websiteAnalytics = null;
+                        return;
+                    }
+
+                    this.websiteAnalyticsBrandId = clientId;
+
+                    if (!this.gaAnalyticsStatus?.connected) {
+                        try {
+                            const statusResponse = await fetch(`${API_URL}/google-analytics/status/${clientId}`, {
+                                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                            });
+                            if (statusResponse.ok) {
+                                const statusResult = await statusResponse.json();
+                                if (statusResult.success) {
+                                    this.gaAnalyticsStatus = statusResult.data;
+                                }
+                            }
+                        } catch (error) {
+                            console.warn('loadWebsiteAnalytics status refresh:', error);
+                        }
+                    }
+
+                    if (!this.gaAnalyticsStatus?.connected) {
                         this.websiteAnalytics = null;
                         return;
                     }
                     if (!this.currentPeriodStart || !this.currentPeriodEnd) return;
 
                     this.websiteAnalyticsLoading = true;
+                    this.websiteAnalyticsError = '';
                     try {
                         const params = new URLSearchParams({
                             startDate: this.currentPeriodStart.toISOString().slice(0, 10),
@@ -5004,13 +5091,30 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         const response = await fetch(`${API_URL}/google-analytics/metrics/${clientId}?${params.toString()}`, {
                             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                         });
-                        if (!response.ok) return;
-                        const result = await response.json();
-                        if (result.success && result.data) {
+                        const result = await response.json().catch(() => ({}));
+                        if (response.ok && result.success && result.data) {
                             this.websiteAnalytics = result.data;
+                            if (result.data.cached && result.data.staleMessage) {
+                                this.websiteAnalyticsError = result.data.staleMessage;
+                            }
+                            return;
                         }
+
+                        if (this.gaAnalyticsStatus?.cachedMetrics?.summary) {
+                            this.websiteAnalytics = this.gaAnalyticsStatus.cachedMetrics;
+                            this.websiteAnalyticsError = result.message || 'Live Google Analytics data is temporarily unavailable. Showing last synced stats.';
+                            return;
+                        }
+
+                        this.websiteAnalyticsError = result.message || 'Unable to load website analytics right now.';
                     } catch (error) {
                         console.warn('loadWebsiteAnalytics:', error);
+                        if (this.gaAnalyticsStatus?.cachedMetrics?.summary) {
+                            this.websiteAnalytics = this.gaAnalyticsStatus.cachedMetrics;
+                            this.websiteAnalyticsError = 'Live Google Analytics data is temporarily unavailable. Showing last synced stats.';
+                        } else {
+                            this.websiteAnalyticsError = 'Unable to load website analytics right now.';
+                        }
                     } finally {
                         this.websiteAnalyticsLoading = false;
                     }
