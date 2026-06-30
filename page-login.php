@@ -239,7 +239,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Content Views</p>
                                     <p class="text-2xl font-bold text-gray-900 mt-1" id="metricViews">—</p>
                                     <p class="text-xs mt-1 hidden" id="changeViews"></p>
-                                    <p class="text-[10px] text-gray-400 mt-1">Reels &amp; video · all platforms</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">Synced posts + Meta account totals</p>
                                 </div>
                                 <div class="rounded-xl p-3.5 border-t-[3px] border-pink-500 bg-gray-50">
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Engagement</p>
@@ -587,8 +587,10 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                     formatChangeEl(document.getElementById('changeEngagement'), data.comparison.engagement);
                     if (data.comparisonLabel) {
                         document.getElementById('showcaseFootnote').textContent =
-                            `${data.comparisonLabel} · aggregated portfolio performance.`;
+                            `${data.comparisonLabel} · ${data.methodology || 'aggregated portfolio performance.'}`;
                     }
+                } else if (data.methodology) {
+                    document.getElementById('showcaseFootnote').textContent = data.methodology;
                 }
             } catch (error) {
                 console.error('Showcase load error:', error);
