@@ -541,7 +541,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Reach</h3>
                                     <div class="hub-stat-card__icon text-teal-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg></div>
                                 </div>
-                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.metrics?.reach?.current || 0)"></p>
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedReach())"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Organic + paid</p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.reach?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.reach?.change || 0)"></span>
                                 </p>
@@ -561,7 +562,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Engagement</h3>
                                     <div class="hub-stat-card__icon text-blue-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg></div>
                                 </div>
-                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(dashboardData.metrics?.engagement?.current || 0)"></p>
+                                <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedEngagement())"></p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.engagement?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.engagement?.change || 0)"></span>
                                 </p>
@@ -572,11 +573,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
                             <div x-show="isWidgetVisible('impressions')" class="hub-stat-card hub-stat-card--orange rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Impressions</h3>
-                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('impressions'))"></p>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedImpressions())"></p>
                             </div>
                             <div x-show="isWidgetVisible('views')" class="hub-stat-card hub-stat-card--cyan">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Views</h3>
-                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('views'))"></p>
+                                <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedViews())"></p>
                             </div>
                             <div x-show="isWidgetVisible('likes')" class="hub-stat-card hub-stat-card--red">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Likes</h3>
@@ -3286,11 +3287,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             const shares = perf.shares || 0;
                             const saves = perf.saves || 0;
                             const views = perf.views || 0;
-                            const engagement = perf.engagement || (likes + comments + shares + saves);
-                            const impressions = perf.impressions || views || 0;
-                            const reach = perf.reach || impressions || views || 0;
+                            const organicReach = perf.organic_reach || 0;
+                            const paidReach = perf.paid_reach || 0;
+                            const engagement = perf.engagement || perf.interactions || (likes + comments + shares + saves);
+                            const impressions = Math.max(perf.impressions || 0, views || 0);
+                            const reach = Math.max(perf.reach || 0, organicReach + paidReach, impressions, views);
                             const kpis = {
                                 [`${platform}_reach`]: reach,
+                                [`${platform}_organic_reach`]: organicReach,
+                                [`${platform}_paid_reach`]: paidReach,
                                 [`${platform}_impressions`]: impressions,
                                 [`${platform}_engagement`]: engagement,
                                 [`${platform}_likes`]: likes,
@@ -4509,6 +4514,37 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return total;
                 },
 
+                getCombinedReach(usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI('reach', usePreviousPeriod);
+                    if (usePreviousPeriod) return postTotal;
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('reach'));
+                },
+
+                getCombinedImpressions(usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI('impressions', usePreviousPeriod);
+                    if (usePreviousPeriod) return postTotal;
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('views'));
+                },
+
+                getCombinedViews(usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI('views', usePreviousPeriod);
+                    if (usePreviousPeriod) return postTotal;
+                    return Math.max(postTotal, this.getAccountActivityForPlatforms('views'));
+                },
+
+                getCombinedEngagement(usePreviousPeriod = false) {
+                    let postTotal = this.calculateFilteredKPI('engagement', usePreviousPeriod);
+                    if (postTotal === 0) {
+                        postTotal =
+                            this.calculateFilteredKPI('likes', usePreviousPeriod) +
+                            this.calculateFilteredKPI('comments', usePreviousPeriod) +
+                            this.calculateFilteredKPI('shares', usePreviousPeriod) +
+                            this.calculateFilteredKPI('saves', usePreviousPeriod);
+                    }
+                    if (usePreviousPeriod) return postTotal;
+                    return Math.max(postTotal, this.getCombinedInteractions());
+                },
+
                 getCombinedInteractions() {
                     const postTotal = this.calculateFilteredKPI('interactions');
                     return Math.max(postTotal, this.getAccountActivityForPlatforms('interactions'));
@@ -5085,20 +5121,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
                     
                     // Calculate current and previous period metrics
-                    const currentReach = this.calculateFilteredKPI('reach', false);
-                    const previousReach = this.calculateFilteredKPI('reach', true);
-                    const currentImpressions = this.calculateFilteredKPI('impressions', false);
-                    const previousImpressions = this.calculateFilteredKPI('impressions', true);
+                    const currentReach = this.getCombinedReach(false);
+                    const previousReach = this.getCombinedReach(true);
+                    const currentImpressions = this.getCombinedImpressions(false);
+                    const previousImpressions = this.getCombinedImpressions(true);
                     
-                    // Calculate engagement: use engagement field, or fallback to sum of likes+comments+shares+saves
-                    let currentEngagement = this.calculateFilteredKPI('engagement', false);
-                    if (currentEngagement === 0) {
-                        currentEngagement = this.calculateFilteredKPI('likes', false) + this.calculateFilteredKPI('comments', false) + this.calculateFilteredKPI('shares', false) + this.calculateFilteredKPI('saves', false);
-                    }
-                    let previousEngagement = this.calculateFilteredKPI('engagement', true);
-                    if (previousEngagement === 0) {
-                        previousEngagement = this.calculateFilteredKPI('likes', true) + this.calculateFilteredKPI('comments', true) + this.calculateFilteredKPI('shares', true) + this.calculateFilteredKPI('saves', true);
-                    }
+                    let currentEngagement = this.getCombinedEngagement(false);
+                    let previousEngagement = this.getCombinedEngagement(true);
                     
                     this.dashboardData.metrics.reach = {
                         current: currentReach,
