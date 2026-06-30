@@ -89,7 +89,7 @@ show_admin_bar(false);
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
                     <span class="nav-text">Clients</span>
                 </a>
-                <a @click.prevent="activeTab = 'emails'; loadClientReminders(); loadFeatureMailblast()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
+                <a @click.prevent="activeTab = 'emails'; loadClientReminders(); loadFeatureMailblast(); loadWebsiteAnalyticsMailblast()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                     <span class="nav-text">Emails</span>
                 </a>
@@ -440,6 +440,77 @@ show_admin_bar(false);
                                         </td>
                                         <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
                                         <td class="px-4 py-3 text-xs text-gray-500 capitalize" x-text="(brand.serviceType || 'social_media').replace('_', ' ')"></td>
+                                        <td class="px-4 py-3 text-xs text-gray-600">
+                                            <template x-if="brand.clientUsers.length">
+                                                <span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span>
+                                            </template>
+                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow rounded-lg border border-amber-200 overflow-hidden">
+                    <div class="p-5 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">Feature Announcements — Website Analytics</h3>
+                            <p class="text-xs text-gray-600 mt-1">Tell website &amp; landing-page clients that Google Analytics (GA4) insights are now available in their Hub dashboard and reports.</p>
+                            <p class="text-xs text-amber-700 mt-2" x-show="websiteMailblastTotals.brands > 0">
+                                <span x-text="websiteMailblastTotals.brandsWithContacts"></span> brand(s) with contacts ·
+                                <span x-text="websiteMailblastTotals.recipients"></span> unique recipient(s)
+                            </p>
+                            <p class="text-xs text-gray-400 mt-2" x-show="!websiteMailblastLoading && websiteMailblastBrands.length === 0">No eligible website clients found.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button @click="loadWebsiteAnalyticsMailblast()" :disabled="websiteMailblastLoading"
+                                    class="px-3 py-1.5 border border-amber-200 text-amber-900 text-xs font-semibold rounded-xl hover:bg-amber-100 disabled:opacity-50">
+                                Refresh
+                            </button>
+                            <button @click="sendWebsiteAnalyticsMailblastTest()"
+                                    :disabled="websiteMailblastTesting || websiteMailblastLoading"
+                                    class="px-3 py-1.5 border border-amber-300 text-amber-800 text-xs font-semibold rounded-xl hover:bg-amber-100 disabled:opacity-50">
+                                <span x-show="!websiteMailblastTesting">Send Test to Me</span>
+                                <span x-show="websiteMailblastTesting">Sending…</span>
+                            </button>
+                            <button @click="sendWebsiteAnalyticsMailblast()"
+                                    :disabled="websiteMailblastSending || websiteMailblastLoading || selectedWebsiteMailblastClients.length === 0"
+                                    class="px-4 py-2 bg-amber-600 text-white text-xs font-semibold rounded-xl hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!websiteMailblastSending">Send to Selected Clients</span>
+                                <span x-show="websiteMailblastSending">Sending…</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="websiteMailblastLoading" class="p-8 text-center text-sm text-gray-500">Loading eligible website clients…</div>
+
+                    <div x-show="!websiteMailblastLoading && websiteMailblastBrands.length > 0" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-amber-50/50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">
+                                        <input type="checkbox" class="rounded border-gray-300"
+                                               :checked="selectedWebsiteMailblastClients.length === websiteMailblastBrands.filter(b => b.clientUsers.length).length && websiteMailblastBrands.filter(b => b.clientUsers.length).length > 0"
+                                               @change="toggleAllWebsiteMailblastClients($event.target.checked)">
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <template x-for="brand in websiteMailblastBrands" :key="'wa-' + brand.clientId">
+                                    <tr class="hover:bg-amber-50/30" :class="!brand.clientUsers.length ? 'opacity-50' : ''">
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" class="rounded border-gray-300"
+                                                   :disabled="!brand.clientUsers.length"
+                                                   :checked="selectedWebsiteMailblastClients.includes(brand.clientId)"
+                                                   @change="toggleWebsiteMailblastClient(brand.clientId, $event.target.checked)">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
+                                        <td class="px-4 py-3 text-xs text-gray-500 capitalize" x-text="(brand.serviceType || 'website').replace('_', ' ')"></td>
                                         <td class="px-4 py-3 text-xs text-gray-600">
                                             <template x-if="brand.clientUsers.length">
                                                 <span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span>
@@ -1456,6 +1527,12 @@ show_admin_bar(false);
                 mailblastLoading: false,
                 mailblastSending: false,
                 mailblastTesting: false,
+                websiteMailblastBrands: [],
+                websiteMailblastTotals: { brands: 0, recipients: 0, brandsWithContacts: 0 },
+                selectedWebsiteMailblastClients: [],
+                websiteMailblastLoading: false,
+                websiteMailblastSending: false,
+                websiteMailblastTesting: false,
                 showCustomizeModal: false,
                 showBulkAddModal: false,
                 showApprovalModal: false,
@@ -2415,6 +2492,109 @@ show_admin_bar(false);
                         this.showToast('Could not send feature announcement', 'error', 5000);
                     } finally {
                         this.mailblastSending = false;
+                    }
+                },
+
+                async loadWebsiteAnalyticsMailblast() {
+                    this.websiteMailblastLoading = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/mailblast/preview?feature=website_analytics`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.websiteMailblastBrands = data.brands || [];
+                            this.websiteMailblastTotals = data.totals || { brands: 0, recipients: 0, brandsWithContacts: 0 };
+                            this.selectedWebsiteMailblastClients = this.websiteMailblastBrands
+                                .filter(b => b.clientUsers && b.clientUsers.length)
+                                .map(b => b.clientId);
+                        } else {
+                            this.showToast(data.message || 'Failed to load website analytics preview', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadWebsiteAnalyticsMailblast:', error);
+                        this.showToast('Could not load website analytics announcement preview', 'error', 5000);
+                    } finally {
+                        this.websiteMailblastLoading = false;
+                    }
+                },
+
+                toggleWebsiteMailblastClient(clientId, checked) {
+                    if (checked) {
+                        if (!this.selectedWebsiteMailblastClients.includes(clientId)) {
+                            this.selectedWebsiteMailblastClients.push(clientId);
+                        }
+                    } else {
+                        this.selectedWebsiteMailblastClients = this.selectedWebsiteMailblastClients.filter(id => id !== clientId);
+                    }
+                },
+
+                toggleAllWebsiteMailblastClients(checked) {
+                    const eligible = this.websiteMailblastBrands.filter(b => b.clientUsers && b.clientUsers.length);
+                    if (checked) {
+                        this.selectedWebsiteMailblastClients = eligible.map(b => b.clientId);
+                    } else {
+                        this.selectedWebsiteMailblastClients = [];
+                    }
+                },
+
+                async sendWebsiteAnalyticsMailblastTest() {
+                    if (!confirm('Send a test Website Analytics announcement to your account email?')) return;
+                    this.websiteMailblastTesting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/mailblast/test`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ feature: 'website_analytics' })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || 'Test email sent — check your inbox', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'Test email could not be sent', 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendWebsiteAnalyticsMailblastTest:', error);
+                        this.showToast('Could not send test email', 'error', 5000);
+                    } finally {
+                        this.websiteMailblastTesting = false;
+                    }
+                },
+
+                async sendWebsiteAnalyticsMailblast() {
+                    if (!this.selectedWebsiteMailblastClients.length) return;
+                    const brands = this.websiteMailblastBrands.filter(b => this.selectedWebsiteMailblastClients.includes(b.clientId));
+                    const emails = new Set();
+                    brands.forEach(b => (b.clientUsers || []).forEach(u => emails.add(u.email)));
+                    if (!confirm(`Send Website Analytics announcement to ${emails.size} client contact(s) across ${brands.length} brand(s)?`)) return;
+
+                    this.websiteMailblastSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/mailblast/send`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                feature: 'website_analytics',
+                                clientIds: this.selectedWebsiteMailblastClients
+                            })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.emailsSent > 0) {
+                            this.showToast(data.message || 'Website Analytics announcement sent', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'No emails were sent', data.emailsSent === 0 ? 'info' : 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendWebsiteAnalyticsMailblast:', error);
+                        this.showToast('Could not send website analytics announcement', 'error', 5000);
+                    } finally {
+                        this.websiteMailblastSending = false;
                     }
                 },
 
