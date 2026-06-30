@@ -740,33 +740,97 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
 
                         <!-- Follower Active Times -->
-                        <div x-show="getOnlineFollowers().length > 0" class="mt-6">
+                        <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
+                            <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
+                                <div class="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <p class="hub-insights-section-title mb-1">Audience activity</p>
+                                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">When your audience is online</h3>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Peak hours from Meta Insights · times shown in your browser's local timezone</p>
+                                    </div>
+                                    <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">Refresh</button>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                    <div x-show="clientPlatforms.includes('instagram')">
+                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Instagram follower active times</h4>
+                                        <div x-show="getInstagramOnlineFollowers().length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                            <template x-for="slot in getInstagramOnlineFollowers().slice(0, 12)" :key="'ig-hour-' + slot.hour">
+                                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatHourLabel(slot.hour)"></p>
+                                                    <p class="text-lg font-bold text-gray-900 dark:text-white mt-1" x-text="formatNumber(slot.count)"></p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div x-show="getInstagramOnlineFollowers().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
+                                            Instagram active times are not available yet. Meta usually requires 100+ followers and a Business/Creator account. Click <strong>Refresh audience</strong> after syncing posts.
+                                        </div>
+                                    </div>
+
+                                    <div x-show="clientPlatforms.includes('facebook')">
+                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Facebook fan active times</h4>
+                                        <div x-show="getFacebookFansOnline().length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                            <template x-for="slot in getFacebookFansOnline().slice(0, 12)" :key="'fb-hour-' + slot.hour">
+                                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatHourLabel(slot.hour)"></p>
+                                                    <p class="text-lg font-bold text-gray-900 dark:text-white mt-1" x-text="formatNumber(slot.count)"></p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div x-show="getFacebookFansOnline().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
+                                            Facebook fan active times are not available yet. Ensure the Page is connected and refresh audience data from Meta.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meta Account Activity -->
+                        <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
                             <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
                                 <div class="mb-4">
-                                    <p class="hub-insights-section-title mb-1">Audience activity</p>
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Follower active times</h3>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">When your followers are most active on Instagram</p>
+                                    <p class="hub-insights-section-title mb-1">Meta account activity</p>
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Facebook & Instagram account metrics</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Account-level totals from Meta · <span x-text="currentPeriodLabel"></span></p>
                                 </div>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                    <template x-for="slot in getOnlineFollowers().slice(0, 12)" :key="'hour-' + slot.hour">
-                                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatHourLabel(slot.hour)"></p>
-                                            <p class="text-lg font-bold text-gray-900 dark:text-white mt-1" x-text="formatNumber(slot.count)"></p>
-                                        </div>
-                                    </template>
+                                <div x-show="hasMetaAccountActivity()" class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                <th class="py-2 pr-4">Metric</th>
+                                                <th class="py-2 pr-4" x-show="clientPlatforms.includes('facebook')">Facebook</th>
+                                                <th class="py-2 pr-4" x-show="clientPlatforms.includes('instagram')">Instagram</th>
+                                                <th class="py-2">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                            <template x-for="row in getMetaAccountActivityRows()" :key="row.label">
+                                                <tr>
+                                                    <td class="py-3 pr-4 font-medium text-gray-800 dark:text-gray-200" x-text="row.label"></td>
+                                                    <td class="py-3 pr-4 text-gray-700 dark:text-gray-300" x-show="clientPlatforms.includes('facebook')" x-text="formatNumber(row.facebook)"></td>
+                                                    <td class="py-3 pr-4 text-gray-700 dark:text-gray-300" x-show="clientPlatforms.includes('instagram')" x-text="formatNumber(row.instagram)"></td>
+                                                    <td class="py-3 font-semibold text-gray-900 dark:text-white" x-text="formatNumber(row.total)"></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div x-show="!hasMetaAccountActivity()" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-gray-600 dark:bg-gray-900/40">
+                                    <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Account activity not loaded yet</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Connect Facebook/Instagram and click <strong>Refresh audience</strong> or run <strong>Sync Posts</strong> to pull Meta account metrics.</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Profile Activity (IG-style) -->
-                        <div x-show="getCombinedProfileVisits() > 0 || getCombinedExternalLinkTaps() > 0 || getCombinedAddressTaps() > 0" class="mt-6">
+                        <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
                             <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
                                 <div class="mb-4">
                                     <p class="hub-insights-section-title mb-1">Profile activity</p>
                                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Visits, links & actions</h3>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Account-level profile metrics from Meta · <span x-text="currentPeriodLabel"></span></p>
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Profile visits</p>
                                         <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedProfileVisits())"></p>
@@ -779,7 +843,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Business address taps</p>
                                         <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedAddressTaps())"></p>
                                     </div>
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Messaging conversations</p>
+                                        <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedMessagingConversations())"></p>
+                                    </div>
                                 </div>
+                                <p x-show="!getCombinedProfileVisits() && !getCombinedExternalLinkTaps() && !getCombinedAddressTaps() && !getCombinedMessagingConversations()" class="mt-4 text-sm text-gray-500 dark:text-gray-400">Profile and action metrics will appear here after Meta account activity syncs for the selected period.</p>
                             </div>
                         </div>
 
@@ -1068,6 +1137,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <div><p class="text-gray-500 dark:text-gray-400">Users</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.users || 0)"></p></div>
                                     <div><p class="text-gray-500 dark:text-gray-400">Page Views</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.pageViews || 0)"></p></div>
                                     <div><p class="text-gray-500 dark:text-gray-400">New Users</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.newUsers || 0)"></p></div>
+                                </div>
+                            </div>
+                            <div x-show="reportPreview?.metaInsights?.accountActivity || reportPreview?.audience?.accountActivity" class="mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-700">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300 mb-2">Meta Account Activity</p>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div><p class="text-gray-500 dark:text-gray-400">Profile visits</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber((reportPreview?.metaInsights?.accountActivity || reportPreview?.audience?.accountActivity)?.profile_visits?.total || 0)"></p></div>
+                                    <div><p class="text-gray-500 dark:text-gray-400">Link taps</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber((reportPreview?.metaInsights?.accountActivity || reportPreview?.audience?.accountActivity)?.external_link_taps?.total || (reportPreview?.metaInsights?.accountActivity || reportPreview?.audience?.accountActivity)?.link_clicks?.total || 0)"></p></div>
+                                    <div><p class="text-gray-500 dark:text-gray-400">Messaging</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber((reportPreview?.metaInsights?.accountActivity || reportPreview?.audience?.accountActivity)?.messaging_conversations?.total || 0)"></p></div>
+                                    <div><p class="text-gray-500 dark:text-gray-400">Story views</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber((reportPreview?.metaInsights?.accountActivity || reportPreview?.audience?.accountActivity)?.stories?.views || 0)"></p></div>
                                 </div>
                             </div>
                         </div>
@@ -4715,16 +4793,74 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return Number(this.audienceInsights?.accountActivity?.stories?.reach) || 0;
                 },
 
-                getOnlineFollowers() {
-                    return this.audienceInsights?.onlineFollowers || [];
+                getInstagramOnlineFollowers() {
+                    const raw = this.audienceInsights?.onlineFollowers;
+                    if (Array.isArray(raw)) return raw;
+                    return raw?.instagram || [];
+                },
+
+                getFacebookFansOnline() {
+                    const raw = this.audienceInsights?.onlineFollowers;
+                    if (Array.isArray(raw)) return [];
+                    return raw?.facebook || [];
+                },
+
+                hasMetaAccountActivity() {
+                    return this.getMetaAccountActivityRows().some((row) => row.total > 0);
+                },
+
+                getMetaAccountActivityRows() {
+                    const activity = this.audienceInsights?.accountActivity;
+                    if (!activity) return [];
+
+                    const rows = [
+                        { label: 'Reach', key: 'reach' },
+                        { label: 'Impressions', key: 'impressions' },
+                        { label: 'Views', key: 'views' },
+                        { label: 'Interactions', key: 'interactions' },
+                        { label: 'Profile visits', key: 'profile_visits' },
+                        { label: 'Profile activity', key: 'profile_activity' },
+                        { label: 'External link taps', key: 'external_link_taps' },
+                        { label: 'Address taps', key: 'address_taps' },
+                        { label: 'Messaging conversations', key: 'messaging_conversations' }
+                    ];
+
+                    const mapped = rows.map((row) => {
+                        const source = row.key === 'external_link_taps'
+                            ? (activity.external_link_taps || activity.link_clicks || {})
+                            : (activity[row.key] || {});
+                        return {
+                            label: row.label,
+                            facebook: Number(source.facebook) || 0,
+                            instagram: Number(source.instagram) || 0,
+                            total: Number(source.total) || 0
+                        };
+                    });
+
+                    if (activity.stories && (activity.stories.views || activity.stories.reach)) {
+                        mapped.push({
+                            label: 'Story views',
+                            facebook: 0,
+                            instagram: Number(activity.stories.views) || 0,
+                            total: Number(activity.stories.views) || 0
+                        });
+                        mapped.push({
+                            label: 'Story reach',
+                            facebook: 0,
+                            instagram: Number(activity.stories.reach) || 0,
+                            total: Number(activity.stories.reach) || 0
+                        });
+                    }
+
+                    return mapped;
                 },
 
                 formatHourLabel(hour) {
                     const h = Number(hour);
                     if (Number.isNaN(h)) return String(hour);
-                    const suffix = h >= 12 ? 'PM' : 'AM';
-                    const normalized = h % 12 || 12;
-                    return `${normalized}:00 ${suffix}`;
+                    const date = new Date();
+                    date.setUTCHours(h, 0, 0, 0);
+                    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
                 },
 
                 getTopContentMetricValue(content, metric) {
