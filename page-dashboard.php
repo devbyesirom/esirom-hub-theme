@@ -797,6 +797,87 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p x-show="!(dashboardData.insights?.topContent?.length)" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No engagement data yet — run Sync Posts to pull metrics.</p>
                             </div>
                         </div>
+
+                        <!-- Website Analytics (GA4) -->
+                        <div x-show="gaAnalyticsStatus?.connected" class="mt-8">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Website Analytics</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-show="websiteAnalytics?.propertyName">
+                                        <span x-text="websiteAnalytics?.propertyName"></span> · Google Analytics 4
+                                    </p>
+                                </div>
+                                <button @click="loadWebsiteAnalytics(true)" :disabled="websiteAnalyticsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">
+                                    <span x-show="!websiteAnalyticsLoading">Refresh</span>
+                                    <span x-show="websiteAnalyticsLoading">Loading…</span>
+                                </button>
+                            </div>
+
+                            <div x-show="websiteAnalyticsLoading && !websiteAnalytics?.summary" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                                Loading website stats…
+                            </div>
+
+                            <div x-show="websiteAnalytics?.summary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                <div class="hub-stat-card hub-stat-card--amber rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Sessions</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(websiteAnalytics?.summary?.sessions || 0)"></p>
+                                    <p class="text-xs mt-1" :class="(websiteAnalytics?.changes?.sessions || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'" x-show="websiteAnalytics?.changes?.sessions != null">
+                                        <span x-text="formatChange(websiteAnalytics?.changes?.sessions || 0)"></span> vs prior period
+                                    </p>
+                                </div>
+                                <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Users</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(websiteAnalytics?.summary?.users || 0)"></p>
+                                    <p class="text-xs mt-1" :class="(websiteAnalytics?.changes?.users || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'" x-show="websiteAnalytics?.changes?.users != null">
+                                        <span x-text="formatChange(websiteAnalytics?.changes?.users || 0)"></span>
+                                    </p>
+                                </div>
+                                <div class="hub-stat-card hub-stat-card--teal rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Page Views</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(websiteAnalytics?.summary?.pageViews || 0)"></p>
+                                    <p class="text-xs mt-1" :class="(websiteAnalytics?.changes?.pageViews || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'" x-show="websiteAnalytics?.changes?.pageViews != null">
+                                        <span x-text="formatChange(websiteAnalytics?.changes?.pageViews || 0)"></span>
+                                    </p>
+                                </div>
+                                <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">New Users</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(websiteAnalytics?.summary?.newUsers || 0)"></p>
+                                </div>
+                                <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Bounce Rate</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="((websiteAnalytics?.summary?.bounceRate || 0)).toFixed(1) + '%'"></p>
+                                </div>
+                                <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Avg Session</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatDuration(websiteAnalytics?.summary?.avgSessionDuration || 0)"></p>
+                                </div>
+                            </div>
+
+                            <div x-show="websiteAnalytics?.topPages?.length || websiteAnalytics?.topSources?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                                <div x-show="websiteAnalytics?.topPages?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Pages</h4>
+                                    <ul class="space-y-2">
+                                        <template x-for="(page, idx) in (websiteAnalytics?.topPages || []).slice(0, 8)" :key="'page-' + idx">
+                                            <li class="flex justify-between gap-2 text-sm">
+                                                <span class="text-gray-700 dark:text-gray-300 truncate" x-text="page.path"></span>
+                                                <span class="font-medium text-gray-900 dark:text-white shrink-0" x-text="formatNumber(page.views)"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div x-show="websiteAnalytics?.topSources?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Traffic Sources</h4>
+                                    <ul class="space-y-2">
+                                        <template x-for="(src, idx) in (websiteAnalytics?.topSources || []).slice(0, 8)" :key="'src-' + idx">
+                                            <li class="flex justify-between gap-2 text-sm">
+                                                <span class="text-gray-700 dark:text-gray-300 truncate" x-text="src.source"></span>
+                                                <span class="font-medium text-gray-900 dark:text-white shrink-0" x-text="formatNumber(src.sessions)"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -890,6 +971,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <div><p class="text-gray-500 dark:text-gray-400">Impressions</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.metrics?.totalImpressions || 0)"></p></div>
                                 <div><p class="text-gray-500 dark:text-gray-400">Engagement</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.metrics?.totalEngagement || 0)"></p></div>
                                 <div><p class="text-gray-500 dark:text-gray-400">Engagement Rate</p><p class="font-semibold text-gray-900 dark:text-white" x-text="(reportPreview?.metrics?.engagementRate || 0).toFixed(2) + '%'"></p></div>
+                            </div>
+                            <div x-show="reportPreview?.websiteAnalytics?.summary" class="mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-700">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300 mb-2">Website Analytics</p>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div><p class="text-gray-500 dark:text-gray-400">Sessions</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.sessions || 0)"></p></div>
+                                    <div><p class="text-gray-500 dark:text-gray-400">Users</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.users || 0)"></p></div>
+                                    <div><p class="text-gray-500 dark:text-gray-400">Page Views</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.pageViews || 0)"></p></div>
+                                    <div><p class="text-gray-500 dark:text-gray-400">New Users</p><p class="font-semibold text-gray-900 dark:text-white" x-text="formatNumber(reportPreview?.websiteAnalytics?.summary?.newUsers || 0)"></p></div>
+                                </div>
                             </div>
                         </div>
 
@@ -2024,6 +2114,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.loadPlatformFollowers();
                     this.loadPageLevelMetrics();
                     await this.loadAudienceInsights();
+                    await this.loadGAAnalyticsStatusForDashboard();
                     this.setDateRange('current_month');
                     this.initializeReportBuilder();
                 },
@@ -2035,6 +2126,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 clientStartDate: null, // Will be loaded from client customization
                 mirrorIGToFB: false,
                 socialMediaStatus: {},
+                gaAnalyticsStatus: {},
+                websiteAnalytics: null,
+                websiteAnalyticsLoading: false,
                 audienceInsights: null,
                 audienceInsightsLoading: false,
                 followerChanges: {
@@ -4786,6 +4880,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
                     
                     this.updateDashboardMetrics();
+                    this.loadWebsiteAnalytics();
                 },
                 
                 applyCustomDateRange() {
@@ -4803,6 +4898,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.currentPeriodLabel = `${this.currentPeriodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${this.currentPeriodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
                     
                     this.updateDashboardMetrics();
+                    this.loadWebsiteAnalytics();
                 },
                 
                 getPostDate(post) {
@@ -4828,6 +4924,64 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     const postDate = this.getPostDate(post);
                     if (!postDate) return false;
                     return postDate >= this.previousPeriodStart && postDate <= this.previousPeriodEnd;
+                },
+
+                    this.updateDashboardMetrics();
+                    this.loadWebsiteAnalytics();
+                },
+
+                formatDuration(seconds) {
+                    const s = Math.round(Number(seconds) || 0);
+                    if (s < 60) return `${s}s`;
+                    const m = Math.floor(s / 60);
+                    const rem = s % 60;
+                    return `${m}m ${rem}s`;
+                },
+
+                async loadGAAnalyticsStatusForDashboard() {
+                    const clientId = this.getClientId();
+                    if (!clientId) return;
+                    try {
+                        const response = await fetch(`${API_URL}/google-analytics/status/${clientId}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (!response.ok) return;
+                        const result = await response.json();
+                        if (result.success) {
+                            this.gaAnalyticsStatus = result.data;
+                        }
+                    } catch (error) {
+                        console.warn('loadGAAnalyticsStatusForDashboard:', error);
+                    }
+                },
+
+                async loadWebsiteAnalytics(forceRefresh = false) {
+                    const clientId = this.getClientId();
+                    if (!clientId || !this.gaAnalyticsStatus?.connected) {
+                        this.websiteAnalytics = null;
+                        return;
+                    }
+                    if (!this.currentPeriodStart || !this.currentPeriodEnd) return;
+
+                    this.websiteAnalyticsLoading = true;
+                    try {
+                        const params = new URLSearchParams({
+                            startDate: this.currentPeriodStart.toISOString().slice(0, 10),
+                            endDate: this.currentPeriodEnd.toISOString().slice(0, 10)
+                        });
+                        const response = await fetch(`${API_URL}/google-analytics/metrics/${clientId}?${params.toString()}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (!response.ok) return;
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                            this.websiteAnalytics = result.data;
+                        }
+                    } catch (error) {
+                        console.warn('loadWebsiteAnalytics:', error);
+                    } finally {
+                        this.websiteAnalyticsLoading = false;
+                    }
                 },
 
                 async loadSocialMediaStatusForDashboard() {

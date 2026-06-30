@@ -1289,6 +1289,45 @@ show_admin_bar(false);
                         <p class="text-xs text-gray-500 mt-3">Syncs channel videos with views, likes, comments, and watch time into the brand dashboard.</p>
                     </div>
 
+                    <!-- Google Analytics Connection -->
+                    <div class="bg-gradient-to-br from-amber-50 to-yellow-50 p-4 rounded-lg border border-amber-200 md:col-span-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <svg class="w-8 h-8 text-amber-600 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M22.84 2.998V16.06a1.2 1.2 0 01-1.2 1.2h-3.6V8.458h-3.6v8.802H3.36a1.2 1.2 0 01-1.2-1.2V2.998h3.6v8.802h3.6V2.998h3.6v8.802h3.6V2.998h3.6z"/>
+                                </svg>
+                                <div>
+                                    <h5 class="font-semibold text-gray-800">Google Analytics (GA4)</h5>
+                                    <p class="text-xs text-gray-600" x-show="!gaAnalyticsStatus?.connected">Not connected — for website clients</p>
+                                    <p class="text-xs text-green-600" x-show="gaAnalyticsStatus?.connected">
+                                        ✓ Connected: <span x-text="gaAnalyticsStatus?.propertyName"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                x-show="!gaAnalyticsStatus?.connected"
+                                @click="connectGoogleAnalytics(customizingClient._id)"
+                                class="flex-1 bg-amber-600 text-white px-3 py-2 rounded text-sm hover:bg-amber-700 transition-colors">
+                                Connect GA4 Property
+                            </button>
+                            <button
+                                x-show="gaAnalyticsStatus?.connected"
+                                @click="syncGoogleAnalytics(customizingClient._id)"
+                                class="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                                Sync Website Stats
+                            </button>
+                            <button
+                                x-show="gaAnalyticsStatus?.connected"
+                                @click="disconnectGoogleAnalytics(customizingClient._id)"
+                                class="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors">
+                                Disconnect
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-3">Pulls sessions, users, page views, traffic sources, and top pages into the brand dashboard and monthly reports.</p>
+                    </div>
+
                     <!-- Coming Soon Platforms -->
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60 md:col-span-2">
                         <div class="flex items-center mb-3">
@@ -1311,7 +1350,7 @@ show_admin_bar(false);
                         <svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                         </svg>
-                        <strong>Note:</strong> Facebook can auto-link Instagram when a Business Account is connected to the Page. YouTube uses a separate Google OAuth connection for the brand channel.
+                        <strong>Note:</strong> Facebook can auto-link Instagram when a Business Account is connected to the Page. YouTube and Google Analytics use separate Google OAuth connections per brand.
                     </p>
                 </div>
             </div>
@@ -1429,6 +1468,7 @@ show_admin_bar(false);
                 editingUpdate: null,
                 customizingClient: null,
                 socialMediaStatus: {},
+                gaAnalyticsStatus: {},
                 socialMediaDiagnosis: null,
                 socialMediaDiagnosisLoading: false,
                 showSocialDiagnosticsDetails: false,
@@ -1817,6 +1857,7 @@ show_admin_bar(false);
                     
                     // Load social media connection status
                     await this.loadSocialMediaStatus(client._id);
+                    await this.loadGAAnalyticsStatus(client._id);
                     
                     try {
                         // Load from database first
@@ -1883,6 +1924,99 @@ show_admin_bar(false);
                         }
                     } catch (error) {
                         console.error('Error loading social media status:', error);
+                    }
+                },
+
+                async loadGAAnalyticsStatus(clientId) {
+                    try {
+                        const response = await fetch(`${API_URL}/google-analytics/status/${clientId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.gaAnalyticsStatus = data.data;
+                        }
+                    } catch (error) {
+                        console.error('Error loading GA status:', error);
+                    }
+                },
+
+                async connectGoogleAnalytics(clientId) {
+                    try {
+                        const response = await fetch(`${API_URL}/google-analytics/auth?clientId=${clientId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+
+                        if (data.success && data.data?.authUrl) {
+                            const width = 600;
+                            const height = 700;
+                            const left = (screen.width - width) / 2;
+                            const top = (screen.height - height) / 2;
+
+                            const popup = window.open(
+                                data.data.authUrl,
+                                'Google Analytics OAuth',
+                                `width=${width},height=${height},left=${left},top=${top}`
+                            );
+
+                            const checkPopup = setInterval(() => {
+                                if (popup.closed) {
+                                    clearInterval(checkPopup);
+                                    this.loadGAAnalyticsStatus(clientId);
+                                    this.showToast('Checking Google Analytics connection...', 'info', 2000);
+                                }
+                            }, 1000);
+                        } else {
+                            this.showToast(data.message || 'Failed to get Google Analytics authorization URL', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('Error connecting Google Analytics:', error);
+                        this.showToast('Error connecting Google Analytics', 'error', 5000);
+                    }
+                },
+
+                async syncGoogleAnalytics(clientId) {
+                    try {
+                        this.showToast('Syncing website analytics...', 'info', 2000);
+                        const response = await fetch(`${API_URL}/google-analytics/sync/${clientId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({})
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showToast('Website analytics synced', 'success', 4000);
+                            await this.loadGAAnalyticsStatus(clientId);
+                        } else {
+                            this.showToast(data.message || 'Sync failed', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('syncGoogleAnalytics:', error);
+                        this.showToast('Error syncing website analytics', 'error', 5000);
+                    }
+                },
+
+                async disconnectGoogleAnalytics(clientId) {
+                    if (!confirm('Disconnect Google Analytics for this client?')) return;
+                    try {
+                        const response = await fetch(`${API_URL}/google-analytics/disconnect/${clientId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.gaAnalyticsStatus = { connected: false };
+                            this.showToast('Google Analytics disconnected', 'success', 3000);
+                        } else {
+                            this.showToast(data.message || 'Disconnect failed', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('disconnectGoogleAnalytics:', error);
+                        this.showToast('Error disconnecting Google Analytics', 'error', 5000);
                     }
                 },
 
