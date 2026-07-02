@@ -2282,6 +2282,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                     this.platformFollowers = {};
                     this.pageLevelMetrics = {};
+                    this.periodAccountActivity = null;
+                    this.previousPeriodAccountActivity = null;
                     this.posts = [];
                     await this.loadDashboardData(token);
                     await this.loadSocialMediaStatusForDashboard();
@@ -2311,6 +2313,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 websiteAnalyticsError: '',
                 audienceInsights: null,
                 audienceInsightsLoading: false,
+                periodAccountActivity: null,
+                previousPeriodAccountActivity: null,
+                periodAccountActivityLoading: false,
+                periodActivityLoadToken: 0,
                 followerChanges: {
                     facebook: { gained: 0, lost: 0 },
                     instagram: { gained: 0, lost: 0 }
@@ -4722,7 +4728,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     });
                     
                     // Page-level Meta totals only apply to the current calendar month.
-                    if (!usePreviousPeriod && this.shouldUseAccountActivityTotals()) {
+                    if (!usePreviousPeriod && this.dateRange === 'current_month') {
                         const pageTotal = this.getPageLevelTotal(metric);
                         if (pageTotal > total) {
                             total = pageTotal;
@@ -4731,12 +4737,46 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return total;
                 },
 
-                shouldUseAccountActivityTotals() {
-                    return this.dateRange === 'current_month';
+                normalizePeriodStart(date) {
+                    const normalized = new Date(date);
+                    normalized.setHours(0, 0, 0, 0);
+                    return normalized;
                 },
 
-                getAccountActivityForPlatforms(bucket) {
-                    const activity = this.audienceInsights?.accountActivity;
+                normalizePeriodEnd(date) {
+                    const normalized = new Date(date);
+                    normalized.setHours(23, 59, 59, 999);
+                    return normalized;
+                },
+
+                normalizePeriodBounds() {
+                    if (this.currentPeriodStart) this.currentPeriodStart = this.normalizePeriodStart(this.currentPeriodStart);
+                    if (this.currentPeriodEnd) this.currentPeriodEnd = this.normalizePeriodEnd(this.currentPeriodEnd);
+                    if (this.previousPeriodStart) this.previousPeriodStart = this.normalizePeriodStart(this.previousPeriodStart);
+                    if (this.previousPeriodEnd) this.previousPeriodEnd = this.normalizePeriodEnd(this.previousPeriodEnd);
+                },
+
+                formatDateParam(date) {
+                    const d = new Date(date);
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                },
+
+                getActiveAccountActivity(usePreviousPeriod = false) {
+                    if (usePreviousPeriod) {
+                        return this.previousPeriodAccountActivity || null;
+                    }
+                    if (this.periodAccountActivity) return this.periodAccountActivity;
+                    if (this.dateRange === 'current_month' && this.audienceInsights?.accountActivity) {
+                        return this.audienceInsights.accountActivity;
+                    }
+                    return null;
+                },
+
+                getAccountActivityForPlatforms(bucket, usePreviousPeriod = false) {
+                    const activity = this.getActiveAccountActivity(usePreviousPeriod);
                     if (!activity?.[bucket]) return 0;
                     let total = 0;
                     this.activePlatforms.forEach((platform) => {
@@ -4745,26 +4785,26 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return total;
                 },
 
+                mergePostAndAccountTotals(metric, usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI(metric, usePreviousPeriod);
+                    const accountTotal = this.getAccountActivityForPlatforms(metric, usePreviousPeriod);
+                    return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
+                },
+
                 getCombinedReach(usePreviousPeriod = false) {
-                    const postTotal = this.calculateFilteredKPI('reach', usePreviousPeriod);
-                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('reach'));
+                    return this.mergePostAndAccountTotals('reach', usePreviousPeriod);
                 },
 
                 getCombinedImpressions(usePreviousPeriod = false) {
-                    const postTotal = this.calculateFilteredKPI('impressions', usePreviousPeriod);
-                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('impressions'));
+                    return this.mergePostAndAccountTotals('impressions', usePreviousPeriod);
                 },
 
                 getCombinedViews(usePreviousPeriod = false) {
-                    const postTotal = this.calculateFilteredKPI('views', usePreviousPeriod);
-                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('views'));
+                    return this.mergePostAndAccountTotals('views', usePreviousPeriod);
                 },
 
-                getCombinedAddressTaps() {
-                    const activity = this.audienceInsights?.accountActivity;
+                getCombinedAddressTaps(usePreviousPeriod = false) {
+                    const activity = this.getActiveAccountActivity(usePreviousPeriod);
                     if (!activity?.address_taps) return 0;
                     let total = 0;
                     this.activePlatforms.forEach((platform) => {
@@ -4773,27 +4813,25 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return total;
                 },
 
-                getCombinedExternalLinkTaps() {
-                    const postTotal = this.calculateFilteredKPI('clicks');
-                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
-                    const activity = this.audienceInsights?.accountActivity;
+                getCombinedExternalLinkTaps(usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI('clicks', usePreviousPeriod);
+                    const activity = this.getActiveAccountActivity(usePreviousPeriod);
                     let accountTotal = 0;
-                    if (activity?.external_link_taps) {
+                    if (activity?.external_link_taps || activity?.link_clicks) {
+                        const source = activity.external_link_taps || activity.link_clicks || {};
                         this.activePlatforms.forEach((platform) => {
-                            accountTotal += Number(activity.external_link_taps[platform]) || 0;
+                            accountTotal += Number(source[platform]) || 0;
                         });
                     }
-                    return Math.max(postTotal, accountTotal, this.getCombinedLinkClicks());
+                    return Math.max(postTotal, accountTotal);
                 },
 
                 getCombinedStoriesViews() {
-                    const activity = this.audienceInsights?.accountActivity;
-                    const accountViews = this.shouldUseAccountActivityTotals()
-                        ? (Number(activity?.stories?.views) || 0)
-                        : 0;
+                    const activity = this.getActiveAccountActivity(false);
+                    const accountViews = Number(activity?.stories?.views) || 0;
                     const storyPostViews = this.posts
                         .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post))
-                        .filter((post) => post.contentType === 'story' || (post.platforms || []).includes('story') || (post.tags || []).includes('story'))
+                        .filter((post) => post.contentType === 'story' || post.mediaType === 'story' || (post.tags || []).includes('story'))
                         .reduce((sum, post) => {
                             let views = 0;
                             (post.platforms || []).forEach((platform) => {
@@ -4807,8 +4845,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 getCombinedStoriesReach() {
-                    if (!this.shouldUseAccountActivityTotals()) return 0;
-                    return Number(this.audienceInsights?.accountActivity?.stories?.reach) || 0;
+                    return Number(this.getActiveAccountActivity(false)?.stories?.reach) || 0;
                 },
 
                 getInstagramOnlineFollowers() {
@@ -4832,7 +4869,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 getMetaAccountActivityRows() {
-                    const activity = this.audienceInsights?.accountActivity;
+                    const activity = this.getActiveAccountActivity(false);
                     if (!activity) return [];
 
                     const rows = [
@@ -4959,38 +4996,32 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.calculateFilteredKPI('shares', usePreviousPeriod) +
                             this.calculateFilteredKPI('saves', usePreviousPeriod);
                     }
-                    if (usePreviousPeriod || !this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getCombinedInteractions());
+                    const accountTotal = this.getAccountActivityForPlatforms('interactions', usePreviousPeriod);
+                    return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
                 },
 
-                getCombinedInteractions() {
-                    const postTotal = this.calculateFilteredKPI('interactions');
-                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('interactions'));
+                getCombinedInteractions(usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI('interactions', usePreviousPeriod);
+                    const accountTotal = this.getAccountActivityForPlatforms('interactions', usePreviousPeriod);
+                    return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
                 },
 
-                getCombinedLinkClicks() {
-                    const postTotal = this.calculateFilteredKPI('clicks');
-                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('link_clicks'));
+                getCombinedLinkClicks(usePreviousPeriod = false) {
+                    const postTotal = this.calculateFilteredKPI('clicks', usePreviousPeriod);
+                    const accountTotal = this.getAccountActivityForPlatforms('link_clicks', usePreviousPeriod);
+                    return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
                 },
 
-                getCombinedProfileVisits() {
-                    const postTotal = this.calculateFilteredKPI('profile_visits');
-                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('profile_visits'));
+                getCombinedProfileVisits(usePreviousPeriod = false) {
+                    return this.mergePostAndAccountTotals('profile_visits', usePreviousPeriod);
                 },
 
-                getCombinedProfileActivity() {
-                    const postTotal = this.calculateFilteredKPI('profile_activity');
-                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('profile_activity'));
+                getCombinedProfileActivity(usePreviousPeriod = false) {
+                    return this.mergePostAndAccountTotals('profile_activity', usePreviousPeriod);
                 },
 
-                getCombinedMessagingConversations() {
-                    const postTotal = this.calculateFilteredKPI('messaging_conversations');
-                    if (!this.shouldUseAccountActivityTotals()) return postTotal;
-                    return Math.max(postTotal, this.getAccountActivityForPlatforms('messaging_conversations'));
+                getCombinedMessagingConversations(usePreviousPeriod = false) {
+                    return this.mergePostAndAccountTotals('messaging_conversations', usePreviousPeriod);
                 },
 
                 getNetFollows() {
@@ -5213,6 +5244,72 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
                 },
 
+                async loadPeriodAccountActivity() {
+                    if (!this.currentPeriodStart || !this.currentPeriodEnd) return;
+
+                    const clientId = this.getClientId();
+                    if (!clientId) return;
+
+                    this.periodActivityLoadToken = (this.periodActivityLoadToken || 0) + 1;
+                    const token = this.periodActivityLoadToken;
+                    this.periodAccountActivityLoading = true;
+
+                    try {
+                        const currentParams = new URLSearchParams({
+                            startDate: this.formatDateParam(this.currentPeriodStart),
+                            endDate: this.formatDateParam(this.currentPeriodEnd),
+                            activityOnly: '1'
+                        });
+
+                        const requests = [
+                            fetch(`${API_URL}/social-media/audience/${clientId}?${currentParams.toString()}`, {
+                                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                            })
+                        ];
+
+                        if (this.previousPeriodStart && this.previousPeriodEnd) {
+                            const previousParams = new URLSearchParams({
+                                startDate: this.formatDateParam(this.previousPeriodStart),
+                                endDate: this.formatDateParam(this.previousPeriodEnd),
+                                activityOnly: '1'
+                            });
+                            requests.push(
+                                fetch(`${API_URL}/social-media/audience/${clientId}?${previousParams.toString()}`, {
+                                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                })
+                            );
+                        }
+
+                        const responses = await Promise.all(requests);
+                        if (token !== this.periodActivityLoadToken) return;
+
+                        if (responses[0]?.ok) {
+                            const currentResult = await responses[0].json();
+                            this.periodAccountActivity = currentResult.data?.periodAccountActivity || null;
+                        } else {
+                            this.periodAccountActivity = null;
+                        }
+
+                        if (responses[1]?.ok) {
+                            const previousResult = await responses[1].json();
+                            this.previousPeriodAccountActivity = previousResult.data?.periodAccountActivity || null;
+                        } else {
+                            this.previousPeriodAccountActivity = null;
+                        }
+                    } catch (error) {
+                        console.warn('loadPeriodAccountActivity:', error);
+                        if (token === this.periodActivityLoadToken) {
+                            this.periodAccountActivity = null;
+                            this.previousPeriodAccountActivity = null;
+                        }
+                    } finally {
+                        if (token === this.periodActivityLoadToken) {
+                            this.periodAccountActivityLoading = false;
+                            this.updateDashboardMetrics();
+                        }
+                    }
+                },
+
                 async loadAudienceInsights(forceRefresh = false) {
                     const clientId = this.getClientId();
                     if (!clientId) return;
@@ -5264,7 +5361,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
                         this.$nextTick(() => {
                             this.initCharts();
-                            this.updateDashboardMetrics();
+                            this.loadPeriodAccountActivity();
                         });
                     } catch (error) {
                         console.warn('loadAudienceInsights:', error);
@@ -5340,8 +5437,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             }
                             break;
                     }
-                    
+
+                    this.normalizePeriodBounds();
+                    this.periodAccountActivity = null;
+                    this.previousPeriodAccountActivity = null;
                     this.updateDashboardMetrics();
+                    this.loadPeriodAccountActivity();
                     this.loadWebsiteAnalytics();
                 },
                 
@@ -5349,17 +5450,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     if (!this.customStartDate || !this.customEndDate) return;
                     
                     this.dateRange = 'custom';
-                    this.currentPeriodStart = new Date(this.customStartDate);
-                    this.currentPeriodEnd = new Date(this.customEndDate);
+                    this.currentPeriodStart = this.normalizePeriodStart(new Date(this.customStartDate));
+                    this.currentPeriodEnd = this.normalizePeriodEnd(new Date(this.customEndDate));
                     
                     // Calculate previous period (same duration)
                     const duration = this.currentPeriodEnd - this.currentPeriodStart;
-                    this.previousPeriodEnd = new Date(this.currentPeriodStart.getTime() - 1);
-                    this.previousPeriodStart = new Date(this.previousPeriodEnd.getTime() - duration);
+                    this.previousPeriodEnd = this.normalizePeriodEnd(new Date(this.currentPeriodStart.getTime() - 1));
+                    this.previousPeriodStart = this.normalizePeriodStart(new Date(this.previousPeriodEnd.getTime() - duration));
                     
                     this.currentPeriodLabel = `${this.currentPeriodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${this.currentPeriodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
                     
+                    this.periodAccountActivity = null;
+                    this.previousPeriodAccountActivity = null;
                     this.updateDashboardMetrics();
+                    this.loadPeriodAccountActivity();
                     this.loadWebsiteAnalytics();
                 },
                 
@@ -5680,6 +5784,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.dashboardData.insights.summaryStats.totalViews = this.getCombinedViews(false);
                     this.dashboardData.insights.summaryStats.totalReach = this.getCombinedReach(false);
                     this.dashboardData.insights.summaryStats.totalEngagement = this.getCombinedEngagement(false);
+                    this.dashboardData.insights.summaryStats.postCount = this.posts.filter((post) => this.isPostInDateRange(post)).length;
                 },
 
                 getTotalFollowers() {
@@ -5818,7 +5923,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             total += Number(post.kpis[key] || 0);
                         }
                     });
-                    if ((metric === 'reach' || metric === 'impressions') && this.shouldUseAccountActivityTotals()) {
+                    if ((metric === 'reach' || metric === 'impressions') && this.dateRange === 'current_month') {
                         const pageTotal = this.pageLevelMetrics?.[platform]?.[metric] || 0;
                         if (pageTotal > total) total = pageTotal;
                     }
@@ -5849,7 +5954,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 formatChange(change) {
                     const sign = change >= 0 ? '+' : '';
-                    return `${sign}${change.toFixed(1)}% vs last month`;
+                    return `${sign}${change.toFixed(1)}% ${this.getComparisonPeriodLabel()}`;
+                },
+
+                getComparisonPeriodLabel() {
+                    if (this.dateRange === 'custom') return 'vs prior period';
+                    if (this.dateRange === 'last_month') return 'vs month before';
+                    if (this.dateRange === 'last_3_months') return 'vs prior 3 months';
+                    if (this.dateRange === 'ytd') return 'vs same period last year';
+                    if (this.dateRange === 'last_year' || this.dateRange.startsWith('full_year_')) return 'vs prior year';
+                    return 'vs prior period';
                 },
 
                 formatDate(dateStr) {
