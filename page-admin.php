@@ -89,7 +89,7 @@ show_admin_bar(false);
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
                     <span class="nav-text">Clients</span>
                 </a>
-                <a @click.prevent="activeTab = 'emails'; loadClientReminders(); loadFeatureMailblast(); loadWebsiteConnectedMailblast(); loadWebsiteUpsellMailblast()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
+                <a @click.prevent="activeTab = 'emails'; loadClientReminders(); loadFeatureMailblast(); loadWebsiteConnectedMailblast(); loadWebsiteUpsellMailblast(); loadTeamProgressEmailPreview()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                     <span class="nav-text">Emails</span>
                 </a>
@@ -308,6 +308,78 @@ show_admin_bar(false);
                             <span x-show="!workflowDigestLoading">Send Test Digest Now</span>
                             <span x-show="workflowDigestLoading">Sending…</span>
                         </button>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">Team Progress — Monthly Emails</h3>
+                            <p class="text-xs text-gray-500 mt-1">Email each team member their individual progress summary. Sent automatically on the 1st of each month (previous month's recap).</p>
+                            <p class="text-xs text-indigo-600 mt-2" x-show="teamProgressEmailPreview.period?.label">
+                                Period: <span x-text="teamProgressEmailPreview.period?.label"></span> ·
+                                <span x-text="teamProgressEmailPreview.recipientCount || 0"></span> recipient(s)
+                            </p>
+                            <p class="text-xs text-amber-600 mt-1" x-show="!teamProgressEmailPreview.enabled">Email not configured — set WORKFLOW_EMAIL_ENABLED=true and Resend/SMTP credentials.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select x-model="teamProgressEmailForm.period" @change="loadTeamProgressEmailPreview()"
+                                    class="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700">
+                                <option value="current">Current month</option>
+                                <option value="previous">Previous month</option>
+                            </select>
+                            <select x-model="teamProgressEmailForm.sampleUserId"
+                                    class="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 max-w-[180px]">
+                                <option value="">Sample: first member</option>
+                                <template x-for="r in teamProgressEmailPreview.recipients || []" :key="r.userId">
+                                    <option :value="r.userId" x-text="r.name"></option>
+                                </template>
+                            </select>
+                            <button @click="loadTeamProgressEmailPreview()" :disabled="teamProgressEmailLoading"
+                                    class="px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
+                                Refresh
+                            </button>
+                            <button @click="sendTeamProgressTestEmail()"
+                                    :disabled="teamProgressEmailLoading"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-xl hover:bg-indigo-50 disabled:opacity-50">
+                                <span x-show="!teamProgressEmailTesting">Send Test to Me</span>
+                                <span x-show="teamProgressEmailTesting">Sending…</span>
+                            </button>
+                            <button @click="sendTeamProgressEmails()"
+                                    :disabled="teamProgressEmailLoading || teamProgressEmailSending || !teamProgressEmailPreview.recipientCount"
+                                    class="px-4 py-2 bg-green-600 text-white text-xs font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!teamProgressEmailSending">Send to All Team</span>
+                                <span x-show="teamProgressEmailSending">Sending…</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="teamProgressEmailLoading" class="p-8 text-center text-sm text-gray-500">Loading team progress preview…</div>
+
+                    <div x-show="!teamProgressEmailLoading && (teamProgressEmailPreview.recipients || []).length" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <template x-for="r in teamProgressEmailPreview.recipients || []" :key="r.userId">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="r.name"></td>
+                                        <td class="px-4 py-3 text-xs text-gray-600" x-text="r.email"></td>
+                                        <td class="px-4 py-3 text-xs text-gray-600" x-text="r.departmentLabel"></td>
+                                        <td class="px-4 py-3 text-xs">
+                                            <span x-text="r.score !== null ? r.score + '%' : '—'"></span>
+                                            <span class="text-gray-400" x-text="r.scoreLabel ? ' (' + r.scoreLabel + ')' : ''"></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -1568,6 +1640,11 @@ show_admin_bar(false);
                 showUserModal: false,
                 showClientModal: false,
                 workflowDigestLoading: false,
+                teamProgressEmailForm: { period: 'current', sampleUserId: '' },
+                teamProgressEmailPreview: { recipients: [], enabled: false },
+                teamProgressEmailLoading: false,
+                teamProgressEmailTesting: false,
+                teamProgressEmailSending: false,
                 reminderBrands: [],
                 reminderTotals: { brands: 0, pendingItems: 0, recipients: 0 },
                 selectedReminderClients: [],
@@ -2785,6 +2862,83 @@ show_admin_bar(false);
                         this.showToast('Could not reach the API — check Admin → API URL settings', 'error', 6000);
                     } finally {
                         this.workflowDigestLoading = false;
+                    }
+                },
+
+                async loadTeamProgressEmailPreview() {
+                    this.teamProgressEmailLoading = true;
+                    try {
+                        const params = new URLSearchParams({ period: this.teamProgressEmailForm.period || 'current' });
+                        const response = await fetch(`${API_URL}/admin/team-progress-emails/preview?${params}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.teamProgressEmailPreview = data;
+                        } else {
+                            this.showToast(data.message || 'Failed to load team progress preview', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadTeamProgressEmailPreview:', error);
+                        this.showToast('Could not load team progress preview', 'error', 5000);
+                    } finally {
+                        this.teamProgressEmailLoading = false;
+                    }
+                },
+
+                async sendTeamProgressTestEmail() {
+                    this.teamProgressEmailTesting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/team-progress-emails/test`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                period: this.teamProgressEmailForm.period || 'current',
+                                userId: this.teamProgressEmailForm.sampleUserId || null
+                            })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || 'Test progress email sent — check your inbox', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'Test email could not be sent', 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendTeamProgressTestEmail:', error);
+                        this.showToast('Could not send test email', 'error', 5000);
+                    } finally {
+                        this.teamProgressEmailTesting = false;
+                    }
+                },
+
+                async sendTeamProgressEmails() {
+                    const count = this.teamProgressEmailPreview.recipientCount || 0;
+                    if (!confirm(`Send progress emails to ${count} team member${count === 1 ? '' : 's'} for ${this.teamProgressEmailPreview.period?.label || 'this period'}?`)) return;
+
+                    this.teamProgressEmailSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/team-progress-emails/send`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ period: this.teamProgressEmailForm.period || 'current' })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || `Sent ${data.sent} email(s)`, 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'Some emails failed to send', 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendTeamProgressEmails:', error);
+                        this.showToast('Could not send team progress emails', 'error', 5000);
+                    } finally {
+                        this.teamProgressEmailSending = false;
                     }
                 },
 
