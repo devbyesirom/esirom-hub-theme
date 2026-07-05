@@ -65,6 +65,20 @@ show_admin_bar(false);
         .sidebar-collapsed .justify-between {
            justify-content: center;
         }
+        /* Admin panel */
+        .admin-card { border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
+        .admin-stat { border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #fff; padding: 0.875rem 1rem; }
+        .admin-stat-value { font-size: 1.25rem; font-weight: 700; color: #111827; line-height: 1.2; }
+        .admin-stat-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin-top: 0.125rem; }
+        .admin-table thead { background: #f9fafb; }
+        .admin-table th { padding: 0.625rem 1rem; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; text-align: left; }
+        .admin-table td { padding: 0.75rem 1rem; font-size: 0.8125rem; color: #374151; }
+        .admin-table tbody tr:hover { background: #f9fafb; }
+        .admin-btn-primary { padding: 0.375rem 0.875rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 600; background: #4f46e5; color: #fff; }
+        .admin-btn-primary:hover { background: #4338ca; }
+        .admin-btn-secondary { padding: 0.375rem 0.875rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 600; border: 1px solid #e5e7eb; color: #374151; background: #fff; }
+        .admin-btn-secondary:hover { background: #f9fafb; }
+        .admin-nav-label { padding: 0.375rem 0.75rem; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; }
         <?php esirom_hub_layout_styles(); ?>
     </style>
     <?php wp_head(); ?>
@@ -76,6 +90,7 @@ show_admin_bar(false);
         <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar flex-shrink-0 bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex flex-col">
             <?php esirom_hub_staff_sidebar_header(false); ?>
             <nav class="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
+                <p class="admin-nav-label nav-text mb-1">Administration</p>
                 <a @click.prevent="activeTab = 'users'" href="#" :class="activeTab === 'users' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
                     <span class="nav-text">Users</span>
@@ -89,13 +104,13 @@ show_admin_bar(false);
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
                     <span class="nav-text">Clients</span>
                 </a>
-                <a @click.prevent="activeTab = 'emails'; loadClientReminders(); loadFeatureMailblast(); loadWebsiteConnectedMailblast(); loadWebsiteUpsellMailblast(); loadTeamProgressEmailPreview()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
+                <a @click.prevent="openEmailsTab()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                     <span class="nav-text">Emails</span>
                 </a>
                 <a @click.prevent="activeTab = 'import'" href="#" :class="activeTab === 'import' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
                     <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                    <span class="nav-text">Import Posts</span>
+                    <span class="nav-text">Data Import</span>
                 </a>
             </nav>
             <div class="p-2 border-t border-gray-200 dark:border-gray-700/50 space-y-0.5">
@@ -147,42 +162,51 @@ show_admin_bar(false);
             <div class="hub-page-content px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-4 sm:pb-6 lg:pb-8">
             
             <!-- Users Tab -->
-            <div x-show="activeTab === 'users'" x-cloak class="w-full">
-                <div class="flex justify-between items-center mb-4 gap-3 flex-wrap">
-                    <h2 class="text-base font-bold text-gray-900 dark:text-white">All Users</h2>
-                    <button @click="showUserModal = true; editingUser = null" class="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-indigo-700">
-                        Add New User
+            <div x-show="activeTab === 'users'" x-cloak class="w-full space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="admin-stat">
+                        <p class="admin-stat-value" x-text="users.length"></p>
+                        <p class="admin-stat-label">Total users</p>
+                    </div>
+                    <div class="admin-stat">
+                        <p class="admin-stat-value" x-text="users.filter(u => u.isActive).length"></p>
+                        <p class="admin-stat-label">Active</p>
+                    </div>
+                    <div class="admin-stat col-span-2 sm:col-span-1">
+                        <p class="admin-stat-value" x-text="users.filter(u => u.role === 'brand_rep').length"></p>
+                        <p class="admin-stat-label">Brand reps</p>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button @click="showUserModal = true; editingUser = null" class="admin-btn-primary hover:bg-indigo-700 transition-colors">
+                        Add user
                     </button>
                 </div>
-
-                <!-- Users Table -->
-                <div class="bg-white shadow rounded-lg overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                <div class="admin-card">
+                    <table class="admin-table min-w-full divide-y divide-gray-100">
+                        <thead>
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="divide-y divide-gray-100">
                             <template x-for="user in users" :key="user._id">
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900" x-text="user.firstName + ' ' + user.lastName"></div>
+                                    <td class="font-medium text-gray-900 whitespace-nowrap" x-text="user.firstName + ' ' + user.lastName"></td>
+                                    <td class="text-gray-500 whitespace-nowrap" x-text="user.email"></td>
+                                    <td class="whitespace-nowrap">
+                                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-50 text-indigo-700 capitalize" x-text="user.role.replace('_', ' ')"></span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="user.email"></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800" x-text="user.role.replace('_', ' ')"></span>
+                                    <td class="whitespace-nowrap">
+                                        <span :class="user.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" class="px-2 py-0.5 text-[10px] font-semibold rounded-full" x-text="user.isActive ? 'Active' : 'Inactive'"></span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="user.isActive ? 'Active' : 'Inactive'"></span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button @click="editUser(user)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                                        <button @click="deleteUser(user._id)" class="text-red-600 hover:text-red-900">Delete</button>
+                                    <td class="whitespace-nowrap font-medium space-x-3">
+                                        <button @click="editUser(user)" class="text-indigo-600 hover:text-indigo-800">Edit</button>
+                                        <button @click="deleteUser(user._id)" class="text-red-600 hover:text-red-800">Delete</button>
                                     </td>
                                 </tr>
                             </template>
@@ -192,60 +216,53 @@ show_admin_bar(false);
             </div>
 
             <!-- Pending Users Tab -->
-            <div x-show="activeTab === 'pending'" x-cloak class="w-full">
-                <div class="flex justify-between items-center mb-4 gap-3 flex-wrap">
-                    <h2 class="text-base font-bold text-gray-900 dark:text-white">Registration Queue</h2>
-                    <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-semibold" x-text="`${pendingUsers.length} Pending`"></span>
+            <div x-show="activeTab === 'pending'" x-cloak class="w-full space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="admin-stat">
+                        <p class="admin-stat-value" x-text="pendingUsers.length"></p>
+                        <p class="admin-stat-label">Awaiting approval</p>
+                    </div>
+                    <div class="admin-stat flex items-center">
+                        <p class="text-xs text-gray-500 leading-relaxed">Review new registration requests and assign clients before approving.</p>
+                    </div>
                 </div>
-
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                <div class="admin-card">
+                    <table class="admin-table min-w-full divide-y divide-gray-100">
+                        <thead>
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Note</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th>User</th>
+                                <th>Company</th>
+                                <th>Note</th>
+                                <th>Requested</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="divide-y divide-gray-100">
                             <template x-if="pendingUsers.length === 0">
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <p class="mt-2 font-medium">No pending registrations</p>
-                                        <p class="text-sm">All registration requests have been processed</p>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                                        <p class="font-medium text-gray-500">No pending registrations</p>
+                                        <p class="text-xs mt-1">New sign-ups will appear here</p>
                                     </td>
                                 </tr>
                             </template>
                             <template x-for="user in pendingUsers" :key="user._id">
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                                                <span class="text-indigo-600 font-semibold" x-text="user.firstName.charAt(0) + user.lastName.charAt(0)"></span>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900" x-text="user.firstName + ' ' + user.lastName"></div>
-                                                <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                <tr>
+                                    <td class="whitespace-nowrap">
+                                        <div class="flex items-center gap-3">
+                                            <div class="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700" x-text="user.firstName.charAt(0) + user.lastName.charAt(0)"></div>
+                                            <div>
+                                                <div class="font-medium text-gray-900" x-text="user.firstName + ' ' + user.lastName"></div>
+                                                <div class="text-xs text-gray-500" x-text="user.email"></div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900" x-text="user.companyName || '-'"></div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 max-w-xs truncate" x-text="user.registrationNote || 'No note provided'" :title="user.registrationNote"></div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <span x-text="new Date(user.createdAt).toLocaleDateString()"></span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                        <button @click="approveUser(user)" class="text-green-600 hover:text-green-900">Approve</button>
-                                        <button @click="rejectUser(user)" class="text-red-600 hover:text-red-900">Reject</button>
+                                    <td class="whitespace-nowrap" x-text="user.companyName || '—'"></td>
+                                    <td class="max-w-xs truncate text-gray-500" x-text="user.registrationNote || '—'" :title="user.registrationNote"></td>
+                                    <td class="whitespace-nowrap text-gray-500" x-text="new Date(user.createdAt).toLocaleDateString()"></td>
+                                    <td class="whitespace-nowrap font-medium space-x-3">
+                                        <button @click="approveUser(user)" class="text-emerald-600 hover:text-emerald-800">Approve</button>
+                                        <button @click="rejectUser(user)" class="text-red-600 hover:text-red-800">Reject</button>
                                     </td>
                                 </tr>
                             </template>
@@ -255,39 +272,49 @@ show_admin_bar(false);
             </div>
 
             <!-- Clients Tab -->
-            <div x-show="activeTab === 'clients'" x-cloak class="w-full">
-                <div class="flex justify-between items-center mb-4 gap-3 flex-wrap">
-                    <h2 class="text-base font-bold text-gray-900 dark:text-white">All Clients &amp; Brands</h2>
-                    <button @click="showClientModal = true; editingClient = null" class="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-indigo-700">
-                        Add New Client
-                    </button>
+            <div x-show="activeTab === 'clients'" x-cloak class="w-full space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="admin-stat">
+                        <p class="admin-stat-value" x-text="clients.length"></p>
+                        <p class="admin-stat-label">Brands</p>
+                    </div>
+                    <div class="admin-stat">
+                        <p class="admin-stat-value" x-text="clients.filter(c => c.isActive !== false).length"></p>
+                        <p class="admin-stat-label">Active</p>
+                    </div>
+                    <div class="admin-stat col-span-2 sm:col-span-1 flex items-center justify-end">
+                        <button @click="showClientModal = true; editingClient = null" class="admin-btn-primary hover:bg-indigo-700 transition-colors">
+                            Add client
+                        </button>
+                    </div>
                 </div>
-
-                <!-- Clients Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     <template x-for="client in clients" :key="client._id">
-                        <div class="bg-white shadow rounded-lg p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <img :src="client.logo || 'https://placehold.co/100x100/4a5568/ffffff?text=' + (client.brandName || client.companyName || client.name || 'C').charAt(0)" class="h-12 w-12 rounded-full" :alt="client.brandName || client.companyName || client.name">
-                                <span :class="client.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 text-xs font-semibold rounded-full" x-text="client.isActive ? 'Active' : 'Inactive'"></span>
+                        <div class="admin-card p-4 flex flex-col">
+                            <div class="flex items-start justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <img :src="client.logo || 'https://placehold.co/80x80/e0e7ff/4338ca?text=' + encodeURIComponent((client.brandName || client.name || 'C').charAt(0))" class="h-10 w-10 rounded-lg object-cover shrink-0" :alt="client.brandName || client.name">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-semibold text-gray-900 truncate" x-text="client.brandName || client.companyName || client.name || 'Unnamed'"></h3>
+                                        <p class="text-xs text-gray-500 truncate" x-text="client.contactEmail || 'No email'"></p>
+                                    </div>
+                                </div>
+                                <span :class="client.isActive !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" class="shrink-0 px-2 py-0.5 text-[10px] font-semibold rounded-full" x-text="client.isActive !== false ? 'Active' : 'Inactive'"></span>
                             </div>
-                            <h3 class="text-lg font-semibold mb-2" x-text="client.brandName || client.companyName || client.name || 'Unnamed Client'"></h3>
-                            <p class="text-sm text-gray-600 mb-2" x-text="client.contactEmail"></p>
-                            <p class="text-xs text-gray-500 mb-1">Industry: <span x-text="client.industry || 'N/A'"></span></p>
-                            <p class="text-xs mb-4">
-                                <span x-show="!client.serviceType || client.serviceType === 'social_media'" class="inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">Social Media</span>
-                                <span x-show="client.serviceType === 'creative'" class="inline-block px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 text-xs font-medium">Creative</span>
-                                <span x-show="client.serviceType === 'multimedia'" class="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">Multimedia</span>
-                                <span x-show="client.serviceType === 'website'" class="inline-block px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-xs font-medium">Website</span>
-                            </p>
-                            <div class="flex flex-col space-y-2">
-                                <button @click="customizeClient(client)" class="w-full bg-green-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-green-700 flex items-center justify-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                                    Customize Dashboard
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                <span x-show="!client.serviceType || client.serviceType === 'social_media'" class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium">Social</span>
+                                <span x-show="client.serviceType === 'creative'" class="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-medium">Creative</span>
+                                <span x-show="client.serviceType === 'multimedia'" class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">Multimedia</span>
+                                <span x-show="client.serviceType === 'website'" class="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-medium">Website</span>
+                                <span x-show="client.industry" class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px]" x-text="client.industry"></span>
+                            </div>
+                            <div class="mt-auto flex flex-col gap-2">
+                                <button @click="customizeClient(client)" class="w-full admin-btn-primary bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                                    Customize dashboard
                                 </button>
-                                <div class="flex space-x-2">
-                                    <button @click="editClient(client)" class="flex-1 bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-indigo-700">Edit</button>
-                                    <button @click="deleteClient(client._id)" class="flex-1 bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-700">Delete</button>
+                                <div class="flex gap-2">
+                                    <button @click="editClient(client)" class="flex-1 admin-btn-secondary">Edit</button>
+                                    <button @click="deleteClient(client._id)" class="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-[0.625rem] hover:bg-red-50 px-3 py-1.5">Delete</button>
                                 </div>
                             </div>
                         </div>
@@ -479,57 +506,57 @@ show_admin_bar(false);
                     </div>
                 </div>
 
-                <!-- Team copy note (compact) -->
-                <details class="rounded-lg border border-indigo-100 bg-indigo-50/50 px-4 py-2.5 text-xs text-indigo-900">
-                    <summary class="font-medium cursor-pointer select-none">Feature announcements also send a [Team copy] to staff</summary>
-                    <p class="mt-2 text-indigo-800/80 leading-relaxed">When you send a client announcement (not a test), every active admin and brand rep gets a copy so the team stays aligned.</p>
-                </details>
-
-                <!-- Live Insights -->
+                <!-- Feature announcements (one-time rollouts) -->
                 <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                     <div class="flex items-stretch">
-                        <button type="button" @click="toggleEmailSection('liveInsights')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                        <button type="button" @click="toggleEmailSection('announcements')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
                             <div class="shrink-0 w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="text-sm font-semibold text-gray-900">Live Insights Announcement</h3>
-                                    <span x-show="mailblastTotals.recipients > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700"><span x-text="mailblastTotals.recipients"></span> contacts</span>
+                                    <h3 class="text-sm font-semibold text-gray-900">Feature Announcements</h3>
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">One-time rollouts</span>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-0.5 truncate">Tell clients live metrics are in the Hub</p>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Live Insights, GA connected, or GA upsell campaigns</p>
                             </div>
-                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.liveInsights ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.announcements ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
-                            <button @click="sendMailblastTest()" :disabled="mailblastTesting || mailblastLoading"
+                            <button @click="sendActiveAnnouncementTest()" :disabled="announcementBusy"
                                     class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg hover:bg-indigo-50 disabled:opacity-50">Test</button>
-                            <button @click="sendFeatureMailblast()"
-                                    :disabled="mailblastSending || mailblastLoading || selectedMailblastClients.length === 0"
+                            <button @click="sendActiveAnnouncement()"
+                                    :disabled="announcementBusy || announcementSelectedCount === 0"
                                     class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
-                                <span x-show="!mailblastSending">Send (<span x-text="selectedMailblastClients.length"></span>)</span>
-                                <span x-show="mailblastSending">…</span>
+                                Send (<span x-text="announcementSelectedCount"></span>)
                             </button>
                         </div>
                     </div>
-                    <div x-show="emailSections.liveInsights" x-collapse class="border-t border-gray-100">
-                        <div class="px-4 py-2 bg-gray-50/50 border-b border-gray-100 flex justify-end">
-                            <button @click="loadFeatureMailblast()" :disabled="mailblastLoading" class="text-xs text-gray-500 hover:text-gray-800">Refresh list</button>
+                    <div x-show="emailSections.announcements" x-collapse class="border-t border-gray-100">
+                        <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-2">
+                            <select x-model="announcementFeature" @change="loadActiveAnnouncementPreview()"
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white">
+                                <option value="live_insights">Live Insights</option>
+                                <option value="website_analytics_connected">Website Analytics — Connected</option>
+                                <option value="website_analytics_upsell">Website Analytics — Upsell</option>
+                            </select>
+                            <button @click="loadActiveAnnouncementPreview()" :disabled="announcementLoading" class="text-xs text-gray-500 hover:text-gray-800">Refresh</button>
+                            <p class="text-[10px] text-indigo-600 ml-auto">Non-test sends include a [Team copy] to staff</p>
                         </div>
-                        <div x-show="mailblastLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
-                        <div x-show="!mailblastLoading && !mailblastBrands.length" class="p-6 text-center text-sm text-gray-400">No eligible clients.</div>
-                        <div x-show="!mailblastLoading && mailblastBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                        <div x-show="announcementLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!announcementLoading && !announcementBrands.length" class="p-6 text-center text-sm text-gray-400">No eligible clients for this campaign.</div>
+                        <div x-show="!announcementLoading && announcementBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
                             <label class="flex items-center gap-3 px-4 py-2 bg-gray-50/80 text-xs font-medium text-gray-500 sticky top-0 border-b border-gray-100 cursor-pointer">
                                 <input type="checkbox" class="rounded border-gray-300"
-                                       :checked="selectedMailblastClients.length === mailblastBrands.filter(b => b.clientUsers.length).length && mailblastBrands.filter(b => b.clientUsers.length).length > 0"
-                                       @change="toggleAllMailblastClients($event.target.checked)">
-                                Select all with contacts
+                                       :checked="announcementSelectedCount === announcementEligibleCount && announcementEligibleCount > 0"
+                                       @change="toggleAllActiveAnnouncementClients($event.target.checked)">
+                                Select all with contacts (<span x-text="announcementTotals.recipients || 0"></span> recipients)
                             </label>
-                            <template x-for="brand in mailblastBrands" :key="brand.clientId">
-                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50/80 cursor-pointer" :class="!brand.clientUsers.length ? 'opacity-40' : ''">
-                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
-                                           :checked="selectedMailblastClients.includes(brand.clientId)"
-                                           @change="toggleMailblastClient(brand.clientId, $event.target.checked)">
+                            <template x-for="brand in announcementBrands" :key="brand.clientId">
+                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50/80 cursor-pointer" :class="!brand.clientUsers?.length ? 'opacity-40' : ''">
+                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers?.length"
+                                           :checked="announcementSelectedIds.includes(brand.clientId)"
+                                           @change="toggleActiveAnnouncementClient(brand.clientId, $event.target.checked)">
                                     <span class="text-sm font-medium text-gray-900 flex-1 truncate" x-text="brand.brandName"></span>
                                     <span class="text-[10px] text-gray-400 capitalize shrink-0" x-text="(brand.serviceType || '').replace('_', ' ')"></span>
                                 </label>
@@ -537,315 +564,152 @@ show_admin_bar(false);
                         </div>
                     </div>
                 </div>
-
-                <!-- GA Connected -->
-                <div class="rounded-xl border border-amber-200/80 bg-white shadow-sm overflow-hidden">
-                    <div class="flex items-stretch">
-                        <button type="button" @click="toggleEmailSection('websiteConnected')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-amber-50/30 transition-colors min-w-0">
-                            <div class="shrink-0 w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
-                                <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="text-sm font-semibold text-gray-900">Website Analytics (Connected)</h3>
-                                    <span x-show="websiteConnectedTotals.recipients > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800"><span x-text="websiteConnectedTotals.recipients"></span> contacts</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-0.5 truncate">GA4 is live — notify connected brands</p>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.websiteConnected ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div class="flex items-center gap-2 px-3 border-l border-amber-100" @click.stop>
-                            <button @click="sendWebsiteConnectedMailblastTest()" :disabled="websiteConnectedTesting || websiteConnectedLoading"
-                                    class="px-3 py-1.5 border border-amber-300 text-amber-800 text-xs font-semibold rounded-lg hover:bg-amber-50 disabled:opacity-50">Test</button>
-                            <button @click="sendWebsiteConnectedMailblast()"
-                                    :disabled="websiteConnectedSending || websiteConnectedLoading || selectedWebsiteConnectedClients.length === 0"
-                                    class="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap">
-                                <span x-show="!websiteConnectedSending">Send (<span x-text="selectedWebsiteConnectedClients.length"></span>)</span>
-                                <span x-show="websiteConnectedSending">…</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div x-show="emailSections.websiteConnected" x-collapse class="border-t border-amber-100">
-                        <div class="px-4 py-2 bg-amber-50/30 border-b border-amber-100 flex justify-end">
-                            <button @click="loadWebsiteConnectedMailblast()" :disabled="websiteConnectedLoading" class="text-xs text-amber-800/70 hover:text-amber-900">Refresh</button>
-                        </div>
-                        <div x-show="websiteConnectedLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
-                        <div x-show="!websiteConnectedLoading && !websiteConnectedBrands.length" class="p-6 text-center text-sm text-gray-400">No GA-connected brands.</div>
-                        <div x-show="!websiteConnectedLoading && websiteConnectedBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
-                            <label class="flex items-center gap-3 px-4 py-2 bg-amber-50/40 text-xs font-medium text-gray-500 sticky top-0 border-b border-amber-100 cursor-pointer">
-                                <input type="checkbox" class="rounded border-gray-300"
-                                       :checked="selectedWebsiteConnectedClients.length === websiteConnectedBrands.filter(b => b.clientUsers.length).length && websiteConnectedBrands.filter(b => b.clientUsers.length).length > 0"
-                                       @change="toggleAllWebsiteConnectedClients($event.target.checked)">
-                                Select all with contacts
-                            </label>
-                            <template x-for="brand in websiteConnectedBrands" :key="'wac-' + brand.clientId">
-                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50/20 cursor-pointer" :class="!brand.clientUsers.length ? 'opacity-40' : ''">
-                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
-                                           :checked="selectedWebsiteConnectedClients.includes(brand.clientId)"
-                                           @change="toggleWebsiteConnectedClient(brand.clientId, $event.target.checked)">
-                                    <span class="text-sm font-medium text-gray-900 flex-1 truncate" x-text="brand.brandName"></span>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GA Upsell -->
-                <div class="rounded-xl border border-teal-200/80 bg-white shadow-sm overflow-hidden">
-                    <div class="flex items-stretch">
-                        <button type="button" @click="toggleEmailSection('websiteUpsell')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-teal-50/30 transition-colors min-w-0">
-                            <div class="shrink-0 w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center">
-                                <svg class="w-4 h-4 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="text-sm font-semibold text-gray-900">Website Analytics (Upsell)</h3>
-                                    <span x-show="websiteUpsellTotals.recipients > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-50 text-teal-800"><span x-text="websiteUpsellTotals.recipients"></span> contacts</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-0.5 truncate">Invite brands without GA to connect</p>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.websiteUpsell ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div class="flex items-center gap-2 px-3 border-l border-teal-100" @click.stop>
-                            <button @click="sendWebsiteUpsellMailblastTest()" :disabled="websiteUpsellTesting || websiteUpsellLoading"
-                                    class="px-3 py-1.5 border border-teal-300 text-teal-800 text-xs font-semibold rounded-lg hover:bg-teal-50 disabled:opacity-50">Test</button>
-                            <button @click="sendWebsiteUpsellMailblast()"
-                                    :disabled="websiteUpsellSending || websiteUpsellLoading || selectedWebsiteUpsellClients.length === 0"
-                                    class="px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg hover:bg-teal-700 disabled:opacity-50 whitespace-nowrap">
-                                <span x-show="!websiteUpsellSending">Send (<span x-text="selectedWebsiteUpsellClients.length"></span>)</span>
-                                <span x-show="websiteUpsellSending">…</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div x-show="emailSections.websiteUpsell" x-collapse class="border-t border-teal-100">
-                        <div class="px-4 py-2 bg-teal-50/30 border-b border-teal-100 flex justify-end">
-                            <button @click="loadWebsiteUpsellMailblast()" :disabled="websiteUpsellLoading" class="text-xs text-teal-800/70 hover:text-teal-900">Refresh</button>
-                        </div>
-                        <div x-show="websiteUpsellLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
-                        <div x-show="!websiteUpsellLoading && !websiteUpsellBrands.length" class="p-6 text-center text-sm text-gray-400">No upsell-eligible brands.</div>
-                        <div x-show="!websiteUpsellLoading && websiteUpsellBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
-                            <label class="flex items-center gap-3 px-4 py-2 bg-teal-50/40 text-xs font-medium text-gray-500 sticky top-0 border-b border-teal-100 cursor-pointer">
-                                <input type="checkbox" class="rounded border-gray-300"
-                                       :checked="selectedWebsiteUpsellClients.length === websiteUpsellBrands.filter(b => b.clientUsers.length).length && websiteUpsellBrands.filter(b => b.clientUsers.length).length > 0"
-                                       @change="toggleAllWebsiteUpsellClients($event.target.checked)">
-                                Select all with contacts
-                            </label>
-                            <template x-for="brand in websiteUpsellBrands" :key="'wau-' + brand.clientId">
-                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-teal-50/20 cursor-pointer" :class="!brand.clientUsers.length ? 'opacity-40' : ''">
-                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
-                                           :checked="selectedWebsiteUpsellClients.includes(brand.clientId)"
-                                           @change="toggleWebsiteUpsellClient(brand.clientId, $event.target.checked)">
-                                    <span class="text-sm font-medium text-gray-900 flex-1 truncate" x-text="brand.brandName"></span>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Import Posts Tab -->
-            <div x-show="activeTab === 'import'" x-cloak class="w-full">
-                <div class="mb-4">
-                    <h2 class="text-base font-bold text-gray-900 dark:text-white">Import Posts &amp; KPIs</h2>
-                </div>
+            <!-- Data Import Tab -->
+            <div x-show="activeTab === 'import'" x-cloak class="w-full space-y-4">
+                <p class="text-sm text-gray-500">Upload Instagram or Facebook export files for a brand. Meta API fetch is under Advanced.</p>
 
-                <!-- Import Method Selection -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <!-- Manual Import (CSV/JSON) -->
-                    <div class="bg-white shadow rounded-lg p-6">
-                        <div class="flex items-center mb-4">
-                            <svg class="h-8 w-8 text-indigo-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <h3 class="text-lg font-semibold">Manual Import (CSV/JSON)</h3>
+                <!-- File import -->
+                <div class="admin-card">
+                    <button type="button" @click="importSections.csv = !importSections.csv" class="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors">
+                        <div class="shrink-0 w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4">Upload a CSV or JSON file with post data and KPIs</p>
-                        
-                        <!-- Client Selection -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Select Client</label>
-                            <select x-model="importClientId" class="w-full border rounded px-3 py-2">
-                                <option value="">Choose a client...</option>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-gray-900">File Import (CSV / JSON / Export folder)</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Instagram or Facebook export folders, or a CSV template</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="importSections.csv ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="importSections.csv" class="border-t border-gray-100 px-4 py-4 space-y-4 bg-gray-50/30">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Brand</label>
+                            <select x-model="importClientId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                                <option value="">Choose a brand…</option>
                                 <template x-for="client in clients" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.companyName || client.name"></option>
                                 </template>
                             </select>
                         </div>
-
-                        <!-- File Upload -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Upload File or Folder</label>
-                            <input 
-                                type="file" 
-                                @change="handleImportFile($event)" 
-                                accept=".csv,.json" 
-                                multiple 
-                                webkitdirectory 
-                                directory 
-                                :disabled="!importClientId"
-                                class="w-full border rounded px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            >
-                            <p class="text-xs text-gray-500 mt-1">Supported: CSV, JSON, Instagram Export, or Facebook Export</p>
-                            <p x-show="!importClientId" class="text-xs text-red-600 mt-1">⚠️ Please select a client first</p>
-                            <p x-show="importClientId" class="text-xs text-blue-600 mt-1">💡 Tip: Select the entire Instagram or Facebook export folder!</p>
-                            <div x-show="importClientId" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p class="text-xs text-amber-800 mb-2">
-                                    <strong>Note:</strong> Media files (videos/images) are referenced but not uploaded to the server.
-                                </p>
-                                <p class="text-xs text-amber-800">
-                                    To display media, copy the <code class="bg-amber-100 px-1 rounded">media</code> folder from your Instagram export to:
-                                </p>
-                                <code class="block bg-amber-100 px-2 py-1 rounded mt-1 text-xs" x-text="'/wp-content/media/' + ((clients.find(c => c._id === importClientId)?.brandName) || (clients.find(c => c._id === importClientId)?.companyName) || 'client-name').toLowerCase().replace(/\\s+/g, '-') + '/'"></code>
-                                <p class="text-xs text-amber-700 mt-2">
-                                    Example: <code class="bg-amber-100 px-1 rounded">cp -r media/ /wp-content/media/grabngoja/</code>
-                                </p>
-                            </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Export file or folder</label>
+                            <input type="file" @change="handleImportFile($event)" accept=".csv,.json" multiple webkitdirectory directory
+                                   :disabled="!importClientId"
+                                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed">
+                            <p class="text-xs text-gray-500 mt-1">CSV, JSON, or full Instagram/Facebook export folder</p>
+                            <p x-show="!importClientId" class="text-xs text-amber-600 mt-1">Select a brand first</p>
                         </div>
-
-                        <button @click="processManualImport()" :disabled="!importClientId || !importFile" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            Import Posts
-                        </button>
-
-                        <!-- Download Template -->
-                        <button @click="downloadTemplate()" class="w-full mt-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                            Download CSV Template
-                        </button>
+                        <div class="flex flex-wrap gap-2">
+                            <button @click="processManualImport()" :disabled="!importClientId || !importFile"
+                                    class="admin-btn-primary disabled:opacity-50 disabled:cursor-not-allowed">Parse &amp; Preview</button>
+                            <button @click="downloadTemplate()" class="admin-btn-secondary">Download CSV template</button>
+                        </div>
+                        <details class="text-xs text-gray-600">
+                            <summary class="cursor-pointer font-medium text-gray-700">Media files note</summary>
+                            <p class="mt-2">Media is referenced from exports but not uploaded automatically. Copy the export <code class="bg-gray-100 px-1 rounded">media</code> folder to <code class="bg-gray-100 px-1 rounded" x-text="'/wp-content/media/' + ((clients.find(c => c._id === importClientId)?.brandName) || (clients.find(c => c._id === importClientId)?.companyName) || 'brand').toLowerCase().replace(/\\s+/g, '-') + '/'"></code>, or use the upload step after preview.</p>
+                        </details>
                     </div>
+                </div>
 
-                    <!-- Meta API Import -->
-                    <div class="bg-white shadow rounded-lg p-6">
-                        <div class="flex items-center mb-4">
-                            <svg class="h-8 w-8 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                            <h3 class="text-lg font-semibold">Meta API Import</h3>
+                <!-- Meta API (advanced) -->
+                <div class="admin-card">
+                    <button type="button" @click="importSections.metaApi = !importSections.metaApi" class="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors">
+                        <div class="shrink-0 w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4">Automatically fetch posts from Facebook & Instagram</p>
-                        
-                        <!-- Client Selection -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Select Client</label>
-                            <select x-model="apiImportClientId" class="w-full border rounded px-3 py-2">
-                                <option value="">Choose a client...</option>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-semibold text-gray-900">Meta API Import</h3>
+                                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">Advanced</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5">Fetch posts via Graph API access token</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="importSections.metaApi ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="importSections.metaApi" class="border-t border-gray-100 px-4 py-4 space-y-4 bg-gray-50/30">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Brand</label>
+                            <select x-model="apiImportClientId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                                <option value="">Choose a brand…</option>
                                 <template x-for="client in clients" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.companyName || client.name"></option>
                                 </template>
                             </select>
                         </div>
-
-                        <!-- Access Token -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Meta Access Token</label>
-                            <input type="password" x-model="metaAccessToken" placeholder="Enter your Meta API access token" class="w-full border rounded px-3 py-2">
-                            <p class="text-xs text-gray-500 mt-1">Get your token from <a href="https://developers.facebook.com/tools/explorer/" target="_blank" class="text-indigo-600 hover:underline">Meta Graph API Explorer</a></p>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Meta access token</label>
+                            <input type="password" x-model="metaAccessToken" placeholder="Paste token from Graph API Explorer" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
                         </div>
-
-                        <!-- Date Range -->
-                        <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-sm font-medium mb-2">From Date</label>
-                                <input type="date" x-model="apiImportFromDate" class="w-full border rounded px-3 py-2">
+                                <label class="block text-xs font-medium text-gray-600 mb-1.5">From</label>
+                                <input type="date" x-model="apiImportFromDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2">To Date</label>
-                                <input type="date" x-model="apiImportToDate" class="w-full border rounded px-3 py-2">
+                                <label class="block text-xs font-medium text-gray-600 mb-1.5">To</label>
+                                <input type="date" x-model="apiImportToDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
                             </div>
                         </div>
-
-                        <button @click="processMetaAPIImport()" :disabled="!apiImportClientId || !metaAccessToken" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            Fetch from Meta API
-                        </button>
-
-                        <!-- Setup Guide -->
-                        <button @click="showMetaAPIGuide = true" class="w-full mt-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                            Setup Guide
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Import Preview/Results -->
-                <!-- Media Upload Section (after import preview) -->
-                <div x-show="importPreview.length > 0 && importClientId" class="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-dashed border-indigo-300 rounded-lg p-6 mb-6">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-bold text-gray-900 mb-2">📹 Upload Media Files</h3>
-                            <p class="text-sm text-gray-700 mb-4">
-                                To display videos and images, upload the media files from your Instagram export.
-                                Select the <code class="bg-indigo-100 px-2 py-0.5 rounded text-xs">media</code> folder from your Instagram export.
-                            </p>
-                            <div class="bg-white rounded-lg p-4 mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Media Folder</label>
-                                <input 
-                                    type="file" 
-                                    @change="handleMediaUpload($event)" 
-                                    webkitdirectory 
-                                    directory 
-                                    multiple
-                                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
-                                >
-                                <p class="text-xs text-gray-500 mt-2">
-                                    Client: <span class="font-semibold" x-text="(clients.find(c => c._id === importClientId)?.brandName) || (clients.find(c => c._id === importClientId)?.companyName)"></span>
-                                </p>
-                            </div>
-                            <div x-show="mediaUploadProgress.total > 0" class="bg-white rounded-lg p-4">
-                                <div class="flex justify-between text-sm mb-2">
-                                    <span class="font-medium">Uploading...</span>
-                                    <span x-text="mediaUploadProgress.uploaded + ' / ' + mediaUploadProgress.total"></span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-indigo-600 h-2 rounded-full transition-all" :style="'width: ' + (mediaUploadProgress.uploaded / mediaUploadProgress.total * 100) + '%'"></div>
-                                </div>
-                            </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button @click="processMetaAPIImport()" :disabled="!apiImportClientId || !metaAccessToken"
+                                    class="admin-btn-primary disabled:opacity-50 disabled:cursor-not-allowed">Fetch from Meta</button>
+                            <button @click="showMetaAPIGuide = true" class="admin-btn-secondary">Setup guide</button>
                         </div>
                     </div>
                 </div>
 
-                <div x-show="importPreview.length > 0" class="bg-white shadow rounded-lg p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Import Preview (<span x-text="importPreview.length"></span> posts)</h3>
-                    <div class="max-h-96 overflow-y-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                <!-- Media upload (after preview) -->
+                <div x-show="importPreview.length > 0 && importClientId" class="admin-card p-4">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-2">Upload media folder</h3>
+                    <p class="text-xs text-gray-600 mb-3">Select the <code class="bg-gray-100 px-1 rounded">media</code> folder from your export so videos and images display in the dashboard.</p>
+                    <input type="file" @change="handleMediaUpload($event)" webkitdirectory directory multiple
+                           class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700">
+                    <div x-show="mediaUploadProgress.total > 0" class="mt-3">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Uploading</span>
+                            <span x-text="mediaUploadProgress.uploaded + ' / ' + mediaUploadProgress.total"></span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div class="bg-indigo-600 h-1.5 rounded-full transition-all" :style="'width: ' + (mediaUploadProgress.uploaded / mediaUploadProgress.total * 100) + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div x-show="importPreview.length > 0" class="admin-card overflow-hidden">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="text-sm font-semibold text-gray-900">Preview — <span x-text="importPreview.length"></span> posts</h3>
+                        <div class="flex gap-2">
+                            <button @click="importPreview = []" class="admin-btn-secondary">Clear</button>
+                            <button @click="confirmImport()" class="admin-btn-primary !bg-green-600 hover:!bg-green-700">Confirm import</button>
+                        </div>
+                    </div>
+                    <div class="max-h-80 overflow-auto">
+                        <table class="admin-table min-w-full">
+                            <thead>
                                 <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Caption</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reach</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Impressions</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Views</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Watch Time</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Likes</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Shares</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Saves</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Skip Rate</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Follower Views</th>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Caption</th>
+                                    <th>Reach</th>
+                                    <th>Likes</th>
+                                    <th>Comments</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="divide-y divide-gray-100">
                                 <template x-for="post in importPreview" :key="post.id">
                                     <tr>
-                                        <td class="px-4 py-2 text-sm" x-text="new Date(post.scheduledDate).toLocaleDateString()"></td>
-                                        <td class="px-4 py-2 text-sm capitalize" x-text="post.contentType"></td>
-                                        <td class="px-4 py-2 text-sm truncate max-w-xs" x-text="post.caption"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_reach || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_impressions || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_views || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_watch_time ? Math.floor(post.kpis.instagram_watch_time / 60) + 'm' : '-'"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_likes || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_comments || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_shares || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_saves || 0"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_skip_rate ? post.kpis.instagram_skip_rate + '%' : '-'"></td>
-                                        <td class="px-4 py-2 text-sm" x-text="post.kpis?.instagram_views_followers || 0"></td>
+                                        <td class="whitespace-nowrap" x-text="new Date(post.scheduledDate).toLocaleDateString()"></td>
+                                        <td class="capitalize" x-text="post.contentType"></td>
+                                        <td class="max-w-xs truncate" x-text="post.caption"></td>
+                                        <td x-text="post.kpis?.instagram_reach || post.kpis?.facebook_reach || 0"></td>
+                                        <td x-text="post.kpis?.instagram_likes || post.kpis?.facebook_likes || 0"></td>
+                                        <td x-text="post.kpis?.instagram_comments || post.kpis?.facebook_comments || 0"></td>
                                     </tr>
                                 </template>
                             </tbody>
                         </table>
-                    </div>
-                    <div class="mt-4 flex justify-end space-x-2">
-                        <button @click="importPreview = []" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-                        <button @click="confirmImport()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Confirm Import</button>
                     </div>
                 </div>
             </div>
@@ -1516,22 +1380,6 @@ show_admin_bar(false);
                         </div>
                         <p class="text-xs text-gray-500 mt-3">Pulls sessions, users, page views, traffic sources, and top pages into the brand dashboard and monthly reports.</p>
                     </div>
-
-                    <!-- Coming Soon Platforms -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 opacity-60 md:col-span-2">
-                        <div class="flex items-center mb-3">
-                            <svg class="w-8 h-8 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                            <div>
-                                <h5 class="font-semibold text-gray-600">LinkedIn & X</h5>
-                                <p class="text-xs text-gray-500">Coming soon</p>
-                            </div>
-                        </div>
-                        <button disabled class="w-full bg-gray-300 text-gray-500 px-3 py-2 rounded text-sm cursor-not-allowed">
-                            Not Available Yet
-                        </button>
-                    </div>
                 </div>
 
                 <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1641,16 +1489,16 @@ show_admin_bar(false);
                     digest: false,
                     teamProgress: false,
                     clientReminders: false,
-                    liveInsights: false,
-                    websiteConnected: false,
-                    websiteUpsell: false
+                    announcements: false
                 },
+                announcementFeature: 'live_insights',
+                _emailsPrimed: false,
+                _announcementsLoaded: false,
                 reminderBrands: [],
                 reminderTotals: { brands: 0, pendingItems: 0, recipients: 0 },
                 selectedReminderClients: [],
                 reminderLoading: false,
                 reminderSending: false,
-                mailblastFeature: 'live_insights',
                 mailblastBrands: [],
                 mailblastTotals: { brands: 0, recipients: 0, brandsWithContacts: 0 },
                 mailblastFeatureMeta: null,
@@ -1679,7 +1527,6 @@ show_admin_bar(false);
                 approvalClientId: '',
                 editingUser: null,
                 editingClient: null,
-                editingUpdate: null,
                 customizingClient: null,
                 socialMediaStatus: {},
                 gaAnalyticsStatus: {},
@@ -1732,6 +1579,7 @@ show_admin_bar(false);
                 apiImportFromDate: '',
                 apiImportToDate: '',
                 showMetaAPIGuide: false,
+                importSections: { csv: true, metaApi: false },
 
                 async init() {
                     // Check auth
@@ -2531,7 +2379,7 @@ show_admin_bar(false);
                 async loadFeatureMailblast() {
                     this.mailblastLoading = true;
                     try {
-                        const response = await fetch(`${API_URL}/admin/mailblast/preview?feature=${encodeURIComponent(this.mailblastFeature)}`, {
+                        const response = await fetch(`${API_URL}/admin/mailblast/preview?feature=${encodeURIComponent(this.announcementFeature)}`, {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                         });
                         const data = await response.json();
@@ -2573,7 +2421,7 @@ show_admin_bar(false);
                 },
 
                 async sendMailblastTest() {
-                    if (!confirm('Send a test Live Insights announcement to your account email?')) return;
+                    if (!confirm(`Send a test ${this.announcementFeatureLabel} announcement to your account email?`)) return;
                     this.mailblastTesting = true;
                     try {
                         const response = await fetch(`${API_URL}/admin/mailblast/test`, {
@@ -2582,7 +2430,7 @@ show_admin_bar(false);
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ feature: this.mailblastFeature })
+                            body: JSON.stringify({ feature: this.announcementFeature })
                         });
                         const data = await response.json();
                         if (response.ok && data.success) {
@@ -2603,7 +2451,7 @@ show_admin_bar(false);
                     const brands = this.mailblastBrands.filter(b => this.selectedMailblastClients.includes(b.clientId));
                     const emails = new Set();
                     brands.forEach(b => (b.clientUsers || []).forEach(u => emails.add(u.email)));
-                    if (!confirm(`Send Live Insights announcement to ${emails.size} client contact(s) across ${brands.length} brand(s)?`)) return;
+                    if (!confirm(`Send ${this.announcementFeatureLabel} announcement to ${emails.size} client contact(s) across ${brands.length} brand(s)?`)) return;
 
                     this.mailblastSending = true;
                     try {
@@ -2614,7 +2462,7 @@ show_admin_bar(false);
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                feature: this.mailblastFeature,
+                                feature: this.announcementFeature,
                                 clientIds: this.selectedMailblastClients
                             })
                         });
@@ -2867,14 +2715,81 @@ show_admin_bar(false);
 
                 toggleEmailSection(key) {
                     this.emailSections[key] = !this.emailSections[key];
+                    if (key === 'announcements' && this.emailSections.announcements && !this._announcementsLoaded) {
+                        this.loadActiveAnnouncementPreview();
+                        this._announcementsLoaded = true;
+                    }
                 },
 
                 expandAllEmailSections() {
                     Object.keys(this.emailSections).forEach((k) => { this.emailSections[k] = true; });
+                    if (!this._announcementsLoaded) {
+                        this.loadActiveAnnouncementPreview();
+                        this._announcementsLoaded = true;
+                    }
                 },
 
                 collapseAllEmailSections() {
                     Object.keys(this.emailSections).forEach((k) => { this.emailSections[k] = false; });
+                },
+
+                openEmailsTab() {
+                    this.activeTab = 'emails';
+                    if (!this._emailsPrimed) {
+                        this.loadClientReminders();
+                        this.loadTeamProgressEmailPreview();
+                        this._emailsPrimed = true;
+                    }
+                },
+
+                async loadActiveAnnouncementPreview() {
+                    if (this.announcementFeature === 'website_analytics_connected') {
+                        return this.loadWebsiteConnectedMailblast();
+                    }
+                    if (this.announcementFeature === 'website_analytics_upsell') {
+                        return this.loadWebsiteUpsellMailblast();
+                    }
+                    return this.loadFeatureMailblast();
+                },
+
+                toggleActiveAnnouncementClient(clientId, checked) {
+                    if (this.announcementFeature === 'website_analytics_connected') {
+                        return this.toggleWebsiteConnectedClient(clientId, checked);
+                    }
+                    if (this.announcementFeature === 'website_analytics_upsell') {
+                        return this.toggleWebsiteUpsellClient(clientId, checked);
+                    }
+                    return this.toggleMailblastClient(clientId, checked);
+                },
+
+                toggleAllActiveAnnouncementClients(checked) {
+                    if (this.announcementFeature === 'website_analytics_connected') {
+                        return this.toggleAllWebsiteConnectedClients(checked);
+                    }
+                    if (this.announcementFeature === 'website_analytics_upsell') {
+                        return this.toggleAllWebsiteUpsellClients(checked);
+                    }
+                    return this.toggleAllMailblastClients(checked);
+                },
+
+                async sendActiveAnnouncementTest() {
+                    if (this.announcementFeature === 'website_analytics_connected') {
+                        return this.sendWebsiteConnectedMailblastTest();
+                    }
+                    if (this.announcementFeature === 'website_analytics_upsell') {
+                        return this.sendWebsiteUpsellMailblastTest();
+                    }
+                    return this.sendMailblastTest();
+                },
+
+                async sendActiveAnnouncement() {
+                    if (this.announcementFeature === 'website_analytics_connected') {
+                        return this.sendWebsiteConnectedMailblast();
+                    }
+                    if (this.announcementFeature === 'website_analytics_upsell') {
+                        return this.sendWebsiteUpsellMailblast();
+                    }
+                    return this.sendFeatureMailblast();
                 },
 
                 async loadTeamProgressEmailPreview() {
@@ -3121,6 +3036,57 @@ show_admin_bar(false);
                     }
                 },
 
+                get announcementBrands() {
+                    if (this.announcementFeature === 'website_analytics_connected') return this.websiteConnectedBrands;
+                    if (this.announcementFeature === 'website_analytics_upsell') return this.websiteUpsellBrands;
+                    return this.mailblastBrands;
+                },
+
+                get announcementTotals() {
+                    if (this.announcementFeature === 'website_analytics_connected') return this.websiteConnectedTotals;
+                    if (this.announcementFeature === 'website_analytics_upsell') return this.websiteUpsellTotals;
+                    return this.mailblastTotals;
+                },
+
+                get announcementSelectedIds() {
+                    if (this.announcementFeature === 'website_analytics_connected') return this.selectedWebsiteConnectedClients;
+                    if (this.announcementFeature === 'website_analytics_upsell') return this.selectedWebsiteUpsellClients;
+                    return this.selectedMailblastClients;
+                },
+
+                get announcementSelectedCount() {
+                    return this.announcementSelectedIds.length;
+                },
+
+                get announcementEligibleCount() {
+                    return this.announcementBrands.filter((b) => b.clientUsers && b.clientUsers.length).length;
+                },
+
+                get announcementLoading() {
+                    if (this.announcementFeature === 'website_analytics_connected') return this.websiteConnectedLoading;
+                    if (this.announcementFeature === 'website_analytics_upsell') return this.websiteUpsellLoading;
+                    return this.mailblastLoading;
+                },
+
+                get announcementBusy() {
+                    if (this.announcementFeature === 'website_analytics_connected') {
+                        return this.websiteConnectedLoading || this.websiteConnectedSending || this.websiteConnectedTesting;
+                    }
+                    if (this.announcementFeature === 'website_analytics_upsell') {
+                        return this.websiteUpsellLoading || this.websiteUpsellSending || this.websiteUpsellTesting;
+                    }
+                    return this.mailblastLoading || this.mailblastSending || this.mailblastTesting;
+                },
+
+                get announcementFeatureLabel() {
+                    const labels = {
+                        live_insights: 'Live Insights',
+                        website_analytics_connected: 'Website Analytics — Connected',
+                        website_analytics_upsell: 'Website Analytics — Upsell'
+                    };
+                    return labels[this.announcementFeature] || 'Feature';
+                },
+
                 get pageTitle() {
                     switch (this.activeTab) {
                         case 'users':
@@ -3132,7 +3098,7 @@ show_admin_bar(false);
                         case 'emails':
                             return 'Emails & Notifications';
                         case 'import':
-                            return 'Import Posts';
+                            return 'Data Import';
                         default:
                             return 'Admin Panel';
                     }
@@ -3149,7 +3115,7 @@ show_admin_bar(false);
                         case 'emails':
                             return 'Test sends, team progress, client reminders, and announcements';
                         case 'import':
-                            return 'Import historical posts and performance data';
+                            return 'Import posts from CSV/JSON exports or Meta API';
                         default:
                             return 'Agency Hub administration';
                     }
