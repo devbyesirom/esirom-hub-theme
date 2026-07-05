@@ -1325,40 +1325,40 @@ show_admin_bar(false);
                         </div>
                         <div x-show="socialMediaDiagnosis" class="mt-3 text-xs">
                             <!-- Healthy: compact status -->
-                            <div x-show="socialMediaDiagnosis.metaSetup?.verdict === 'ok'" class="rounded-lg p-3 border bg-green-50 border-green-200 flex items-center justify-between gap-2">
+                            <div x-show="socialMediaDiagnosis?.metaSetup?.verdict === 'ok'" class="rounded-lg p-3 border bg-green-50 border-green-200 flex items-center justify-between gap-2">
                                 <p class="text-green-800 font-medium">✓ Facebook & Instagram connected — insights are working</p>
                                 <button type="button" @click="showSocialDiagnosticsDetails = !showSocialDiagnosticsDetails" class="text-green-700 underline whitespace-nowrap" x-text="showSocialDiagnosticsDetails ? 'Hide details' : 'Details'"></button>
                             </div>
                             <!-- Issues: show summary prominently -->
-                            <div x-show="socialMediaDiagnosis.metaSetup && socialMediaDiagnosis.metaSetup?.verdict !== 'ok'" class="rounded-lg p-3 border mb-2"
+                            <div x-show="socialMediaDiagnosis?.metaSetup && socialMediaDiagnosis?.metaSetup?.verdict !== 'ok'" class="rounded-lg p-3 border mb-2"
                                  :class="{
-                                     'bg-amber-50 border-amber-200': socialMediaDiagnosis.metaSetup?.verdict === 'partial',
-                                     'bg-red-50 border-red-200': socialMediaDiagnosis.metaSetup?.verdict === 'blocked'
+                                     'bg-amber-50 border-amber-200': socialMediaDiagnosis?.metaSetup?.verdict === 'partial',
+                                     'bg-red-50 border-red-200': socialMediaDiagnosis?.metaSetup?.verdict === 'blocked'
                                  }">
                                 <p class="font-semibold text-gray-900">Connection issue</p>
-                                <p class="mt-1 text-gray-800" x-text="socialMediaDiagnosis.metaSetup?.summary"></p>
+                                <p class="mt-1 text-gray-800" x-text="socialMediaDiagnosis?.metaSetup?.summary"></p>
                                 <button type="button" @click="showSocialDiagnosticsDetails = !showSocialDiagnosticsDetails" class="mt-2 text-indigo-700 underline" x-text="showSocialDiagnosticsDetails ? 'Hide details' : 'Show details'"></button>
                             </div>
-                            <div x-show="showSocialDiagnosticsDetails || (socialMediaDiagnosis.metaSetup?.verdict && socialMediaDiagnosis.metaSetup?.verdict !== 'ok')" class="p-3 bg-white rounded border border-blue-100 space-y-2">
-                                <p class="text-gray-600" x-show="socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes?.length">
+                            <div x-show="socialMediaDiagnosis && (showSocialDiagnosticsDetails || (socialMediaDiagnosis?.metaSetup?.verdict && socialMediaDiagnosis?.metaSetup?.verdict !== 'ok'))" class="p-3 bg-white rounded border border-blue-100 space-y-2">
+                                <p class="text-gray-600" x-show="socialMediaDiagnosis?.metaSetup?.token?.missingInstagramScopes?.length">
                                     Missing on token:
-                                    <span class="font-mono" x-text="(socialMediaDiagnosis.metaSetup?.token?.missingInstagramScopes || []).join(', ')"></span>
+                                    <span class="font-mono" x-text="(socialMediaDiagnosis?.metaSetup?.token?.missingInstagramScopes || []).join(', ')"></span>
                                 </p>
-                                <template x-for="check in (socialMediaDiagnosis.facebook?.checks || [])" :key="'fb-' + check.step">
+                                <template x-for="check in (socialMediaDiagnosis?.facebook?.checks || [])" :key="'fb-' + check.step">
                                     <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
                                         <span x-text="check.ok ? '✓' : '✗'"></span>
                                         <span class="font-medium" x-text="' FB ' + check.step + ':'"></span>
                                         <span x-text="check.message"></span>
                                     </p>
                                 </template>
-                                <template x-for="check in (socialMediaDiagnosis.instagram?.checks || [])" :key="'ig-' + check.step">
+                                <template x-for="check in (socialMediaDiagnosis?.instagram?.checks || [])" :key="'ig-' + check.step">
                                     <p :class="check.ok ? 'text-green-700' : 'text-red-700'">
                                         <span x-text="check.ok ? '✓' : '✗'"></span>
                                         <span class="font-medium" x-text="' IG ' + check.step + ':'"></span>
                                         <span x-text="check.message"></span>
                                     </p>
                                 </template>
-                                <template x-for="(tip, idx) in (socialMediaDiagnosis.recommendations || [])" :key="'tip-' + idx">
+                                <template x-for="(tip, idx) in (socialMediaDiagnosis?.recommendations || [])" :key="'tip-' + idx">
                                     <p class="text-amber-800">→ <span x-text="tip"></span></p>
                                 </template>
                             </div>
