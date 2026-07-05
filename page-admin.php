@@ -445,6 +445,80 @@ show_admin_bar(false);
                 <!-- ── Client outreach ── -->
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 px-1 pt-3">Client outreach</p>
 
+                <!-- Client Monthly Report -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('monthlyReport')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Monthly Report</h3>
+                                    <span x-show="monthlyReportEmailPreview.period?.label" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-50 text-violet-700" x-text="monthlyReportEmailPreview.period?.label"></span>
+                                    <span x-show="monthlyReportEmailPreview.recipientCount" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600"><span x-text="monthlyReportEmailPreview.recipientCount"></span> recipients</span>
+                                    <span x-show="!monthlyReportEmailPreview.enabled" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700">Email off</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">KPI summary for clients · auto-sent 1st of month</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.monthlyReport ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
+                            <button @click="sendMonthlyReportTestEmail()" :disabled="monthlyReportEmailLoading || monthlyReportEmailTesting"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!monthlyReportEmailTesting">Test</span>
+                                <span x-show="monthlyReportEmailTesting">…</span>
+                            </button>
+                            <button @click="sendMonthlyReportEmails()"
+                                    :disabled="monthlyReportEmailLoading || monthlyReportEmailSending || !monthlyReportEmailPreview.recipientCount"
+                                    class="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!monthlyReportEmailSending">Send all</span>
+                                <span x-show="monthlyReportEmailSending">…</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div x-show="emailSections.monthlyReport" x-collapse class="border-t border-gray-100">
+                        <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-2">
+                            <select x-model="monthlyReportEmailForm.period" @change="loadMonthlyReportEmailPreview()"
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white">
+                                <option value="previous">Previous month (scheduled send)</option>
+                                <option value="current">Current month</option>
+                            </select>
+                            <select x-model="monthlyReportEmailForm.sampleClientId"
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white max-w-[180px]">
+                                <option value="">Test brand: first with contacts</option>
+                                <template x-for="b in monthlyReportEmailPreview.brands || []" :key="b.clientId">
+                                    <option :value="b.clientId" x-text="b.brandName + (b.clientUsers?.length ? '' : ' (no users)')" :disabled="!b.clientUsers?.length"></option>
+                                </template>
+                            </select>
+                            <button @click="loadMonthlyReportEmailPreview()" :disabled="monthlyReportEmailLoading"
+                                    class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900">Refresh</button>
+                            <p class="text-[10px] text-violet-600 ml-auto">Test sends to your admin email</p>
+                        </div>
+                        <div x-show="monthlyReportEmailLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!monthlyReportEmailLoading && !(monthlyReportEmailPreview.brands || []).length" class="p-6 text-center text-sm text-gray-400">No active brands found.</div>
+                        <div x-show="!monthlyReportEmailLoading && (monthlyReportEmailPreview.brands || []).length" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                            <template x-for="brand in monthlyReportEmailPreview.brands || []" :key="brand.clientId">
+                                <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50/80" :class="!brand.clientUsers?.length ? 'opacity-40' : ''">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-sm font-medium text-gray-900 truncate" x-text="brand.brandName"></span>
+                                            <span x-show="brand.hasData" class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700" x-text="(brand.postCount || 0) + ' posts'"></span>
+                                            <span x-show="!brand.hasData && !brand.error" class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">No data yet</span>
+                                        </div>
+                                        <p class="text-[10px] text-gray-400 mt-0.5" x-show="brand.totalReach !== undefined">
+                                            Reach <span x-text="(brand.totalReach || 0).toLocaleString()"></span> · Engagement <span x-text="(brand.totalEngagement || 0).toLocaleString()"></span>
+                                        </p>
+                                        <p class="text-[10px] text-gray-400 truncate" x-show="brand.clientUsers?.length"
+                                           x-text="brand.clientUsers.map(u => u.email).join(', ')"></p>
+                                        <p x-show="!brand.clientUsers?.length" class="text-[10px] text-red-500 mt-0.5">No client users</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Content Bank Reminders -->
                 <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                     <div class="flex items-stretch">
@@ -1485,9 +1559,15 @@ show_admin_bar(false);
                 teamProgressEmailLoading: false,
                 teamProgressEmailTesting: false,
                 teamProgressEmailSending: false,
+                monthlyReportEmailForm: { period: 'previous', sampleClientId: '' },
+                monthlyReportEmailPreview: { brands: [], enabled: false },
+                monthlyReportEmailLoading: false,
+                monthlyReportEmailTesting: false,
+                monthlyReportEmailSending: false,
                 emailSections: {
                     digest: false,
                     teamProgress: false,
+                    monthlyReport: false,
                     clientReminders: false,
                     announcements: false
                 },
@@ -2738,6 +2818,7 @@ show_admin_bar(false);
                     if (!this._emailsPrimed) {
                         this.loadClientReminders();
                         this.loadTeamProgressEmailPreview();
+                        this.loadMonthlyReportEmailPreview();
                         this._emailsPrimed = true;
                     }
                 },
@@ -2866,6 +2947,89 @@ show_admin_bar(false);
                         this.showToast('Could not send team progress emails', 'error', 5000);
                     } finally {
                         this.teamProgressEmailSending = false;
+                    }
+                },
+
+                async loadMonthlyReportEmailPreview() {
+                    this.monthlyReportEmailLoading = true;
+                    try {
+                        const params = new URLSearchParams({ period: this.monthlyReportEmailForm.period || 'previous' });
+                        const response = await fetch(`${API_URL}/admin/client-monthly-report-emails/preview?${params}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.monthlyReportEmailPreview = data;
+                        } else {
+                            this.showToast(data.message || 'Failed to load monthly report preview', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadMonthlyReportEmailPreview:', error);
+                        this.showToast('Could not load monthly report preview', 'error', 5000);
+                    } finally {
+                        this.monthlyReportEmailLoading = false;
+                    }
+                },
+
+                async sendMonthlyReportTestEmail() {
+                    const brand = (this.monthlyReportEmailPreview.brands || []).find(
+                        (b) => String(b.clientId) === String(this.monthlyReportEmailForm.sampleClientId)
+                    );
+                    const brandLabel = brand?.brandName || 'the first brand with contacts';
+                    if (!confirm(`Send a test Monthly Report for ${brandLabel} to your admin email?`)) return;
+
+                    this.monthlyReportEmailTesting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/client-monthly-report-emails/test`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                period: this.monthlyReportEmailForm.period || 'previous',
+                                clientId: this.monthlyReportEmailForm.sampleClientId || null
+                            })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || 'Test monthly report sent — check your inbox', 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'Test email could not be sent', 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendMonthlyReportTestEmail:', error);
+                        this.showToast('Could not send test email', 'error', 5000);
+                    } finally {
+                        this.monthlyReportEmailTesting = false;
+                    }
+                },
+
+                async sendMonthlyReportEmails() {
+                    const count = this.monthlyReportEmailPreview.recipientCount || 0;
+                    if (!confirm(`Send monthly report emails to ${count} client contact${count === 1 ? '' : 's'} for ${this.monthlyReportEmailPreview.period?.label || 'this period'}?`)) return;
+
+                    this.monthlyReportEmailSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/client-monthly-report-emails/send`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ period: this.monthlyReportEmailForm.period || 'previous' })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || `Sent ${data.sent} email(s)`, 'success', 8000);
+                        } else {
+                            this.showToast(data.message || 'Some emails failed to send', 'error', 8000);
+                        }
+                    } catch (error) {
+                        console.error('sendMonthlyReportEmails:', error);
+                        this.showToast('Could not send monthly report emails', 'error', 5000);
+                    } finally {
+                        this.monthlyReportEmailSending = false;
                     }
                 },
 
@@ -3113,7 +3277,7 @@ show_admin_bar(false);
                         case 'clients':
                             return 'Manage brands, dashboards, and client settings';
                         case 'emails':
-                            return 'Test sends, team progress, client reminders, and announcements';
+                            return 'Test sends, team progress, monthly reports, reminders, and announcements';
                         case 'import':
                             return 'Import posts from CSV/JSON exports or Meta API';
                         default:
