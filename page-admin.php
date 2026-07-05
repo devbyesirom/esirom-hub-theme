@@ -442,6 +442,128 @@ show_admin_bar(false);
                     </div>
                 </div>
 
+                <!-- Social Media — Concept Upload -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('smConceptUpload')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Concept Upload Reminder</h3>
+                                    <span x-show="smConceptUploadPreview.schedule?.targetContentLabel" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700" x-text="smConceptUploadPreview.schedule?.targetContentLabel"></span>
+                                    <span x-show="smConceptUploadPreview.recipientCount" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600"><span x-text="smConceptUploadPreview.recipientCount"></span> execs</span>
+                                    <span x-show="!smConceptUploadPreview.enabled" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700">Email off</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Nudge social team before 2nd Friday · auto Mon of that week</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.smConceptUpload ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
+                            <button @click="sendSmConceptUploadTestEmail()" :disabled="smConceptUploadLoading || smConceptUploadTesting"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!smConceptUploadTesting">Test</span>
+                                <span x-show="smConceptUploadTesting">…</span>
+                            </button>
+                            <button @click="sendSmConceptUploadEmails()"
+                                    :disabled="smConceptUploadLoading || smConceptUploadSending || !smConceptUploadPreview.recipientCount"
+                                    class="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!smConceptUploadSending">Send all</span>
+                                <span x-show="smConceptUploadSending">…</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div x-show="emailSections.smConceptUpload" x-collapse class="border-t border-gray-100">
+                        <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-2">
+                            <select x-model="smConceptUploadForm.sampleUserId"
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white max-w-[180px]">
+                                <option value="">Test as: first exec</option>
+                                <template x-for="r in smConceptUploadPreview.recipients || []" :key="r.user._id">
+                                    <option :value="r.user._id" x-text="r.user.firstName + ' ' + r.user.lastName"></option>
+                                </template>
+                            </select>
+                            <button @click="loadSmConceptUploadPreview()" :disabled="smConceptUploadLoading"
+                                    class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900">Refresh</button>
+                            <p class="text-[10px] text-green-700 ml-auto" x-show="smConceptUploadPreview.schedule?.isReminderDay">Scheduled send runs today</p>
+                        </div>
+                        <div x-show="smConceptUploadLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!smConceptUploadLoading && !(smConceptUploadPreview.recipients || []).length" class="p-6 text-center text-sm text-gray-400">No social media executives with assigned brands.</div>
+                        <div x-show="!smConceptUploadLoading && (smConceptUploadPreview.recipients || []).length" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                            <template x-for="r in smConceptUploadPreview.recipients || []" :key="r.user._id">
+                                <div class="px-4 py-2.5 hover:bg-gray-50/80" x-show="r.totals.brands > 0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-sm font-medium text-gray-900" x-text="r.user.firstName + ' ' + r.user.lastName"></span>
+                                        <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                              :class="r.totals.conceptsStillNeeded > 0 ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'"
+                                              x-text="r.totals.conceptsUploaded + '/' + r.totals.conceptsTarget + ' concepts'"></span>
+                                    </div>
+                                    <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="(r.brandBreakdown || []).map(b => b.brandName + (b.conceptsStillNeeded > 0 ? ' (' + b.conceptsStillNeeded + ' needed)' : '')).join(' · ')"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Media — Inactive Pages -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('smInactivePages')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Inactive Page Reminder</h3>
+                                    <span x-show="smInactivePreview.inactivePageCount > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700"><span x-text="smInactivePreview.inactivePageCount"></span> inactive</span>
+                                    <span x-show="smInactivePreview.recipientCount > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600"><span x-text="smInactivePreview.recipientCount"></span> execs</span>
+                                    <span x-show="!smInactivePreview.enabled" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700">Email off</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">No published post in 3 days · auto daily 9:30 AM</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.smInactivePages ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
+                            <button @click="sendSmInactiveTestEmail()" :disabled="smInactiveLoading || smInactiveTesting"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!smInactiveTesting">Test</span>
+                                <span x-show="smInactiveTesting">…</span>
+                            </button>
+                            <button @click="sendSmInactiveEmails()"
+                                    :disabled="smInactiveLoading || smInactiveSending || !smInactivePreview.inactivePageCount"
+                                    class="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!smInactiveSending">Send now</span>
+                                <span x-show="smInactiveSending">…</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div x-show="emailSections.smInactivePages" x-collapse class="border-t border-gray-100">
+                        <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-2">
+                            <select x-model="smInactiveForm.sampleUserId"
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white max-w-[180px]">
+                                <option value="">Test as: first with inactive</option>
+                                <template x-for="r in smInactivePreview.recipients || []" :key="r.user._id">
+                                    <option :value="r.user._id" x-text="r.user.firstName + ' ' + r.user.lastName + (r.totals.inactivePages ? ' (' + r.totals.inactivePages + ')' : '')"></option>
+                                </template>
+                            </select>
+                            <button @click="loadSmInactivePreview()" :disabled="smInactiveLoading"
+                                    class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900">Refresh</button>
+                        </div>
+                        <div x-show="smInactiveLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!smInactiveLoading && !smInactivePreview.inactivePageCount" class="p-6 text-center text-sm text-emerald-600">All managed pages have published within the last 3 days.</div>
+                        <div x-show="!smInactiveLoading && smInactivePreview.inactivePageCount" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                            <template x-for="r in smInactivePreview.recipients || []" :key="r.user._id">
+                                <div class="px-4 py-2.5 hover:bg-gray-50/80" x-show="r.totals.inactivePages > 0">
+                                    <p class="text-sm font-medium text-gray-900" x-text="r.user.firstName + ' ' + r.user.lastName"></p>
+                                    <template x-for="brand in r.inactiveBrands || []" :key="brand.clientId">
+                                        <p class="text-[10px] text-red-600 mt-0.5" x-text="brand.brandName + ': ' + (brand.inactivePlatforms || []).map(p => p.platformLabel + (p.daysSinceLastPost === null ? ' (no posts)' : ' (' + p.daysSinceLastPost + 'd)')).join(', ')"></p>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── Client outreach ── -->
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 px-1 pt-3">Client outreach</p>
 
@@ -1564,9 +1686,21 @@ show_admin_bar(false);
                 monthlyReportEmailLoading: false,
                 monthlyReportEmailTesting: false,
                 monthlyReportEmailSending: false,
+                smConceptUploadForm: { sampleUserId: '' },
+                smConceptUploadPreview: { recipients: [], enabled: false, schedule: {} },
+                smConceptUploadLoading: false,
+                smConceptUploadTesting: false,
+                smConceptUploadSending: false,
+                smInactiveForm: { sampleUserId: '' },
+                smInactivePreview: { recipients: [], enabled: false, inactivePageCount: 0 },
+                smInactiveLoading: false,
+                smInactiveTesting: false,
+                smInactiveSending: false,
                 emailSections: {
                     digest: false,
                     teamProgress: false,
+                    smConceptUpload: false,
+                    smInactivePages: false,
                     monthlyReport: false,
                     clientReminders: false,
                     announcements: false
@@ -2819,6 +2953,8 @@ show_admin_bar(false);
                         this.loadClientReminders();
                         this.loadTeamProgressEmailPreview();
                         this.loadMonthlyReportEmailPreview();
+                        this.loadSmConceptUploadPreview();
+                        this.loadSmInactivePreview();
                         this._emailsPrimed = true;
                     }
                 },
@@ -3030,6 +3166,158 @@ show_admin_bar(false);
                         this.showToast('Could not send monthly report emails', 'error', 5000);
                     } finally {
                         this.monthlyReportEmailSending = false;
+                    }
+                },
+
+                async loadSmConceptUploadPreview() {
+                    this.smConceptUploadLoading = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/social-media-reminders/concept-upload/preview`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.smConceptUploadPreview = data;
+                        } else {
+                            this.showToast(data.message || 'Failed to load concept upload preview', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadSmConceptUploadPreview:', error);
+                        this.showToast('Could not load concept upload preview', 'error', 5000);
+                    } finally {
+                        this.smConceptUploadLoading = false;
+                    }
+                },
+
+                async sendSmConceptUploadTestEmail() {
+                    this.smConceptUploadTesting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/social-media-reminders/concept-upload/test`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId: this.smConceptUploadForm.sampleUserId || null
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showToast(data.message || 'Test concept upload reminder sent', 'success', 5000);
+                        } else {
+                            this.showToast(data.message || 'Test send failed', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('sendSmConceptUploadTestEmail:', error);
+                        this.showToast('Could not send test email', 'error', 5000);
+                    } finally {
+                        this.smConceptUploadTesting = false;
+                    }
+                },
+
+                async sendSmConceptUploadEmails() {
+                    const count = this.smConceptUploadPreview.recipientCount || 0;
+                    if (!confirm(`Send concept upload reminders to ${count} social media executive${count === 1 ? '' : 's'}?`)) return;
+
+                    this.smConceptUploadSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/social-media-reminders/concept-upload/send`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({})
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showToast(data.message || 'Concept upload reminders sent', 'success', 5000);
+                        } else {
+                            this.showToast(data.message || 'Send failed', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('sendSmConceptUploadEmails:', error);
+                        this.showToast('Could not send reminders', 'error', 5000);
+                    } finally {
+                        this.smConceptUploadSending = false;
+                    }
+                },
+
+                async loadSmInactivePreview() {
+                    this.smInactiveLoading = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/social-media-reminders/inactive-brands/preview?inactiveDays=3`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.smInactivePreview = data;
+                        } else {
+                            this.showToast(data.message || 'Failed to load inactive page preview', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('loadSmInactivePreview:', error);
+                        this.showToast('Could not load inactive page preview', 'error', 5000);
+                    } finally {
+                        this.smInactiveLoading = false;
+                    }
+                },
+
+                async sendSmInactiveTestEmail() {
+                    this.smInactiveTesting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/social-media-reminders/inactive-brands/test`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId: this.smInactiveForm.sampleUserId || null,
+                                inactiveDays: 3
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showToast(data.message || 'Test inactive page reminder sent', 'success', 5000);
+                        } else {
+                            this.showToast(data.message || 'Test send failed', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('sendSmInactiveTestEmail:', error);
+                        this.showToast('Could not send test email', 'error', 5000);
+                    } finally {
+                        this.smInactiveTesting = false;
+                    }
+                },
+
+                async sendSmInactiveEmails() {
+                    const count = this.smInactivePreview.inactivePageCount || 0;
+                    if (!confirm(`Send inactive page reminders for ${count} page${count === 1 ? '' : 's'}? Only execs with inactive pages will receive email.`)) return;
+
+                    this.smInactiveSending = true;
+                    try {
+                        const response = await fetch(`${API_URL}/admin/social-media-reminders/inactive-brands/send`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ inactiveDays: 3 })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showToast(data.message || 'Inactive page reminders sent', 'success', 5000);
+                            this.loadSmInactivePreview();
+                        } else {
+                            this.showToast(data.message || 'Send failed', 'error', 5000);
+                        }
+                    } catch (error) {
+                        console.error('sendSmInactiveEmails:', error);
+                        this.showToast('Could not send reminders', 'error', 5000);
+                    } finally {
+                        this.smInactiveSending = false;
                     }
                 },
 
