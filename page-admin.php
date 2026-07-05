@@ -296,357 +296,349 @@ show_admin_bar(false);
             </div>
 
             <!-- Emails Tab -->
-            <div x-show="activeTab === 'emails'" x-cloak class="w-full space-y-6">
-                <div class="bg-white shadow rounded-lg p-5 border border-gray-200">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">Google Space — Workflow Digest</h3>
-                            <p class="text-xs text-gray-500 mt-1">Daily overdue / due today / due soon summary for your team Space (Mon–Fri 8:30 AM).</p>
-                        </div>
-                        <button @click="testWorkflowDigest()" :disabled="workflowDigestLoading"
-                                class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
-                            <span x-show="!workflowDigestLoading">Send Test Digest Now</span>
-                            <span x-show="workflowDigestLoading">Sending…</span>
-                        </button>
+            <div x-show="activeTab === 'emails'" x-cloak class="w-full max-w-5xl space-y-4">
+
+                <!-- Toolbar -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-1">
+                    <p class="text-sm text-gray-500">Click a section to expand. Primary actions stay visible when collapsed.</p>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" @click="expandAllEmailSections()" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Expand all</button>
+                        <button type="button" @click="collapseAllEmailSections()" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Collapse all</button>
                     </div>
                 </div>
 
-                <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">Team Progress — Monthly Emails</h3>
-                            <p class="text-xs text-gray-500 mt-1">Email each team member their individual progress summary. Sent automatically on the 1st of each month (previous month's recap).</p>
-                            <p class="text-xs text-indigo-600 mt-2" x-show="teamProgressEmailPreview.period?.label">
-                                Period: <span x-text="teamProgressEmailPreview.period?.label"></span> ·
-                                <span x-text="teamProgressEmailPreview.recipientCount || 0"></span> recipient(s)
-                            </p>
-                            <p class="text-xs text-amber-600 mt-1" x-show="!teamProgressEmailPreview.enabled">Email not configured — set WORKFLOW_EMAIL_ENABLED=true and Resend/SMTP credentials.</p>
+                <!-- ── Internal team ── -->
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 px-1 pt-1">Internal team</p>
+
+                <!-- Workflow Digest -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('digest')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Google Space Digest</h3>
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700">Mon–Fri 8:30 AM</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Overdue, due today, and due soon → team Space</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.digest ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center px-3 border-l border-gray-100" @click.stop>
+                            <button @click="testWorkflowDigest()" :disabled="workflowDigestLoading"
+                                    class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!workflowDigestLoading">Test digest</span>
+                                <span x-show="workflowDigestLoading">Sending…</span>
+                            </button>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
+                    </div>
+                    <div x-show="emailSections.digest" x-collapse class="border-t border-gray-100 px-4 py-3 bg-gray-50/50">
+                        <p class="text-xs text-gray-600 leading-relaxed">Posts a card to your Google Chat Space with concepts and productions that are overdue, due today, or due within 3 days. The scheduled job runs weekdays at 8:30 AM (America/Chicago).</p>
+                    </div>
+                </div>
+
+                <!-- Team Progress -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('teamProgress')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Team Progress</h3>
+                                    <span x-show="teamProgressEmailPreview.period?.label" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700" x-text="teamProgressEmailPreview.period?.label"></span>
+                                    <span x-show="teamProgressEmailPreview.recipientCount" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600"><span x-text="teamProgressEmailPreview.recipientCount"></span> people</span>
+                                    <span x-show="!teamProgressEmailPreview.enabled" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700">Email off</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Individual monthly progress · auto-sent 1st of month</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.teamProgress ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
+                            <button @click="sendTeamProgressTestEmail()" :disabled="teamProgressEmailLoading || teamProgressEmailTesting"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!teamProgressEmailTesting">Test</span>
+                                <span x-show="teamProgressEmailTesting">…</span>
+                            </button>
+                            <button @click="sendTeamProgressEmails()"
+                                    :disabled="teamProgressEmailLoading || teamProgressEmailSending || !teamProgressEmailPreview.recipientCount"
+                                    class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!teamProgressEmailSending">Send all</span>
+                                <span x-show="teamProgressEmailSending">…</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div x-show="emailSections.teamProgress" x-collapse class="border-t border-gray-100">
+                        <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-2">
                             <select x-model="teamProgressEmailForm.period" @change="loadTeamProgressEmailPreview()"
-                                    class="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700">
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white">
                                 <option value="current">Current month</option>
                                 <option value="previous">Previous month</option>
                             </select>
                             <select x-model="teamProgressEmailForm.sampleUserId"
-                                    class="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 max-w-[180px]">
+                                    class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white max-w-[160px]">
                                 <option value="">Sample: first member</option>
                                 <template x-for="r in teamProgressEmailPreview.recipients || []" :key="r.userId">
                                     <option :value="r.userId" x-text="r.name"></option>
                                 </template>
                             </select>
                             <button @click="loadTeamProgressEmailPreview()" :disabled="teamProgressEmailLoading"
-                                    class="px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
-                                Refresh
-                            </button>
-                            <button @click="sendTeamProgressTestEmail()"
-                                    :disabled="teamProgressEmailLoading"
-                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-xl hover:bg-indigo-50 disabled:opacity-50">
-                                <span x-show="!teamProgressEmailTesting">Send Test to Me</span>
-                                <span x-show="teamProgressEmailTesting">Sending…</span>
-                            </button>
-                            <button @click="sendTeamProgressEmails()"
-                                    :disabled="teamProgressEmailLoading || teamProgressEmailSending || !teamProgressEmailPreview.recipientCount"
-                                    class="px-4 py-2 bg-green-600 text-white text-xs font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span x-show="!teamProgressEmailSending">Send to All Team</span>
-                                <span x-show="teamProgressEmailSending">Sending…</span>
-                            </button>
+                                    class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900">Refresh</button>
                         </div>
-                    </div>
-
-                    <div x-show="teamProgressEmailLoading" class="p-8 text-center text-sm text-gray-500">Loading team progress preview…</div>
-
-                    <div x-show="!teamProgressEmailLoading && (teamProgressEmailPreview.recipients || []).length" class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="r in teamProgressEmailPreview.recipients || []" :key="r.userId">
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="r.name"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-600" x-text="r.email"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-600" x-text="r.departmentLabel"></td>
-                                        <td class="px-4 py-3 text-xs">
-                                            <span x-text="r.score !== null ? r.score + '%' : '—'"></span>
-                                            <span class="text-gray-400" x-text="r.scoreLabel ? ' (' + r.scoreLabel + ')' : ''"></span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        <div x-show="teamProgressEmailLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!teamProgressEmailLoading && !(teamProgressEmailPreview.recipients || []).length" class="p-6 text-center text-sm text-gray-400">No eligible team members.</div>
+                        <div x-show="!teamProgressEmailLoading && (teamProgressEmailPreview.recipients || []).length" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                            <template x-for="r in teamProgressEmailPreview.recipients || []" :key="r.userId">
+                                <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50/80">
+                                    <div class="shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700"
+                                         x-text="(r.name || '?').split(' ').map(n => n[0]).join('').slice(0,2)"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate" x-text="r.name"></p>
+                                        <p class="text-xs text-gray-500 truncate"><span x-text="r.departmentLabel"></span> · <span x-text="r.email"></span></p>
+                                    </div>
+                                    <div class="shrink-0 text-right">
+                                        <p class="text-sm font-semibold" :class="{
+                                            'text-emerald-600': r.score >= 90,
+                                            'text-blue-600': r.score >= 70 && r.score < 90,
+                                            'text-amber-600': r.score >= 50 && r.score < 70,
+                                            'text-red-600': r.score !== null && r.score < 50,
+                                            'text-gray-400': r.score === null
+                                        }" x-text="r.score !== null ? r.score + '%' : '—'"></p>
+                                        <p class="text-[10px] text-gray-400" x-text="r.scoreLabel || ''"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">Content Bank — Client Reminders</h3>
-                            <p class="text-xs text-gray-500 mt-1">Email clients a summary of content waiting for their approval in the Hub.</p>
-                            <p class="text-xs text-indigo-600 mt-2" x-show="reminderTotals.pendingItems > 0">
-                                <span x-text="reminderTotals.pendingItems"></span> item(s) across
-                                <span x-text="reminderTotals.brands"></span> brand(s) ·
-                                <span x-text="reminderTotals.recipients"></span> client contact(s)
-                            </p>
-                            <p class="text-xs text-gray-400 mt-2" x-show="!reminderLoading && reminderBrands.length === 0">No content currently waiting for client approval.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
+                <!-- ── Client outreach ── -->
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 px-1 pt-3">Client outreach</p>
+
+                <!-- Content Bank Reminders -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('clientReminders')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Content Bank Reminders</h3>
+                                    <span x-show="reminderTotals.pendingItems > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800"><span x-text="reminderTotals.pendingItems"></span> pending</span>
+                                    <span x-show="reminderTotals.brands > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600"><span x-text="reminderTotals.brands"></span> brands</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Nudge clients to approve content in the Hub</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.clientReminders ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
                             <button @click="loadClientReminders()" :disabled="reminderLoading"
-                                    class="px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
-                                Refresh
+                                    class="p-1.5 text-gray-400 hover:text-gray-600" title="Refresh">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             </button>
                             <button @click="sendClientReminders()"
                                     :disabled="reminderSending || reminderLoading || selectedReminderClients.length === 0"
-                                    class="px-4 py-2 bg-purple-600 text-white text-xs font-semibold rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span x-show="!reminderSending">Send Client Reminder</span>
-                                <span x-show="reminderSending">Sending…</span>
+                                    class="px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!reminderSending">Send (<span x-text="selectedReminderClients.length"></span>)</span>
+                                <span x-show="reminderSending">…</span>
                             </button>
                         </div>
                     </div>
-
-                    <div x-show="reminderLoading" class="p-8 text-center text-sm text-gray-500">Loading pending approvals…</div>
-
-                    <div x-show="!reminderLoading && reminderBrands.length > 0" class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">
-                                        <input type="checkbox" class="rounded border-gray-300"
-                                               :checked="selectedReminderClients.length === reminderBrands.length && reminderBrands.length > 0"
-                                               @change="toggleAllReminderClients($event.target.checked)">
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pending</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="brand in reminderBrands" :key="brand.clientId">
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3">
-                                            <input type="checkbox" class="rounded border-gray-300"
-                                                   :checked="selectedReminderClients.includes(brand.clientId)"
-                                                   @change="toggleReminderClient(brand.clientId, $event.target.checked)">
-                                        </td>
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800" x-text="brand.pendingCount"></span>
-                                        </td>
-                                        <td class="px-4 py-3 text-xs text-gray-600">
-                                            <template x-if="brand.clientUsers.length">
-                                                <span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span>
-                                            </template>
-                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-xs text-gray-500 max-w-md">
-                                            <span x-text="brand.items.map(i => i.title).join(' · ')"></span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                    <div x-show="emailSections.clientReminders" x-collapse class="border-t border-gray-100">
+                        <div x-show="reminderLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!reminderLoading && !reminderBrands.length" class="p-6 text-center text-sm text-gray-400">Nothing waiting for approval.</div>
+                        <div x-show="!reminderLoading && reminderBrands.length" class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                            <label class="flex items-center gap-3 px-4 py-2 bg-gray-50/80 text-xs font-medium text-gray-500 sticky top-0 border-b border-gray-100 cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300"
+                                       :checked="selectedReminderClients.length === reminderBrands.length && reminderBrands.length > 0"
+                                       @change="toggleAllReminderClients($event.target.checked)">
+                                Select all
+                            </label>
+                            <template x-for="brand in reminderBrands" :key="brand.clientId">
+                                <label class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50/80 cursor-pointer">
+                                    <input type="checkbox" class="rounded border-gray-300 mt-0.5"
+                                           :checked="selectedReminderClients.includes(brand.clientId)"
+                                           @change="toggleReminderClient(brand.clientId, $event.target.checked)">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-medium text-gray-900" x-text="brand.brandName"></span>
+                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800" x-text="brand.pendingCount + ' pending'"></span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-0.5 truncate" x-text="brand.items.map(i => i.title).join(' · ')"></p>
+                                        <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-show="brand.clientUsers.length"
+                                           x-text="brand.clientUsers.map(u => u.email).join(', ')"></p>
+                                        <p x-show="!brand.clientUsers.length" class="text-[10px] text-red-500 mt-0.5">No client users</p>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                    <p class="text-xs text-indigo-900"><strong>Agency team copies:</strong> When you send a feature announcement (not test emails), every active admin and brand rep receives a <span class="font-medium">[Team copy]</span> of the client email so the team stays aligned on what went out.</p>
-                    <p class="text-xs text-indigo-700 mt-1" x-show="mailblastTotals.teamCopyRecipients > 0">
-                        <span x-text="mailblastTotals.teamCopyRecipients"></span> team recipient(s) will receive a copy on send.
-                    </p>
-                </div>
+                <!-- Team copy note (compact) -->
+                <details class="rounded-lg border border-indigo-100 bg-indigo-50/50 px-4 py-2.5 text-xs text-indigo-900">
+                    <summary class="font-medium cursor-pointer select-none">Feature announcements also send a [Team copy] to staff</summary>
+                    <p class="mt-2 text-indigo-800/80 leading-relaxed">When you send a client announcement (not a test), every active admin and brand rep gets a copy so the team stays aligned.</p>
+                </details>
 
-                <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">Feature Announcements — Live Insights</h3>
-                            <p class="text-xs text-gray-500 mt-1">Tell selected clients that live audience and content metrics are now available in the Hub.</p>
-                            <p class="text-xs text-indigo-600 mt-2" x-show="mailblastTotals.brands > 0">
-                                <span x-text="mailblastTotals.brandsWithContacts"></span> brand(s) with contacts ·
-                                <span x-text="mailblastTotals.recipients"></span> unique recipient(s)
-                            </p>
-                            <p class="text-xs text-gray-400 mt-2" x-show="!mailblastLoading && mailblastBrands.length === 0">No eligible social media clients found.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button @click="loadFeatureMailblast()" :disabled="mailblastLoading"
-                                    class="px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50">
-                                Refresh
-                            </button>
-                            <button @click="sendMailblastTest()"
-                                    :disabled="mailblastTesting || mailblastLoading"
-                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-xl hover:bg-indigo-50 disabled:opacity-50">
-                                <span x-show="!mailblastTesting">Send Test to Me</span>
-                                <span x-show="mailblastTesting">Sending…</span>
-                            </button>
+                <!-- Live Insights -->
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('liveInsights')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-gray-50/80 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Live Insights Announcement</h3>
+                                    <span x-show="mailblastTotals.recipients > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700"><span x-text="mailblastTotals.recipients"></span> contacts</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Tell clients live metrics are in the Hub</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.liveInsights ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-gray-100" @click.stop>
+                            <button @click="sendMailblastTest()" :disabled="mailblastTesting || mailblastLoading"
+                                    class="px-3 py-1.5 border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg hover:bg-indigo-50 disabled:opacity-50">Test</button>
                             <button @click="sendFeatureMailblast()"
                                     :disabled="mailblastSending || mailblastLoading || selectedMailblastClients.length === 0"
-                                    class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span x-show="!mailblastSending">Send to Selected Clients</span>
-                                <span x-show="mailblastSending">Sending…</span>
+                                    class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!mailblastSending">Send (<span x-text="selectedMailblastClients.length"></span>)</span>
+                                <span x-show="mailblastSending">…</span>
                             </button>
                         </div>
                     </div>
-
-                    <div x-show="mailblastLoading" class="p-8 text-center text-sm text-gray-500">Loading eligible clients…</div>
-
-                    <div x-show="!mailblastLoading && mailblastBrands.length > 0" class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">
-                                        <input type="checkbox" class="rounded border-gray-300"
-                                               :checked="selectedMailblastClients.length === mailblastBrands.filter(b => b.clientUsers.length).length && mailblastBrands.filter(b => b.clientUsers.length).length > 0"
-                                               @change="toggleAllMailblastClients($event.target.checked)">
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="brand in mailblastBrands" :key="brand.clientId">
-                                    <tr class="hover:bg-gray-50" :class="!brand.clientUsers.length ? 'opacity-50' : ''">
-                                        <td class="px-4 py-3">
-                                            <input type="checkbox" class="rounded border-gray-300"
-                                                   :disabled="!brand.clientUsers.length"
-                                                   :checked="selectedMailblastClients.includes(brand.clientId)"
-                                                   @change="toggleMailblastClient(brand.clientId, $event.target.checked)">
-                                        </td>
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-500 capitalize" x-text="(brand.serviceType || 'social_media').replace('_', ' ')"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-600">
-                                            <template x-if="brand.clientUsers.length">
-                                                <span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span>
-                                            </template>
-                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                    <div x-show="emailSections.liveInsights" x-collapse class="border-t border-gray-100">
+                        <div class="px-4 py-2 bg-gray-50/50 border-b border-gray-100 flex justify-end">
+                            <button @click="loadFeatureMailblast()" :disabled="mailblastLoading" class="text-xs text-gray-500 hover:text-gray-800">Refresh list</button>
+                        </div>
+                        <div x-show="mailblastLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!mailblastLoading && !mailblastBrands.length" class="p-6 text-center text-sm text-gray-400">No eligible clients.</div>
+                        <div x-show="!mailblastLoading && mailblastBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                            <label class="flex items-center gap-3 px-4 py-2 bg-gray-50/80 text-xs font-medium text-gray-500 sticky top-0 border-b border-gray-100 cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300"
+                                       :checked="selectedMailblastClients.length === mailblastBrands.filter(b => b.clientUsers.length).length && mailblastBrands.filter(b => b.clientUsers.length).length > 0"
+                                       @change="toggleAllMailblastClients($event.target.checked)">
+                                Select all with contacts
+                            </label>
+                            <template x-for="brand in mailblastBrands" :key="brand.clientId">
+                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50/80 cursor-pointer" :class="!brand.clientUsers.length ? 'opacity-40' : ''">
+                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
+                                           :checked="selectedMailblastClients.includes(brand.clientId)"
+                                           @change="toggleMailblastClient(brand.clientId, $event.target.checked)">
+                                    <span class="text-sm font-medium text-gray-900 flex-1 truncate" x-text="brand.brandName"></span>
+                                    <span class="text-[10px] text-gray-400 capitalize shrink-0" x-text="(brand.serviceType || '').replace('_', ' ')"></span>
+                                </label>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white shadow rounded-lg border border-amber-200 overflow-hidden">
-                    <div class="p-5 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">Website Analytics — GA Connected</h3>
-                            <p class="text-xs text-gray-600 mt-1">For brands with Google Analytics already wired up. Lets them know site metrics are live in the Hub.</p>
-                            <p class="text-xs text-amber-700 mt-2" x-show="websiteConnectedTotals.brands > 0">
-                                <span x-text="websiteConnectedTotals.brandsWithContacts"></span> brand(s) ·
-                                <span x-text="websiteConnectedTotals.recipients"></span> recipient(s)
-                            </p>
-                            <p class="text-xs text-gray-400 mt-2" x-show="!websiteConnectedLoading && websiteConnectedBrands.length === 0">No GA-connected brands found.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button @click="loadWebsiteConnectedMailblast()" :disabled="websiteConnectedLoading"
-                                    class="px-3 py-1.5 border border-amber-200 text-amber-900 text-xs font-semibold rounded-xl hover:bg-amber-100 disabled:opacity-50">Refresh</button>
+                <!-- GA Connected -->
+                <div class="rounded-xl border border-amber-200/80 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('websiteConnected')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-amber-50/30 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Website Analytics (Connected)</h3>
+                                    <span x-show="websiteConnectedTotals.recipients > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800"><span x-text="websiteConnectedTotals.recipients"></span> contacts</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">GA4 is live — notify connected brands</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.websiteConnected ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-amber-100" @click.stop>
                             <button @click="sendWebsiteConnectedMailblastTest()" :disabled="websiteConnectedTesting || websiteConnectedLoading"
-                                    class="px-3 py-1.5 border border-amber-300 text-amber-800 text-xs font-semibold rounded-xl hover:bg-amber-100 disabled:opacity-50">
-                                <span x-show="!websiteConnectedTesting">Send Test to Me</span>
-                                <span x-show="websiteConnectedTesting">Sending…</span>
-                            </button>
+                                    class="px-3 py-1.5 border border-amber-300 text-amber-800 text-xs font-semibold rounded-lg hover:bg-amber-50 disabled:opacity-50">Test</button>
                             <button @click="sendWebsiteConnectedMailblast()"
                                     :disabled="websiteConnectedSending || websiteConnectedLoading || selectedWebsiteConnectedClients.length === 0"
-                                    class="px-4 py-2 bg-amber-600 text-white text-xs font-semibold rounded-xl hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span x-show="!websiteConnectedSending">Send to Selected</span>
-                                <span x-show="websiteConnectedSending">Sending…</span>
+                                    class="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!websiteConnectedSending">Send (<span x-text="selectedWebsiteConnectedClients.length"></span>)</span>
+                                <span x-show="websiteConnectedSending">…</span>
                             </button>
                         </div>
                     </div>
-                    <div x-show="websiteConnectedLoading" class="p-8 text-center text-sm text-gray-500">Loading GA-connected brands…</div>
-                    <div x-show="!websiteConnectedLoading && websiteConnectedBrands.length > 0" class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-amber-50/50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left"><input type="checkbox" class="rounded border-gray-300"
-                                               :checked="selectedWebsiteConnectedClients.length === websiteConnectedBrands.filter(b => b.clientUsers.length).length && websiteConnectedBrands.filter(b => b.clientUsers.length).length > 0"
-                                               @change="toggleAllWebsiteConnectedClients($event.target.checked)"></th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="brand in websiteConnectedBrands" :key="'wac-' + brand.clientId">
-                                    <tr class="hover:bg-amber-50/30" :class="!brand.clientUsers.length ? 'opacity-50' : ''">
-                                        <td class="px-4 py-3"><input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
-                                                   :checked="selectedWebsiteConnectedClients.includes(brand.clientId)"
-                                                   @change="toggleWebsiteConnectedClient(brand.clientId, $event.target.checked)"></td>
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-500 capitalize" x-text="(brand.serviceType || '—').replace('_', ' ')"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-600">
-                                            <template x-if="brand.clientUsers.length"><span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span></template>
-                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                    <div x-show="emailSections.websiteConnected" x-collapse class="border-t border-amber-100">
+                        <div class="px-4 py-2 bg-amber-50/30 border-b border-amber-100 flex justify-end">
+                            <button @click="loadWebsiteConnectedMailblast()" :disabled="websiteConnectedLoading" class="text-xs text-amber-800/70 hover:text-amber-900">Refresh</button>
+                        </div>
+                        <div x-show="websiteConnectedLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!websiteConnectedLoading && !websiteConnectedBrands.length" class="p-6 text-center text-sm text-gray-400">No GA-connected brands.</div>
+                        <div x-show="!websiteConnectedLoading && websiteConnectedBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                            <label class="flex items-center gap-3 px-4 py-2 bg-amber-50/40 text-xs font-medium text-gray-500 sticky top-0 border-b border-amber-100 cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300"
+                                       :checked="selectedWebsiteConnectedClients.length === websiteConnectedBrands.filter(b => b.clientUsers.length).length && websiteConnectedBrands.filter(b => b.clientUsers.length).length > 0"
+                                       @change="toggleAllWebsiteConnectedClients($event.target.checked)">
+                                Select all with contacts
+                            </label>
+                            <template x-for="brand in websiteConnectedBrands" :key="'wac-' + brand.clientId">
+                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50/20 cursor-pointer" :class="!brand.clientUsers.length ? 'opacity-40' : ''">
+                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
+                                           :checked="selectedWebsiteConnectedClients.includes(brand.clientId)"
+                                           @change="toggleWebsiteConnectedClient(brand.clientId, $event.target.checked)">
+                                    <span class="text-sm font-medium text-gray-900 flex-1 truncate" x-text="brand.brandName"></span>
+                                </label>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white shadow rounded-lg border border-teal-200 overflow-hidden">
-                    <div class="p-5 border-b border-teal-100 bg-gradient-to-r from-teal-50 to-cyan-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">Website Analytics — Upsell (Not Connected)</h3>
-                            <p class="text-xs text-gray-600 mt-1">For brands without GA yet. Invite them to get website insights when Esirom builds or manages their site.</p>
-                            <p class="text-xs text-teal-700 mt-2" x-show="websiteUpsellTotals.brands > 0">
-                                <span x-text="websiteUpsellTotals.brandsWithContacts"></span> brand(s) ·
-                                <span x-text="websiteUpsellTotals.recipients"></span> recipient(s)
-                            </p>
-                            <p class="text-xs text-gray-400 mt-2" x-show="!websiteUpsellLoading && websiteUpsellBrands.length === 0">No upsell-eligible brands found.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button @click="loadWebsiteUpsellMailblast()" :disabled="websiteUpsellLoading"
-                                    class="px-3 py-1.5 border border-teal-200 text-teal-900 text-xs font-semibold rounded-xl hover:bg-teal-100 disabled:opacity-50">Refresh</button>
+                <!-- GA Upsell -->
+                <div class="rounded-xl border border-teal-200/80 bg-white shadow-sm overflow-hidden">
+                    <div class="flex items-stretch">
+                        <button type="button" @click="toggleEmailSection('websiteUpsell')" class="flex-1 flex items-center gap-3 p-4 text-left hover:bg-teal-50/30 transition-colors min-w-0">
+                            <div class="shrink-0 w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-gray-900">Website Analytics (Upsell)</h3>
+                                    <span x-show="websiteUpsellTotals.recipients > 0" class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-50 text-teal-800"><span x-text="websiteUpsellTotals.recipients"></span> contacts</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Invite brands without GA to connect</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200" :class="emailSections.websiteUpsell ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-2 px-3 border-l border-teal-100" @click.stop>
                             <button @click="sendWebsiteUpsellMailblastTest()" :disabled="websiteUpsellTesting || websiteUpsellLoading"
-                                    class="px-3 py-1.5 border border-teal-300 text-teal-800 text-xs font-semibold rounded-xl hover:bg-teal-100 disabled:opacity-50">
-                                <span x-show="!websiteUpsellTesting">Send Test to Me</span>
-                                <span x-show="websiteUpsellTesting">Sending…</span>
-                            </button>
+                                    class="px-3 py-1.5 border border-teal-300 text-teal-800 text-xs font-semibold rounded-lg hover:bg-teal-50 disabled:opacity-50">Test</button>
                             <button @click="sendWebsiteUpsellMailblast()"
                                     :disabled="websiteUpsellSending || websiteUpsellLoading || selectedWebsiteUpsellClients.length === 0"
-                                    class="px-4 py-2 bg-teal-600 text-white text-xs font-semibold rounded-xl hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span x-show="!websiteUpsellSending">Send to Selected</span>
-                                <span x-show="websiteUpsellSending">Sending…</span>
+                                    class="px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg hover:bg-teal-700 disabled:opacity-50 whitespace-nowrap">
+                                <span x-show="!websiteUpsellSending">Send (<span x-text="selectedWebsiteUpsellClients.length"></span>)</span>
+                                <span x-show="websiteUpsellSending">…</span>
                             </button>
                         </div>
                     </div>
-                    <div x-show="websiteUpsellLoading" class="p-8 text-center text-sm text-gray-500">Loading upsell-eligible brands…</div>
-                    <div x-show="!websiteUpsellLoading && websiteUpsellBrands.length > 0" class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-teal-50/50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left"><input type="checkbox" class="rounded border-gray-300"
-                                               :checked="selectedWebsiteUpsellClients.length === websiteUpsellBrands.filter(b => b.clientUsers.length).length && websiteUpsellBrands.filter(b => b.clientUsers.length).length > 0"
-                                               @change="toggleAllWebsiteUpsellClients($event.target.checked)"></th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client contacts</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="brand in websiteUpsellBrands" :key="'wau-' + brand.clientId">
-                                    <tr class="hover:bg-teal-50/30" :class="!brand.clientUsers.length ? 'opacity-50' : ''">
-                                        <td class="px-4 py-3"><input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
-                                                   :checked="selectedWebsiteUpsellClients.includes(brand.clientId)"
-                                                   @change="toggleWebsiteUpsellClient(brand.clientId, $event.target.checked)"></td>
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="brand.brandName"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-500 capitalize" x-text="(brand.serviceType || '—').replace('_', ' ')"></td>
-                                        <td class="px-4 py-3 text-xs text-gray-600">
-                                            <template x-if="brand.clientUsers.length"><span x-text="brand.clientUsers.map(u => u.firstName + ' ' + u.lastName + ' (' + u.email + ')').join(', ')"></span></template>
-                                            <span x-show="!brand.clientUsers.length" class="text-red-500">No client users</span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                    <div x-show="emailSections.websiteUpsell" x-collapse class="border-t border-teal-100">
+                        <div class="px-4 py-2 bg-teal-50/30 border-b border-teal-100 flex justify-end">
+                            <button @click="loadWebsiteUpsellMailblast()" :disabled="websiteUpsellLoading" class="text-xs text-teal-800/70 hover:text-teal-900">Refresh</button>
+                        </div>
+                        <div x-show="websiteUpsellLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
+                        <div x-show="!websiteUpsellLoading && !websiteUpsellBrands.length" class="p-6 text-center text-sm text-gray-400">No upsell-eligible brands.</div>
+                        <div x-show="!websiteUpsellLoading && websiteUpsellBrands.length" class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                            <label class="flex items-center gap-3 px-4 py-2 bg-teal-50/40 text-xs font-medium text-gray-500 sticky top-0 border-b border-teal-100 cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300"
+                                       :checked="selectedWebsiteUpsellClients.length === websiteUpsellBrands.filter(b => b.clientUsers.length).length && websiteUpsellBrands.filter(b => b.clientUsers.length).length > 0"
+                                       @change="toggleAllWebsiteUpsellClients($event.target.checked)">
+                                Select all with contacts
+                            </label>
+                            <template x-for="brand in websiteUpsellBrands" :key="'wau-' + brand.clientId">
+                                <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-teal-50/20 cursor-pointer" :class="!brand.clientUsers.length ? 'opacity-40' : ''">
+                                    <input type="checkbox" class="rounded border-gray-300" :disabled="!brand.clientUsers.length"
+                                           :checked="selectedWebsiteUpsellClients.includes(brand.clientId)"
+                                           @change="toggleWebsiteUpsellClient(brand.clientId, $event.target.checked)">
+                                    <span class="text-sm font-medium text-gray-900 flex-1 truncate" x-text="brand.brandName"></span>
+                                </label>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1645,6 +1637,14 @@ show_admin_bar(false);
                 teamProgressEmailLoading: false,
                 teamProgressEmailTesting: false,
                 teamProgressEmailSending: false,
+                emailSections: {
+                    digest: false,
+                    teamProgress: false,
+                    clientReminders: false,
+                    liveInsights: false,
+                    websiteConnected: false,
+                    websiteUpsell: false
+                },
                 reminderBrands: [],
                 reminderTotals: { brands: 0, pendingItems: 0, recipients: 0 },
                 selectedReminderClients: [],
@@ -2865,6 +2865,18 @@ show_admin_bar(false);
                     }
                 },
 
+                toggleEmailSection(key) {
+                    this.emailSections[key] = !this.emailSections[key];
+                },
+
+                expandAllEmailSections() {
+                    Object.keys(this.emailSections).forEach((k) => { this.emailSections[k] = true; });
+                },
+
+                collapseAllEmailSections() {
+                    Object.keys(this.emailSections).forEach((k) => { this.emailSections[k] = false; });
+                },
+
                 async loadTeamProgressEmailPreview() {
                     this.teamProgressEmailLoading = true;
                     try {
@@ -3135,7 +3147,7 @@ show_admin_bar(false);
                         case 'clients':
                             return 'Manage brands, dashboards, and client settings';
                         case 'emails':
-                            return 'Feature announcements, Content Bank reminders, and workflow digest';
+                            return 'Test sends, team progress, client reminders, and announcements';
                         case 'import':
                             return 'Import historical posts and performance data';
                         default:
