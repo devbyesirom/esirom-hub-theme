@@ -493,7 +493,7 @@ show_admin_bar(false);
                             </select>
                             <button @click="loadMonthlyReportEmailPreview()" :disabled="monthlyReportEmailLoading"
                                     class="px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900">Refresh</button>
-                            <p class="text-[10px] text-violet-600 ml-auto">Test sends to your admin email</p>
+                            <p class="text-[10px] text-violet-600 ml-auto">Test uses live Meta totals (same as Insights dashboard)</p>
                         </div>
                         <div x-show="monthlyReportEmailLoading" class="p-6 text-center text-sm text-gray-500">Loading…</div>
                         <div x-show="!monthlyReportEmailLoading && !(monthlyReportEmailPreview.brands || []).length" class="p-6 text-center text-sm text-gray-400">No active brands found.</div>
