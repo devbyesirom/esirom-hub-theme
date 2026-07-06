@@ -255,8 +255,7 @@ $progress_url = esc_url(get_permalink(get_page_by_path('progress')));
     </main>
 </div>
 
-<?php esirom_hub_staff_mobile_nav('website_projects'); ?>
-<?php $hub_client_nav_context = 'site'; esirom_hub_client_mobile_nav(); ?>
+<?php esirom_hub_mobile_nav('website_projects', 'site'); ?>
 
 <!-- Project Modal -->
 <div x-show="showProjectModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @keydown.escape.window="showProjectModal = false">

@@ -101,11 +101,19 @@ function esirom_hub_wp_head_reset() {
 }
 
 /**
+ * Render unified mobile bottom navigation (clients + staff, PWA).
+ */
+function esirom_hub_mobile_nav($active = '', $context = 'site') {
+    $hub_mobile_active = $active;
+    $hub_mobile_context = $context;
+    include get_template_directory() . '/inc/hub-mobile-nav.php';
+}
+
+/**
  * Render shared staff mobile bottom navigation.
  */
 function esirom_hub_staff_mobile_nav($active = '') {
-    $hub_mobile_active = $active;
-    include get_template_directory() . '/inc/hub-staff-mobile-nav.php';
+    esirom_hub_mobile_nav($active, 'site');
 }
 
 /**
@@ -123,8 +131,7 @@ function esirom_hub_client_sidebar_nav($active = '', $context = 'site', $alpine_
  * Render shared client mobile bottom navigation (viewMode === 'client').
  */
 function esirom_hub_client_mobile_nav($context = 'site') {
-    $hub_client_nav_context = $context;
-    include get_template_directory() . '/inc/hub-client-mobile-nav.php';
+    esirom_hub_mobile_nav('', $context);
 }
 
 /**

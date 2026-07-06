@@ -861,10 +861,6 @@ function passwordVaultApp() {
 }
 </script>
 
-<nav class="hub-mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40">
-    <div class="flex justify-around items-center h-16 overflow-x-auto">
-        <?php esirom_hub_client_mobile_nav('site'); ?>
-    </div>
-</nav>
+<?php esirom_hub_mobile_nav('password_vault', 'site'); ?>
 </body>
 </html>

@@ -1,8 +1,11 @@
-const CACHE_NAME = 'esirom-hub-v1';
+const CACHE_NAME = 'esirom-hub-v2';
 const urlsToCache = [
   '/dashboard/',
-  '/admin/',
-  '/wp-content/themes/esiromhub/offline.html',
+  '/workflow/',
+  '/content-calendar/',
+  '/progress/',
+  '/overview/',
+  '/wp-content/themes/esirom-hub-theme/offline.html',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js'
@@ -78,7 +81,7 @@ self.addEventListener('fetch', event => {
           return response;
         }).catch(() => {
           // Network failed, show offline page
-          return caches.match('/wp-content/themes/esiromhub/offline.html');
+          return caches.match('/wp-content/themes/esirom-hub-theme/offline.html');
         });
       })
   );

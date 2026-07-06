@@ -66,6 +66,10 @@ body.admin-bar { margin-top: 0 !important; padding-top: 0 !important; }
 .sidebar-collapsed .nav-text { display: none; }
 .sidebar-collapsed .justify-between { justify-content: center; }
 
+.hub-mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
 @media (min-width: 768px) {
     .hub-mobile-bottom-nav {
         display: none !important;
