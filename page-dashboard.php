@@ -897,6 +897,69 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 </div>
                             </div>
 
+                            <!-- Executive summary + per-platform insights -->
+                            <div x-show="insightsNarratives?.executiveSummary?.length || insightsNarratives?.platformReports?.length" class="mb-5 space-y-4">
+                                <div x-show="insightsNarratives?.executiveSummary?.length" class="rounded-xl border border-indigo-200/80 bg-indigo-50/60 p-4 dark:border-indigo-700/50 dark:bg-indigo-950/30">
+                                    <h4 class="font-semibold text-indigo-900 dark:text-indigo-200 mb-2 text-sm uppercase tracking-wide">Executive summary</h4>
+                                    <ul class="space-y-1">
+                                        <template x-for="(line, idx) in (insightsNarratives?.executiveSummary || [])" :key="'exec-' + idx">
+                                            <li class="text-sm text-indigo-900/90 dark:text-indigo-100/90" x-text="line"></li>
+                                        </template>
+                                    </ul>
+                                </div>
+
+                                <template x-for="report in (insightsNarratives?.platformReports || [])" :key="'platform-report-' + report.platform">
+                                    <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                            <h4 class="font-bold text-gray-900 dark:text-white" x-text="report.platformLabel + ' performance'"></h4>
+                                            <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400" x-text="currentPeriodLabel"></span>
+                                        </div>
+
+                                        <div class="overflow-x-auto mb-4">
+                                            <table class="min-w-full text-sm">
+                                                <thead>
+                                                    <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                        <th class="py-2 pr-4">Metric</th>
+                                                        <th class="py-2 pr-4">Current</th>
+                                                        <th class="py-2 pr-4">MoM</th>
+                                                        <th class="py-2">YoY</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template x-for="kpi in (report.kpis || [])" :key="report.platform + '-' + kpi.label">
+                                                        <tr class="border-b border-gray-100 dark:border-gray-700/60">
+                                                            <td class="py-2 pr-4 text-gray-700 dark:text-gray-300" x-text="kpi.label"></td>
+                                                            <td class="py-2 pr-4 font-semibold text-gray-900 dark:text-white" x-text="formatNumber(kpi.current || 0)"></td>
+                                                            <td class="py-2 pr-4 font-medium" :class="insightChangeClass(kpi.momChange)" x-text="kpi.momChange != null ? formatInsightChange(kpi.momChange) : '—'"></td>
+                                                            <td class="py-2 font-medium" :class="insightChangeClass(kpi.yoyChange)" x-text="kpi.yoyChange != null ? formatInsightChange(kpi.yoyChange) : '—'"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40 mb-3">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Key insights</p>
+                                            <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed" x-text="report.keyInsights"></p>
+                                        </div>
+
+                                        <div x-show="(report.recommendations || []).length">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-2">Recommendations</p>
+                                            <ul class="space-y-1.5">
+                                                <template x-for="(rec, rIdx) in (report.recommendations || [])" :key="report.platform + '-rec-' + rIdx">
+                                                    <li class="text-sm text-gray-700 dark:text-gray-300 flex gap-2">
+                                                        <span class="text-emerald-600 dark:text-emerald-400 shrink-0" x-text="(rIdx + 1) + '.'"></span>
+                                                        <span x-text="rec"></span>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p x-show="insightsNarrativesLoading" class="text-sm text-gray-500 dark:text-gray-400 text-center py-2">Loading platform insights…</p>
+                                <p x-show="insightsNarrativesError" class="text-xs text-amber-700 dark:text-amber-300" x-text="insightsNarrativesError"></p>
+                            </div>
+
                             <!-- Month-over-month progress -->
                             <div class="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 mb-5">
                                 <h4 class="font-semibold text-gray-900 dark:text-white mb-3 text-sm uppercase tracking-wide">Progress vs last month</h4>
@@ -986,12 +1049,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 Loading website stats…
                             </div>
 
-                            <div x-show="websiteAnalytics?.summary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div x-show="websiteAnalytics?.summary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
                                 <div class="hub-stat-card hub-stat-card--amber rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Sessions</h3>
                                     <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(websiteAnalytics?.summary?.sessions || 0)"></p>
                                     <p class="text-xs mt-1" :class="(websiteAnalytics?.changes?.sessions || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'" x-show="websiteAnalytics?.changes?.sessions != null">
                                         <span x-text="formatChange(websiteAnalytics?.changes?.sessions || 0)"></span> vs prior period
+                                    </p>
+                                    <p class="text-xs mt-0.5 text-gray-500 dark:text-gray-400" x-show="websiteAnalytics?.changesYoY?.sessions != null">
+                                        <span x-text="formatChange(websiteAnalytics?.changesYoY?.sessions || 0)"></span> YoY
                                     </p>
                                 </div>
                                 <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
@@ -1020,9 +1086,30 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Avg Session</h3>
                                     <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatDuration(websiteAnalytics?.summary?.avgSessionDuration || 0)"></p>
                                 </div>
+                                <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Engagement Rate</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="((websiteAnalytics?.summary?.engagementRate || 0)).toFixed(1) + '%'"></p>
+                                </div>
+                                <div class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Engaged Sessions</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(websiteAnalytics?.summary?.engagedSessions || 0)"></p>
+                                </div>
                             </div>
 
-                            <div x-show="websiteAnalytics?.topPages?.length || websiteAnalytics?.topSources?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                            <div x-show="websiteAnalytics?.narrative?.keyInsights" class="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 dark:border-indigo-800 dark:bg-indigo-950/30">
+                                <h4 class="text-sm font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-300 mb-2">Website insights</h4>
+                                <p class="text-sm text-indigo-950 dark:text-indigo-100 leading-relaxed mb-3" x-text="websiteAnalytics?.narrative?.keyInsights"></p>
+                                <ul x-show="(websiteAnalytics?.narrative?.recommendations || []).length" class="space-y-1.5">
+                                    <template x-for="(rec, wIdx) in (websiteAnalytics?.narrative?.recommendations || [])" :key="'web-rec-' + wIdx">
+                                        <li class="text-sm text-indigo-900/90 dark:text-indigo-100/90 flex gap-2">
+                                            <span class="text-indigo-600 dark:text-indigo-400 shrink-0" x-text="(wIdx + 1) + '.'"></span>
+                                            <span x-text="rec"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+
+                            <div x-show="websiteAnalytics?.topPages?.length || websiteAnalytics?.topSources?.length || websiteAnalytics?.topChannels?.length || websiteAnalytics?.topCountries?.length || websiteAnalytics?.topDevices?.length || websiteAnalytics?.topCities?.length" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
                                 <div x-show="websiteAnalytics?.topPages?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                     <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Pages</h4>
                                     <ul class="space-y-2">
@@ -1041,6 +1128,56 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             <li class="flex justify-between gap-2 text-sm">
                                                 <span class="text-gray-700 dark:text-gray-300 truncate" x-text="src.source"></span>
                                                 <span class="font-medium text-gray-900 dark:text-white shrink-0" x-text="formatNumber(src.sessions)"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div x-show="websiteAnalytics?.topChannels?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Traffic Channels</h4>
+                                    <ul class="space-y-2">
+                                        <template x-for="(ch, idx) in (websiteAnalytics?.topChannels || []).slice(0, 8)" :key="'ch-' + idx">
+                                            <li class="flex justify-between gap-2 text-sm">
+                                                <span class="text-gray-700 dark:text-gray-300 truncate" x-text="ch.channel"></span>
+                                                <span class="font-medium text-gray-900 dark:text-white shrink-0">
+                                                    <span x-text="formatNumber(ch.sessions)"></span>
+                                                    <span class="text-gray-500 dark:text-gray-400 text-xs ml-1" x-show="ch.share != null" x-text="'(' + (ch.share || 0).toFixed(0) + '%)'"></span>
+                                                </span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div x-show="websiteAnalytics?.topCountries?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Countries</h4>
+                                    <ul class="space-y-2">
+                                        <template x-for="(country, idx) in (websiteAnalytics?.topCountries || []).slice(0, 8)" :key="'country-' + idx">
+                                            <li class="flex justify-between gap-2 text-sm">
+                                                <span class="text-gray-700 dark:text-gray-300 truncate" x-text="country.country"></span>
+                                                <span class="font-medium text-gray-900 dark:text-white shrink-0" x-text="formatNumber(country.sessions)"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div x-show="websiteAnalytics?.topCities?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Cities</h4>
+                                    <ul class="space-y-2">
+                                        <template x-for="(city, idx) in (websiteAnalytics?.topCities || []).slice(0, 8)" :key="'city-' + idx">
+                                            <li class="flex justify-between gap-2 text-sm">
+                                                <span class="text-gray-700 dark:text-gray-300 truncate" x-text="city.city"></span>
+                                                <span class="font-medium text-gray-900 dark:text-white shrink-0" x-text="formatNumber(city.sessions)"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div x-show="websiteAnalytics?.topDevices?.length" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Devices</h4>
+                                    <ul class="space-y-2">
+                                        <template x-for="(device, idx) in (websiteAnalytics?.topDevices || []).slice(0, 5)" :key="'device-' + idx">
+                                            <li class="flex justify-between gap-2 text-sm">
+                                                <span class="text-gray-700 dark:text-gray-300 capitalize truncate" x-text="device.device"></span>
+                                                <span class="font-medium text-gray-900 dark:text-white shrink-0">
+                                                    <span x-text="formatNumber(device.sessions)"></span>
+                                                    <span class="text-gray-500 dark:text-gray-400 text-xs ml-1" x-show="device.share != null" x-text="'(' + (device.share || 0).toFixed(0) + '%)'"></span>
+                                                </span>
                                             </li>
                                         </template>
                                     </ul>
@@ -2311,6 +2448,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 websiteAnalytics: null,
                 websiteAnalyticsLoading: false,
                 websiteAnalyticsError: '',
+                insightsNarratives: null,
+                insightsNarrativesLoading: false,
+                insightsNarrativesError: '',
                 audienceInsights: null,
                 audienceInsightsLoading: false,
                 periodAccountActivity: null,
@@ -2457,6 +2597,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         if (this.activeView === 'dashboard') {
                            setTimeout(() => this.initCharts(), 100);
                            this.loadWebsiteAnalytics();
+                           this.loadInsightsNarratives();
                         }
                     });
                     
@@ -5056,6 +5197,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         this.activePlatforms.push(platform);
                     }
                     this.updateDashboardMetrics();
+                    this.loadInsightsNarratives();
                 },
 
                 isPlatformFilterActive(platform) {
@@ -5081,6 +5223,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 selectAllPlatforms() {
                     this.activePlatforms = [...this.clientPlatforms];
                     this.updateDashboardMetrics();
+                    this.loadInsightsNarratives();
                 },
 
                 hasVideoInsights() {
@@ -5444,6 +5587,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.updateDashboardMetrics();
                     this.loadPeriodAccountActivity();
                     this.loadWebsiteAnalytics();
+                    this.loadInsightsNarratives();
                 },
                 
                 applyCustomDateRange() {
@@ -5465,6 +5609,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.updateDashboardMetrics();
                     this.loadPeriodAccountActivity();
                     this.loadWebsiteAnalytics();
+                    this.loadInsightsNarratives();
                 },
                 
                 getPostDate(post) {
@@ -5593,6 +5738,40 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
                     } finally {
                         this.websiteAnalyticsLoading = false;
+                    }
+                },
+
+                async loadInsightsNarratives() {
+                    const clientId = this.getClientId();
+                    if (!clientId || !this.currentPeriodStart || !this.currentPeriodEnd) {
+                        this.insightsNarratives = null;
+                        return;
+                    }
+
+                    this.insightsNarrativesLoading = true;
+                    this.insightsNarrativesError = '';
+                    try {
+                        const params = new URLSearchParams({
+                            startDate: this.currentPeriodStart.toISOString().slice(0, 10),
+                            endDate: this.currentPeriodEnd.toISOString().slice(0, 10)
+                        });
+                        if (this.activePlatforms?.length) {
+                            params.set('platforms', this.activePlatforms.join(','));
+                        }
+                        const response = await fetch(`${API_URL}/insights/narratives/${clientId}?${params.toString()}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        const result = await response.json().catch(() => ({}));
+                        if (response.ok && result.success) {
+                            this.insightsNarratives = result.data;
+                            return;
+                        }
+                        this.insightsNarrativesError = result.message || 'Unable to load platform insights.';
+                    } catch (error) {
+                        console.warn('loadInsightsNarratives:', error);
+                        this.insightsNarrativesError = 'Unable to load platform insights.';
+                    } finally {
+                        this.insightsNarrativesLoading = false;
                     }
                 },
 
