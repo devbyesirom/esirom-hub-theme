@@ -3734,7 +3734,7 @@ show_admin_bar(false);
                     this.conceptDescriptionNA = false;
                     this.editingConcept = null;
                     const defaultDue = mediaType === 'graphic'
-                        ? this.addBusinessDays(new Date(), 3).toISOString().slice(0, 10)
+                        ? this.toDateInputValue(this.addBusinessDays(new Date(), 3))
                         : '';
                     this.conceptForm = {
                         title: '',
@@ -4050,6 +4050,15 @@ show_admin_bar(false);
                     return result;
                 },
 
+                toDateInputValue(date) {
+                    const d = new Date(date);
+                    d.setHours(0, 0, 0, 0);
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                },
+
                 getArtworkLeadFromDate() {
                     if (this.editingConcept?.createdAt) {
                         return new Date(this.editingConcept.createdAt);
@@ -4061,15 +4070,16 @@ show_admin_bar(false);
                     if (this.conceptMediaType === 'video' || this.conceptForm.priority === 'urgent') {
                         return '';
                     }
-                    return this.addBusinessDays(this.getArtworkLeadFromDate(), 3).toISOString().slice(0, 10);
+                    return this.toDateInputValue(this.addBusinessDays(this.getArtworkLeadFromDate(), 3));
                 },
 
                 validateArtworkDueDateClient() {
                     if (this.conceptMediaType === 'video' || this.conceptForm.priority === 'urgent') return null;
                     if (!this.conceptForm.dueDate) return 'Due date is required';
                     const minDue = this.addBusinessDays(this.getArtworkLeadFromDate(), 3);
-                    const due = new Date(this.conceptForm.dueDate + 'T00:00:00');
-                    due.setHours(0, 0, 0, 0);
+                    minDue.setHours(0, 0, 0, 0);
+                    const [y, m, d] = this.conceptForm.dueDate.split('-').map(Number);
+                    const due = new Date(y, m - 1, d, 0, 0, 0, 0);
                     if (due < minDue) {
                         const label = minDue.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                         return `Artwork needs at least 3 business days. Earliest due date is ${label}, or set Priority to Urgent.`;
