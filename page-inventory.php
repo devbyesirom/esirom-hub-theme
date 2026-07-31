@@ -116,13 +116,17 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
                     </div>
                     <div class="divide-y dark:divide-gray-700">
                         <template x-for="item in equipment.filter(e => e.availability === 'available').slice(0,8)" :key="item._id">
-                            <div class="px-5 py-3 flex items-center gap-4">
+                            <div class="px-5 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-medium truncate" x-text="item.name"></p>
                                     <p class="text-xs text-gray-500" x-text="(item.model || '—') + ' · ' + item.category"></p>
                                 </div>
                                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Available</span>
-                                <button @click="openBookingModal(item)" class="text-xs text-indigo-600 hover:underline">Book</button>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button @click="openBookingModal(item)" class="text-xs font-medium text-indigo-600 hover:underline">Book</button>
+                                    <button x-show="canManage" @click="openEquipmentModal(item)" class="text-xs font-medium text-gray-600 dark:text-gray-300 hover:underline">Edit</button>
+                                    <button x-show="canManage" @click="deleteEquipment(item)" class="text-xs font-medium text-red-500 hover:underline">Delete</button>
+                                </div>
                             </div>
                         </template>
                         <div x-show="equipment.filter(e => e.availability === 'available').length === 0" class="px-5 py-8 text-center text-sm text-gray-500">No equipment currently available</div>
@@ -178,9 +182,11 @@ $dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
                                               :class="availClass(item.availability)" x-text="item.availability.replace('_',' ')"></span>
                                     </td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        <button x-show="item.availability === 'available'" @click="openBookingModal(item)" class="text-xs text-emerald-600 hover:underline mr-2">Book</button>
-                                        <button x-show="canManage" @click="openEquipmentModal(item)" class="text-xs text-indigo-600 hover:underline mr-2">Edit</button>
-                                        <button x-show="canManage" @click="deleteEquipment(item)" class="text-xs text-red-500 hover:underline">Remove</button>
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <button x-show="item.availability === 'available'" @click="openBookingModal(item)" class="px-2 py-1 text-xs font-medium rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300">Book</button>
+                                            <button x-show="canManage" @click="openEquipmentModal(item)" class="px-2 py-1 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300">Edit</button>
+                                            <button x-show="canManage" @click="deleteEquipment(item)" class="px-2 py-1 text-xs font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300">Delete</button>
+                                        </div>
                                     </td>
                                 </tr>
                             </template>
@@ -344,7 +350,9 @@ function inventoryApp() {
         categories: ['camera','lens','lighting','audio','grip','computer','drone','other'],
         conditions: ['new','good','needs_servicing','old','other'],
 
-        get canManage() { return this.user?.role === 'admin' || this.user?.isManager; },
+        get canManage() {
+            return this.user?.role === 'admin' || this.user?.role === 'brand_rep' || this.user?.isManager;
+        },
         get canApprove() { return this.user?.role === 'admin' || this.user?.isManager; },
 
         get tabs() {
@@ -455,15 +463,37 @@ function inventoryApp() {
         },
 
         openEquipmentModal(item = null) {
-            this.equipmentForm = item ? { ...item } : { name: '', model: '', serialNumber: '', category: 'camera', status: 'good', location: '', notes: '' };
+            if (item) {
+                this.equipmentForm = {
+                    _id: item._id,
+                    name: item.name || '',
+                    model: item.model || '',
+                    serialNumber: item.serialNumber || '',
+                    category: item.category || 'camera',
+                    status: item.status || 'good',
+                    location: item.location || '',
+                    notes: item.notes || ''
+                };
+            } else {
+                this.equipmentForm = { name: '', model: '', serialNumber: '', category: 'camera', status: 'good', location: '', notes: '' };
+            }
             this.showEquipmentModal = true;
         },
 
         async saveEquipment() {
             if (!this.equipmentForm.name?.trim()) { this.showToast('Name is required', 'error'); return; }
             const isEdit = !!this.equipmentForm._id;
+            const payload = {
+                name: this.equipmentForm.name.trim(),
+                model: this.equipmentForm.model || '',
+                serialNumber: this.equipmentForm.serialNumber || '',
+                category: this.equipmentForm.category || 'other',
+                status: this.equipmentForm.status || 'good',
+                location: this.equipmentForm.location || '',
+                notes: this.equipmentForm.notes || ''
+            };
             const url = isEdit ? `${API_URL}/inventory/equipment/${this.equipmentForm._id}` : `${API_URL}/inventory/equipment`;
-            const res = await fetch(url, { method: isEdit ? 'PATCH' : 'POST', headers: this.headers(), body: JSON.stringify(this.equipmentForm) });
+            const res = await fetch(url, { method: isEdit ? 'PATCH' : 'POST', headers: this.headers(), body: JSON.stringify(payload) });
             const data = await res.json();
             if (data.success) {
                 this.showEquipmentModal = false;
@@ -475,10 +505,10 @@ function inventoryApp() {
         },
 
         async deleteEquipment(item) {
-            if (!confirm(`Remove "${item.name}" from inventory?`)) return;
+            if (!confirm(`Delete "${item.name}" from inventory? This cannot be undone from the list (item will be archived).`)) return;
             const res = await fetch(`${API_URL}/inventory/equipment/${item._id}`, { method: 'DELETE', headers: this.headers() });
             const data = await res.json();
-            if (data.success) { this.showToast('Equipment removed', 'success'); await this.loadAll(); }
+            if (data.success) { this.showToast('Equipment deleted', 'success'); await this.loadAll(); }
             else this.showToast(data.message || 'Failed', 'error');
         },
 
