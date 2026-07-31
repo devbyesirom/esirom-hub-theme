@@ -552,147 +552,48 @@ show_admin_bar(false);
                             </div>
                         </div>
 
-                        <!-- ── Brand Overview ── -->
+                        <!-- ── Design Queue ── -->
                         <div x-show="dashboardCards.brandOverview" class="wf-card-appear bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/40 flex items-center justify-center">
-                                        <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Brand Overview</h3>
-                                        <p class="text-xs text-gray-400">All assigned concepts grouped by brand</p>
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Design Queue</h3>
+                                        <p class="text-xs text-gray-400">Work by priority &amp; due date</p>
                                     </div>
                                 </div>
                                 <button @click="navigateTab('concepts')" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">View All →</button>
                             </div>
                             <div class="divide-y divide-gray-50 dark:divide-gray-700/40 max-h-96 overflow-y-auto">
-                                <template x-for="brand in getConceptsByBrand()" :key="brand.brandId">
-                                    <div x-data="{ expanded: false }">
-                                        <button @click="expanded = !expanded" class="w-full px-5 py-3.5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors border-l-4" :style="'border-left-color: ' + getBrandColor(brand.brandId)">
-                                            <div class="flex items-center gap-2.5">
-                                                <svg :class="expanded ? 'rotate-90' : ''" class="w-3.5 h-3.5 text-gray-400 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="brand.brandName"></span>
-                                                <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium" x-text="brand.concepts.length + ' concepts'"></span>
-                                            </div>
-                                        </button>
-                                        <div x-show="expanded" class="divide-y divide-gray-50 dark:divide-gray-700/30 bg-gray-50/40 dark:bg-gray-900/20">
-                                            <template x-for="c in brand.concepts" :key="c._id">
-                                                <div class="px-5 py-2.5 pl-14 hover:bg-gray-100/60 dark:hover:bg-gray-700/40 cursor-pointer flex items-center justify-between gap-3 transition-colors" @click="viewConcept(c)">
-                                                    <div class="flex items-center gap-3 min-w-0">
-                                                        <template x-if="getConceptImages(c).length > 0">
-                                                            <img :src="getConceptImages(c)[0]" class="w-8 h-8 rounded-lg object-cover shrink-0" @error="$event.target.style.display='none'" />
-                                                        </template>
-                                                        <template x-if="getConceptImages(c).length === 0">
-                                                            <div class="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-600 shrink-0 flex items-center justify-center">
-                                                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                            </div>
-                                                        </template>
-                                                        <div class="min-w-0">
-                                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="c.title"></p>
-                                                            <p class="text-xs text-gray-400" x-text="'Due ' + formatDate(c.dueDate) + ' · ' + (c.assignedTo ? (c.assignedTo.firstName + ' ' + c.assignedTo.lastName) : 'Unassigned')"></p>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex items-center gap-2 shrink-0">
-                                                        <span :class="getStatusClass(c.status)" class="px-2 py-0.5 text-xs rounded-full font-medium" x-text="formatStatus(c.status)"></span>
-                                                        <span :class="getPriorityClass(c.priority)" class="px-2 py-0.5 text-xs rounded-full capitalize" x-text="c.priority"></span>
-                                                    </div>
+                                <template x-for="c in getDesignQueue()" :key="c._id">
+                                    <div class="px-5 py-3 hover:bg-gray-50/80 dark:hover:bg-gray-700/40 cursor-pointer flex items-center justify-between gap-3 transition-colors border-l-4" :style="'border-left-color: ' + getBrandColor(c.clientId?._id)" @click="viewConcept(c)">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <template x-if="getConceptImages(c).length > 0">
+                                                <img :src="getConceptImages(c)[0]" class="w-9 h-9 rounded-lg object-cover shrink-0" @error="$event.target.style.display='none'" />
+                                            </template>
+                                            <template x-if="getConceptImages(c).length === 0">
+                                                <div class="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-600 shrink-0 flex items-center justify-center">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                                 </div>
                                             </template>
+                                            <div class="min-w-0">
+                                                <div class="flex items-center gap-2 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="c.title"></p>
+                                                    <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400 shrink-0 truncate max-w-[9rem]" x-text="c.clientId?.brandName || c.clientId?.name || 'Unknown Brand'"></span>
+                                                </div>
+                                                <p class="text-xs text-gray-400 mt-0.5" x-text="'Due ' + formatDate(c.dueDate) + ' · ' + (c.assignedTo ? (c.assignedTo.firstName + ' ' + c.assignedTo.lastName) : 'Unassigned')"></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span :class="getStatusClass(c.status)" class="px-2 py-0.5 text-xs rounded-full font-medium" x-text="formatStatus(c.status)"></span>
+                                            <span :class="getPriorityClass(c.priority)" class="px-2 py-0.5 text-xs rounded-full capitalize" x-text="c.priority"></span>
                                         </div>
                                     </div>
                                 </template>
                                 <div x-show="assignedConcepts.length === 0" class="px-5 py-12 text-center">
                                     <p class="text-sm text-gray-400">No assigned concepts yet</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── Content Quota + Ready to Post ── -->
-                        <div x-show="dashboardCards.quota || dashboardCards.readyToPost" class="wf-card-appear grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-                            <!-- Content Quota -->
-                            <div x-show="dashboardCards.quota" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
-                                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-3 flex-wrap">
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-900/40 flex items-center justify-center">
-                                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Content Quota</h3>
-                                            <p class="text-xs text-gray-400">Monthly targets vs delivery</p>
-                                        </div>
-                                    </div>
-                                    <select x-model="quotaYear" @change="loadInitialData()" class="px-2.5 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                                        <option value="2024">2024</option>
-                                        <option value="2025">2025</option>
-                                        <option value="2026">2026</option>
-                                        <option value="2027">2027</option>
-                                    </select>
-                                </div>
-                                <div class="p-4 space-y-3 overflow-y-auto max-h-80">
-                                    <template x-for="quota in contentQuotaTracking" :key="quota.clientId">
-                                        <div class="rounded-xl border p-4" :class="quota.status === 'behind' ? 'border-l-4 border-l-red-400 border-red-100 dark:border-red-900/40 bg-red-50/30 dark:bg-red-900/10' : 'border-l-4 border-l-emerald-400 border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-900/10'">
-                                            <div class="flex items-start justify-between mb-3">
-                                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="quota.clientName"></p>
-                                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold shrink-0"
-                                                      :class="quota.status === 'behind' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'"
-                                                      x-text="quota.status === 'behind' ? 'Behind' : 'On Track'"></span>
-                                            </div>
-                                            <div class="grid grid-cols-3 gap-2 text-center">
-                                                <div class="bg-white/70 dark:bg-gray-800/70 rounded-xl p-2.5">
-                                                    <p class="text-xl font-extrabold text-gray-900 dark:text-white tabular-nums" x-text="quota.monthlyTarget"></p>
-                                                    <p class="text-xs text-gray-500 mt-0.5">Target/mo</p>
-                                                </div>
-                                                <div class="bg-white/70 dark:bg-gray-800/70 rounded-xl p-2.5">
-                                                    <p class="text-xl font-extrabold tabular-nums" :class="quota.remainingNeeded > 0 ? 'text-red-600' : 'text-emerald-600'" x-text="quota.remainingNeeded"></p>
-                                                    <p class="text-xs text-gray-500 mt-0.5">Remaining</p>
-                                                </div>
-                                                <div class="bg-white/70 dark:bg-gray-800/70 rounded-xl p-2.5">
-                                                    <p class="text-xl font-extrabold text-blue-600 tabular-nums" x-text="quota.conceptsInProgress"></p>
-                                                    <p class="text-xs text-gray-500 mt-0.5">In Progress</p>
-                                                </div>
-                                            </div>
-                                            <div x-show="quota.carryoverFromPreviousYears > 0" class="mt-2.5 pt-2.5 border-t border-current/10 flex justify-between text-xs">
-                                                <span class="text-gray-500">Carryover</span>
-                                                <span class="font-semibold text-orange-600" x-text="'+' + quota.carryoverFromPreviousYears"></span>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <div x-show="contentQuotaTracking.length === 0" class="py-10 text-center">
-                                        <p class="text-sm text-gray-400">No quota data available</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Ready to Post -->
-                            <div x-show="dashboardCards.readyToPost" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
-                                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-900/40 flex items-center justify-center">
-                                            <svg class="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Ready to Post</h3>
-                                            <p class="text-xs text-gray-400">Approved content not yet published</p>
-                                        </div>
-                                    </div>
-                                    <a href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#content-calendar" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Open Calendar →</a>
-                                </div>
-                                <div class="divide-y divide-gray-50 dark:divide-gray-700/40 flex-1 overflow-y-auto max-h-80">
-                                    <template x-for="p in approvedNotPosted" :key="p._id">
-                                        <div class="px-5 py-3.5 flex items-start justify-between gap-3">
-                                            <div class="min-w-0">
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="(p.clientId?.brandName || p.clientId?.name || '—') + ' · ' + (p.platform || '—')"></p>
-                                                <p class="text-xs text-gray-400 mt-0.5" x-text="p.scheduledDate ? ('Scheduled ' + formatDate(p.scheduledDate)) : 'No date set'"></p>
-                                            </div>
-                                            <span class="px-2 py-0.5 text-xs rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400 font-medium shrink-0" x-text="p.status"></span>
-                                        </div>
-                                    </template>
-                                    <div x-show="approvedNotPosted.length === 0" class="px-5 py-12 text-center">
-                                        <svg class="w-9 h-9 text-gray-200 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-                                        <p class="text-sm text-gray-400">All approved content is posted</p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3197,16 +3098,12 @@ show_admin_bar(false);
                 dashboardCards: {
                     pipeline: true,
                     myWork: true,
-                    brandOverview: true,
-                    quota: true,
-                    readyToPost: true
+                    brandOverview: true
                 },
                 dashboardCardConfig: [
-                    { id: 'pipeline',      label: 'Pipeline Status',        desc: 'Concept counts by status stage' },
-                    { id: 'myWork',        label: 'My Work',                desc: 'Your assigned concepts & items needing attention' },
-                    { id: 'brandOverview', label: 'Brand Overview',          desc: 'All assigned concepts grouped by brand' },
-                    { id: 'quota',         label: 'Content Quota',           desc: 'Monthly post targets vs actual delivery' },
-                    { id: 'readyToPost',   label: 'Ready to Post',           desc: 'Approved content not yet published' }
+                    { id: 'pipeline',      label: 'Pipeline Status', desc: 'Concept counts by status stage' },
+                    { id: 'myWork',        label: 'My Work',         desc: 'Your assigned concepts & items needing attention' },
+                    { id: 'brandOverview', label: 'Design Queue',    desc: 'Assigned concepts ordered by priority & due date' }
                 ],
                 concepts: [],
                 tasks: [],
@@ -3220,10 +3117,6 @@ show_admin_bar(false);
                 assignedConcepts: [],
                 workloadByAssignee: [],
                 teamMonthlyEfficiency: [],
-                approvedNotPosted: [],
-                contentQuotaTracking: [],
-                isQuotaOpen: false,
-                quotaYear: new Date().getFullYear(),
                 efficiencyYear: new Date().getFullYear(),
                 efficiencyMonth: new Date().getMonth() + 1,
                 conceptSearch: '',
@@ -3425,7 +3318,12 @@ show_admin_bar(false);
                         const saved = localStorage.getItem(key);
                         if (saved) {
                             const parsed = JSON.parse(saved);
-                            this.dashboardCards = { ...this.dashboardCards, ...parsed };
+                            const allowed = Object.keys(this.dashboardCards);
+                            const next = { ...this.dashboardCards };
+                            for (const id of allowed) {
+                                if (typeof parsed[id] === 'boolean') next[id] = parsed[id];
+                            }
+                            this.dashboardCards = next;
                         }
                     } catch (e) {}
                 },
@@ -3539,7 +3437,7 @@ show_admin_bar(false);
                     const token = localStorage.getItem('token');
                     try {
                         const [dashboardRes, clientsRes, usersRes, notifRes, mentionsRes] = await Promise.all([
-                            fetch(`${API_URL}/workflow/dashboard?quotaYear=${this.quotaYear}&efficiencyYear=${this.efficiencyYear}&efficiencyMonth=${this.efficiencyMonth}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                            fetch(`${API_URL}/workflow/dashboard?efficiencyYear=${this.efficiencyYear}&efficiencyMonth=${this.efficiencyMonth}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                             fetch(`${API_URL}/clients`, { headers: { 'Authorization': `Bearer ${token}` } }),
                             fetch(`${API_URL}/workflow/team-members`, { headers: { 'Authorization': `Bearer ${token}` } }),
                             fetch(`${API_URL}/workflow/notifications`, { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -3552,8 +3450,6 @@ show_admin_bar(false);
                             this.assignedConcepts = d.assignedConcepts || [];
                             this.workloadByAssignee = d.workloadByAssignee || [];
                             this.teamMonthlyEfficiency = d.teamMonthlyEfficiency || [];
-                            this.approvedNotPosted = d.approvedNotPosted || [];
-                            this.contentQuotaTracking = d.contentQuotaTracking || [];
                         }
                         if (clientsRes.ok) { const d = await clientsRes.json(); this.clients = d.data || []; }
                         if (usersRes.ok) { const d = await usersRes.json(); this.teamMembers = d.data || []; } else { await usersRes.text(); }
@@ -4050,30 +3946,17 @@ show_admin_bar(false);
                     return colors[Math.abs(hash) % colors.length];
                 },
 
-                getConceptsByBrand() {
+                getDesignQueue() {
                     const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-                    const brandMap = {};
-                    
-                    for (const c of this.assignedConcepts) {
-                        const brandId = c.clientId?._id || 'unknown';
-                        const brandName = c.clientId?.brandName || c.clientId?.name || 'Unknown Brand';
-                        
-                        if (!brandMap[brandId]) {
-                            brandMap[brandId] = { brandId, brandName, concepts: [] };
-                        }
-                        brandMap[brandId].concepts.push(c);
-                    }
-                    
-                    for (const brand of Object.values(brandMap)) {
-                        brand.concepts.sort((a, b) => {
-                            const pA = priorityOrder[a.priority] ?? 2;
-                            const pB = priorityOrder[b.priority] ?? 2;
-                            if (pA !== pB) return pA - pB;
-                            return new Date(a.dueDate) - new Date(b.dueDate);
-                        });
-                    }
-                    
-                    return Object.values(brandMap).sort((a, b) => a.brandName.localeCompare(b.brandName));
+                    return [...(this.assignedConcepts || [])].sort((a, b) => {
+                        const pA = priorityOrder[a.priority] ?? 2;
+                        const pB = priorityOrder[b.priority] ?? 2;
+                        if (pA !== pB) return pA - pB;
+                        const dA = a.dueDate ? new Date(a.dueDate).getTime() : Number.POSITIVE_INFINITY;
+                        const dB = b.dueDate ? new Date(b.dueDate).getTime() : Number.POSITIVE_INFINITY;
+                        if (dA !== dB) return dA - dB;
+                        return String(a.title || '').localeCompare(String(b.title || ''));
+                    });
                 },
 
                 filterByStatus(status) {
