@@ -1485,6 +1485,25 @@ show_admin_bar(false);
                                 </template>
                             </div>
                         </div>
+                        <div x-show="!socialMediaStatus.facebook?.connected" class="mt-3 pt-3 border-t border-blue-200 space-y-2">
+                            <button type="button" @click="showManualMetaConnect = !showManualMetaConnect" class="text-xs font-medium text-indigo-700 hover:underline">
+                                <span x-text="showManualMetaConnect ? 'Hide manual Page connect' : 'Page admin but Business Manager blocked? Connect manually'"></span>
+                            </button>
+                            <div x-show="showManualMetaConnect" class="space-y-2 rounded-lg border border-indigo-200 bg-white/80 p-3">
+                                <p class="text-xs text-gray-600">Use this when you are a <strong>full admin on the Page</strong> but cannot add it via Business Manager / OAuth page list. Paste the numeric Page ID and a <strong>Page access token</strong> (Graph API Explorer → select this Page).</p>
+                                <input type="text" x-model="manualMetaPageId" placeholder="Facebook Page ID" class="w-full border rounded px-2 py-1.5 text-xs">
+                                <input type="password" x-model="manualMetaPageToken" placeholder="Page access token" class="w-full border rounded px-2 py-1.5 text-xs" autocomplete="off">
+                                <input type="text" x-model="manualMetaPageName" placeholder="Page name (optional)" class="w-full border rounded px-2 py-1.5 text-xs">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <input type="text" x-model="manualIgAccountId" placeholder="IG Business Account ID (optional)" class="border rounded px-2 py-1.5 text-xs">
+                                    <input type="text" x-model="manualIgUsername" placeholder="@username (optional)" class="border rounded px-2 py-1.5 text-xs">
+                                </div>
+                                <button type="button" @click="connectMetaManual(customizingClient._id)" :disabled="manualMetaConnecting" class="w-full px-3 py-1.5 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:opacity-60">
+                                    <span x-show="!manualMetaConnecting">Verify &amp; Connect Page</span>
+                                    <span x-show="manualMetaConnecting">Verifying…</span>
+                                </button>
+                            </div>
+                        </div>
                         <div x-show="socialMediaStatus.facebook?.connected && !(socialMediaStatus.instagram?.connected && socialMediaStatus.instagram?.verified)" class="mt-3 pt-3 border-t border-blue-200 space-y-2">
                             <p class="text-xs font-medium text-gray-700">Manual Instagram link</p>
                             <p class="text-xs text-gray-500">Only needed if auto-discovery fails. Paste the numeric <strong>Instagram Business Account ID</strong> (not @handle).</p>
@@ -1749,6 +1768,11 @@ show_admin_bar(false);
                 showSocialDiagnosticsDetails: false,
                 manualIgAccountId: '',
                 manualIgUsername: '',
+                showManualMetaConnect: false,
+                manualMetaConnecting: false,
+                manualMetaPageId: '',
+                manualMetaPageToken: '',
+                manualMetaPageName: '',
                 bulkAddMetric: '',
                 bulkAddYear: new Date().getFullYear(),
                 bulkAddPlatforms: {
@@ -2441,6 +2465,50 @@ show_admin_bar(false);
                     } catch (error) {
                         console.error('Error syncing social media:', error);
                         this.showToast('Error syncing posts', 'error', 5000);
+                    }
+                },
+
+                async connectMetaManual(clientId) {
+                    const pageId = (this.manualMetaPageId || '').trim();
+                    const pageAccessToken = (this.manualMetaPageToken || '').trim();
+                    if (!pageId || !pageAccessToken) {
+                        this.showToast('Enter Facebook Page ID and Page access token', 'error', 4000);
+                        return;
+                    }
+                    this.manualMetaConnecting = true;
+                    try {
+                        const response = await fetch(`${API_URL}/social-media/connect-meta-manual/${clientId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                pageId,
+                                pageAccessToken,
+                                pageName: (this.manualMetaPageName || '').trim(),
+                                igAccountId: (this.manualIgAccountId || '').trim(),
+                                igUsername: (this.manualIgUsername || '').trim()
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showToast(data.message || 'Page connected', 'success', 6000);
+                            this.manualMetaPageId = '';
+                            this.manualMetaPageToken = '';
+                            this.manualMetaPageName = '';
+                            this.manualIgAccountId = '';
+                            this.manualIgUsername = '';
+                            this.showManualMetaConnect = false;
+                            await this.loadSocialMediaStatus(clientId);
+                        } else {
+                            this.showToast(data.message || 'Failed to connect Page', 'error', 7000);
+                        }
+                    } catch (error) {
+                        console.error('connectMetaManual:', error);
+                        this.showToast('Error connecting Page', 'error', 5000);
+                    } finally {
+                        this.manualMetaConnecting = false;
                     }
                 },
 
