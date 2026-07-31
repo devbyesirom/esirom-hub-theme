@@ -3859,6 +3859,7 @@ show_admin_bar(false);
                             captionColor: concept.briefDetails?.captionColor || '#6B7280'
                         }
                     };
+                    this.loadConceptAssetOptions();
                     this.clearAllReferenceImages();
                     const existingImages = this.getConceptImages(concept);
                     existingImages.forEach((url) => {
