@@ -457,6 +457,106 @@ show_admin_bar(false);
                     </div>
                 </div>
 
+                <!-- ── Team Efficiency + Workload ── -->
+                <div class="ov-card-appear">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Creative Team</span>
+                        <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+                        <a :href="WORKFLOW_URL" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Open Workflow →</a>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        <!-- Team Efficiency -->
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+                            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-3 flex-wrap">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/40 flex items-center justify-center">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Team Efficiency</h3>
+                                        <p class="text-xs text-gray-400">Completion rate per creative</p>
+                                    </div>
+                                </div>
+                                <input type="month" :value="`${efficiencyYear}-${String(efficiencyMonth).padStart(2, '0')}`" @change="updateEfficiencyMonth($event.target.value)" class="px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            </div>
+                            <div class="p-4 space-y-2.5 overflow-y-auto max-h-80">
+                                <template x-for="w in teamMonthlyEfficiency" :key="w.assignee?._id">
+                                    <div @click="openWorkflowForAssignee(w.assignee?._id, true)" class="p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700/60 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 cursor-pointer transition-all">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-xs font-bold text-indigo-700 dark:text-indigo-400 shrink-0" x-text="((w.assignee?.firstName || '?')[0] + (w.assignee?.lastName || '?')[0]).toUpperCase()"></div>
+                                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="(w.assignee?.firstName || 'Unknown') + ' ' + (w.assignee?.lastName || '')"></p>
+                                            </div>
+                                            <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                                                  :class="w.completionRate >= 70 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : (w.completionRate >= 40 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400')"
+                                                  x-text="w.completionRate + '%'"></span>
+                                        </div>
+                                        <div class="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div class="h-full rounded-full transition-all duration-500"
+                                                 :style="'width:' + w.completionRate + '%'"
+                                                 :class="w.completionRate >= 70 ? 'bg-emerald-500' : (w.completionRate >= 40 ? 'bg-amber-500' : 'bg-red-500')"></div>
+                                        </div>
+                                        <div class="mt-1.5 flex items-center gap-3 text-xs text-gray-500">
+                                            <span>Done <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="w.completedCount"></span></span>
+                                            <span class="text-gray-300 dark:text-gray-600">·</span>
+                                            <span>Assigned <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="w.assignedCount"></span></span>
+                                            <span class="text-gray-300 dark:text-gray-600">·</span>
+                                            <span class="text-blue-500">WIP <span class="font-semibold" x-text="w.inProgressCount"></span></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="teamMonthlyEfficiency.length === 0" class="py-10 text-center">
+                                    <p class="text-sm text-gray-400">No assignments found for this month</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Workload Distribution -->
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+                            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-900/40 flex items-center justify-center">
+                                        <svg class="w-3.5 h-3.5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Workload Distribution</h3>
+                                        <p class="text-xs text-gray-400">Pending assigned concepts per creative</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 space-y-2 overflow-y-auto max-h-96">
+                                <template x-for="w in workloadByAssignee" :key="w.assignee?._id">
+                                    <div @click="openWorkflowForAssignee(w.assignee?._id, false)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40 px-3 py-2.5 -mx-2 rounded-xl transition-colors">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-xs font-bold text-violet-700 dark:text-violet-400 shrink-0" x-text="((w.assignee?.firstName || '?')[0] + (w.assignee?.lastName || '?')[0]).toUpperCase()"></div>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="(w.assignee?.firstName || 'Unknown') + ' ' + (w.assignee?.lastName || '')"></p>
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-700 dark:text-gray-300 tabular-nums" x-text="w.pendingCount"></span>
+                                        </div>
+                                        <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
+                                            <div class="h-full bg-gray-400"   :style="'width:' + ((w.statusBreakdown?.draft || 0) / w.pendingCount * 100) + '%'"></div>
+                                            <div class="h-full bg-blue-400"   :style="'width:' + ((w.statusBreakdown?.in_progress || 0) / w.pendingCount * 100) + '%'"></div>
+                                            <div class="h-full bg-amber-400"  :style="'width:' + ((w.statusBreakdown?.pending_review || 0) / w.pendingCount * 100) + '%'"></div>
+                                            <div class="h-full bg-purple-400" :style="'width:' + ((w.statusBreakdown?.in_content_bank || 0) / w.pendingCount * 100) + '%'"></div>
+                                            <div class="h-full bg-teal-400"   :style="'width:' + ((w.statusBreakdown?.client_approved || 0) / w.pendingCount * 100) + '%'"></div>
+                                        </div>
+                                        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                                            <span x-show="w.statusBreakdown?.draft > 0" class="text-xs text-gray-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0"></span>Draft <span class="font-medium text-gray-600 dark:text-gray-300" x-text="w.statusBreakdown?.draft"></span></span>
+                                            <span x-show="w.statusBreakdown?.in_progress > 0" class="text-xs text-gray-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>WIP <span class="font-medium text-gray-600 dark:text-gray-300" x-text="w.statusBreakdown?.in_progress"></span></span>
+                                            <span x-show="w.statusBreakdown?.pending_review > 0" class="text-xs text-gray-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>Review <span class="font-medium text-gray-600 dark:text-gray-300" x-text="w.statusBreakdown?.pending_review"></span></span>
+                                            <span x-show="w.statusBreakdown?.in_content_bank > 0" class="text-xs text-gray-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0"></span>Approved <span class="font-medium text-gray-600 dark:text-gray-300" x-text="w.statusBreakdown?.in_content_bank"></span></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="workloadByAssignee.length === 0" class="py-10 text-center">
+                                    <p class="text-sm text-gray-400">No workload data yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── Search & Filter ── -->
                 <div class="ov-card-appear flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                     <div class="relative flex-1 min-w-0">
@@ -581,12 +681,14 @@ show_admin_bar(false);
         const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
         const DASHBOARD_URL = '<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>';
         const LOGIN_URL = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
+        const WORKFLOW_URL = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>';
         const OVERVIEW_PAGE_PATH = <?php echo wp_json_encode($esirom_overview_page_path, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
 
         function agencyOverview() {
             return {
                 loading: true,
                 user: {},
+                WORKFLOW_URL,
                 viewMode: localStorage.getItem('viewMode') || 'admin',
                 showPwModal: false,
                 pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
@@ -616,6 +718,10 @@ show_admin_bar(false);
                     totals: { pending: 0, outstanding: 0, completed: 0, total: 0 },
                     projects: []
                 },
+                workloadByAssignee: [],
+                teamMonthlyEfficiency: [],
+                efficiencyYear: new Date().getFullYear(),
+                efficiencyMonth: new Date().getMonth() + 1,
 
                 showToast(message, type = 'info', duration = 3000) {
                     const id = Date.now();
@@ -799,17 +905,30 @@ show_admin_bar(false);
                         } else {
                             q.set('month', this.selectedYearMonth || this.defaultYearMonth());
                         }
-                        const response = await fetch(`${API_URL}/analytics/agency-overview?${q}`, {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
 
-                        if (!response.ok) {
+                        // Keep efficiency month aligned with overview month when not in All Time
+                        if (!this.rangeAll && this.selectedYearMonth && this.selectedYearMonth.includes('-')) {
+                            const [y, m] = this.selectedYearMonth.split('-').map(Number);
+                            if (!Number.isNaN(y) && !Number.isNaN(m)) {
+                                this.efficiencyYear = y;
+                                this.efficiencyMonth = m;
+                            }
+                        }
+
+                        const [overviewRes, workflowRes] = await Promise.all([
+                            fetch(`${API_URL}/analytics/agency-overview?${q}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            }),
+                            fetch(`${API_URL}/workflow/dashboard?efficiencyYear=${this.efficiencyYear}&efficiencyMonth=${this.efficiencyMonth}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            })
+                        ]);
+
+                        if (!overviewRes.ok) {
                             throw new Error('Failed to load data');
                         }
 
-                        const data = await response.json();
+                        const data = await overviewRes.json();
                         this.brands = Array.isArray(data.brands) ? data.brands : [];
                         this.stats = {
                             totalBrands: 0,
@@ -827,6 +946,13 @@ show_admin_bar(false);
                             totals: { pending: 0, outstanding: 0, completed: 0, total: 0 },
                             projects: []
                         };
+
+                        if (workflowRes.ok) {
+                            const wf = await workflowRes.json();
+                            this.workloadByAssignee = wf.workloadByAssignee || [];
+                            this.teamMonthlyEfficiency = wf.teamMonthlyEfficiency || [];
+                        }
+
                         this.filterBrands();
                     } catch (error) {
                         console.error('Error loading data:', error);
@@ -834,6 +960,39 @@ show_admin_bar(false);
                     } finally {
                         this.loading = false;
                     }
+                },
+
+                async updateEfficiencyMonth(monthValue) {
+                    if (!monthValue || !monthValue.includes('-')) return;
+                    const [year, month] = monthValue.split('-');
+                    const parsedYear = parseInt(year, 10);
+                    const parsedMonth = parseInt(month, 10);
+                    if (Number.isNaN(parsedYear) || Number.isNaN(parsedMonth)) return;
+                    this.efficiencyYear = parsedYear;
+                    this.efficiencyMonth = parsedMonth;
+                    try {
+                        const token = localStorage.getItem('token');
+                        const res = await fetch(`${API_URL}/workflow/dashboard?efficiencyYear=${this.efficiencyYear}&efficiencyMonth=${this.efficiencyMonth}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const wf = await res.json();
+                            this.teamMonthlyEfficiency = wf.teamMonthlyEfficiency || [];
+                            this.workloadByAssignee = wf.workloadByAssignee || [];
+                        }
+                    } catch (e) {
+                        console.error('Efficiency reload error:', e);
+                    }
+                },
+
+                openWorkflowForAssignee(assigneeId, withMonthFilter = false) {
+                    if (!assigneeId) return;
+                    const params = new URLSearchParams({ tab: 'concepts', assignedTo: assigneeId });
+                    if (withMonthFilter) {
+                        params.set('assignedYear', String(this.efficiencyYear));
+                        params.set('assignedMonth', String(this.efficiencyMonth));
+                    }
+                    window.location.href = `${WORKFLOW_URL}?${params.toString()}`;
                 },
 
                 filterBrands() {
