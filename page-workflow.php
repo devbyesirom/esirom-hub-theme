@@ -1926,7 +1926,15 @@ show_admin_bar(false);
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date *</label>
-                                <input type="date" x-model="conceptForm.dueDate" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <input type="date" x-model="conceptForm.dueDate" required
+                                    :min="getArtworkMinDueDate()"
+                                    class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <p x-show="conceptMediaType === 'graphic' && conceptForm.priority !== 'urgent'" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                    Artwork needs at least 3 business days. Set Priority to Urgent to use an earlier deadline.
+                                </p>
+                                <p x-show="conceptMediaType === 'graphic' && conceptForm.priority === 'urgent'" class="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                                    Urgent — 3 business day lead time bypassed.
+                                </p>
                             </div>
                             <!-- Assign To Searchable Dropdown -->
                             <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
@@ -2018,10 +2026,14 @@ show_admin_bar(false);
                         </div>
                     </div>
                     <div class="p-6">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Content Type</p>
                                 <p class="font-medium text-gray-900 dark:text-white capitalize" x-text="selectedConcept?.contentType?.replace('_', ' ')"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Priority</p>
+                                <p class="font-medium text-gray-900 dark:text-white capitalize" x-text="selectedConcept?.priority || 'medium'"></p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
@@ -2034,6 +2046,10 @@ show_admin_bar(false);
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Assigned By</p>
                                 <p class="font-medium text-gray-900 dark:text-white" x-text="selectedConcept?.createdBy ? selectedConcept.createdBy.firstName + ' ' + selectedConcept.createdBy.lastName : 'Unknown'"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Created / Assigned</p>
+                                <p class="font-medium text-gray-900 dark:text-white" x-text="formatDateTime(selectedConcept?.createdAt)"></p>
                             </div>
                         </div>
                         <div class="mb-6">
@@ -3717,6 +3733,9 @@ show_admin_bar(false);
                     this.conceptMediaType = mediaType;
                     this.conceptDescriptionNA = false;
                     this.editingConcept = null;
+                    const defaultDue = mediaType === 'graphic'
+                        ? this.addBusinessDays(new Date(), 3).toISOString().slice(0, 10)
+                        : '';
                     this.conceptForm = {
                         title: '',
                         description: '',
@@ -3726,7 +3745,7 @@ show_admin_bar(false);
                         mediaCategory: mediaType,
                         platform: mediaType === 'video' ? ['instagram'] : [],
                         priority: 'medium',
-                        dueDate: '',
+                        dueDate: defaultDue,
                         assignedTo: '',
                         referenceLink: '',
                         briefDetails: { keyMessage: '', callToAction: '', additionalNotes: '', descriptionColor: '#111827', captionColor: '#6B7280' }
@@ -4017,6 +4036,45 @@ show_admin_bar(false);
                     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                     return `${dateStr} at ${timeStr}`;
+                },
+
+                addBusinessDays(fromDate, businessDays) {
+                    const result = new Date(fromDate);
+                    result.setHours(0, 0, 0, 0);
+                    let remaining = Number(businessDays) || 0;
+                    while (remaining > 0) {
+                        result.setDate(result.getDate() + 1);
+                        const day = result.getDay();
+                        if (day !== 0 && day !== 6) remaining -= 1;
+                    }
+                    return result;
+                },
+
+                getArtworkLeadFromDate() {
+                    if (this.editingConcept?.createdAt) {
+                        return new Date(this.editingConcept.createdAt);
+                    }
+                    return new Date();
+                },
+
+                getArtworkMinDueDate() {
+                    if (this.conceptMediaType === 'video' || this.conceptForm.priority === 'urgent') {
+                        return '';
+                    }
+                    return this.addBusinessDays(this.getArtworkLeadFromDate(), 3).toISOString().slice(0, 10);
+                },
+
+                validateArtworkDueDateClient() {
+                    if (this.conceptMediaType === 'video' || this.conceptForm.priority === 'urgent') return null;
+                    if (!this.conceptForm.dueDate) return 'Due date is required';
+                    const minDue = this.addBusinessDays(this.getArtworkLeadFromDate(), 3);
+                    const due = new Date(this.conceptForm.dueDate + 'T00:00:00');
+                    due.setHours(0, 0, 0, 0);
+                    if (due < minDue) {
+                        const label = minDue.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                        return `Artwork needs at least 3 business days. Earliest due date is ${label}, or set Priority to Urgent.`;
+                    }
+                    return null;
                 },
 
                 formatMessageWithMentions(message) {
@@ -4314,6 +4372,11 @@ show_admin_bar(false);
                     }
                     if (this.conceptMediaType !== 'video' && !this.conceptForm.description?.trim()) {
                         this.showToast('Description is required for graphic concepts', 'error');
+                        return;
+                    }
+                    const dueError = this.validateArtworkDueDateClient();
+                    if (dueError) {
+                        this.showToast(dueError, 'error');
                         return;
                     }
                     this.conceptForm.mediaCategory = this.conceptMediaType || this.conceptForm.mediaCategory || 'graphic';
