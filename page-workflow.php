@@ -2099,11 +2099,22 @@ show_admin_bar(false);
                                 </div>
                             </div>
                             
-                            <div x-show="selectedConcept?.attachments?.length > 0" class="mb-4 space-y-2">
-                                <template x-for="attachment in selectedConcept?.attachments" :key="attachment._id">
-                                    <div x-show="attachment?.kind === 'design' || (!attachment?.kind && !attachment?.mimetype?.startsWith('image/'))" class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div x-show="getDesignAttachments(selectedConcept).length > 0" class="mb-4 space-y-2">
+                                <p x-show="selectedConcept?.contentType === 'carousel' && getDesignAttachments(selectedConcept).length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">Use the arrows to set carousel slide order (1 = first slide).</p>
+                                <template x-for="(attachment, designIdx) in getDesignAttachments(selectedConcept)" :key="attachment._id">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg gap-2">
                                         <div class="flex items-center gap-3 flex-1 min-w-0">
-                                            <svg class="w-5 h-5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div x-show="selectedConcept?.contentType === 'carousel'" class="flex flex-col gap-0.5 shrink-0">
+                                                <button type="button" @click="moveDesignAttachment(designIdx, -1)" :disabled="designIdx === 0" class="p-0.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" title="Move up">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                                </button>
+                                                <button type="button" @click="moveDesignAttachment(designIdx, 1)" :disabled="designIdx >= getDesignAttachments(selectedConcept).length - 1" class="p-0.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" title="Move down">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                </button>
+                                            </div>
+                                            <span x-show="selectedConcept?.contentType === 'carousel'" class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center justify-center shrink-0" x-text="designIdx + 1"></span>
+                                            <img x-show="attachment?.mimetype?.startsWith('image/') && attachment?.url" :src="attachment.url" class="w-10 h-10 rounded object-cover border border-gray-200 dark:border-gray-600 shrink-0" :alt="attachment.originalName || 'Slide'" />
+                                            <svg x-show="!(attachment?.mimetype?.startsWith('image/') && attachment?.url)" class="w-5 h-5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                             </svg>
                                             <div class="flex-1 min-w-0">
@@ -3945,15 +3956,25 @@ show_admin_bar(false);
                     return refs.slice(0, this.maxConceptImages || 10);
                 },
 
-                getDesignImages(concept) {
+                getDesignAttachments(concept) {
                     const a = concept?.attachments;
                     if (!Array.isArray(a) || a.length === 0) return [];
                     return a
-                        .filter(x => x?.kind === 'design' && (x?.mimetype || '').startsWith('image/'))
-                        .sort((left, right) => new Date(left.uploadedAt) - new Date(right.uploadedAt))
-                        .map(x => x?.url || '')
-                        .filter(Boolean)
+                        .filter(x => x?.kind === 'design')
+                        .slice()
+                        .sort((left, right) => {
+                            const leftOrder = Number.isFinite(left?.sortOrder) ? left.sortOrder : Number.MAX_SAFE_INTEGER;
+                            const rightOrder = Number.isFinite(right?.sortOrder) ? right.sortOrder : Number.MAX_SAFE_INTEGER;
+                            if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+                            return new Date(left.uploadedAt || 0) - new Date(right.uploadedAt || 0);
+                        })
                         .slice(0, this.maxConceptImages || 10);
+                },
+
+                getDesignImages(concept) {
+                    return this.getDesignAttachments(concept)
+                        .filter(x => (x?.mimetype || '').startsWith('image/') && x?.url)
+                        .map(x => x.url);
                 },
 
                 getReferenceAttachments(concept) {
@@ -3963,12 +3984,20 @@ show_admin_bar(false);
                     if (!refs.length) {
                         refs = a.filter(x => (x?.mimetype || '').startsWith('image/'));
                     }
-                    return refs.slice(0, this.maxConceptImages || 10);
+                    return refs
+                        .slice()
+                        .sort((left, right) => {
+                            const leftOrder = Number.isFinite(left?.sortOrder) ? left.sortOrder : Number.MAX_SAFE_INTEGER;
+                            const rightOrder = Number.isFinite(right?.sortOrder) ? right.sortOrder : Number.MAX_SAFE_INTEGER;
+                            if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+                            return new Date(left.uploadedAt || 0) - new Date(right.uploadedAt || 0);
+                        })
+                        .slice(0, this.maxConceptImages || 10);
                 },
 
                 getLatestDesignImage(concept) {
                     const designs = this.getDesignImages(concept);
-                    if (designs.length) return designs[designs.length - 1];
+                    if (designs.length) return designs[0];
                     const a = concept?.attachments;
                     if (!Array.isArray(a) || a.length === 0) return null;
                     const fallback = a.filter(x => {
@@ -4210,12 +4239,17 @@ show_admin_bar(false);
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         if (response.ok) {
-                            const updatedConcept = await fetch(`${API_URL}/workflow/concepts/${conceptId}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
-                            if (updatedConcept.ok) {
-                                const data = await updatedConcept.json();
+                            const data = await response.json().catch(() => ({}));
+                            if (data?.concept) {
                                 this.selectedConcept = data.concept;
+                            } else {
+                                const updatedConcept = await fetch(`${API_URL}/workflow/concepts/${conceptId}`, {
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                if (updatedConcept.ok) {
+                                    const refreshed = await updatedConcept.json();
+                                    this.selectedConcept = refreshed.concept;
+                                }
                             }
                             await this.loadConcepts();
                             await this.loadInitialData();
@@ -4226,6 +4260,50 @@ show_admin_bar(false);
                     } catch (error) {
                         console.error('Delete attachment error:', error);
                         this.showToast('Failed to delete attachment', 'error');
+                    }
+                },
+
+                async moveDesignAttachment(index, direction) {
+                    const designs = this.getDesignAttachments(this.selectedConcept);
+                    const target = index + direction;
+                    if (!designs.length || target < 0 || target >= designs.length) return;
+
+                    const ordered = designs.map((item) => item._id);
+                    const [moved] = ordered.splice(index, 1);
+                    ordered.splice(target, 0, moved);
+
+                    // Optimistic UI update
+                    ordered.forEach((id, order) => {
+                        const attachment = (this.selectedConcept.attachments || []).find((a) => String(a._id) === String(id));
+                        if (attachment) attachment.sortOrder = order;
+                    });
+
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/workflow/concepts/${this.selectedConcept._id}/attachments/reorder`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ kind: 'design', orderedIds: ordered })
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (response.ok && data?.concept) {
+                            this.selectedConcept = data.concept;
+                        } else if (!response.ok) {
+                            this.showToast(data.message || 'Failed to reorder slides', 'error');
+                            const refreshed = await fetch(`${API_URL}/workflow/concepts/${this.selectedConcept._id}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (refreshed.ok) {
+                                const body = await refreshed.json();
+                                this.selectedConcept = body.concept;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Reorder attachment error:', error);
+                        this.showToast('Failed to reorder slides', 'error');
                     }
                 },
 
