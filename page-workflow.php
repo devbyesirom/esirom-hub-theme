@@ -1756,76 +1756,56 @@ show_admin_bar(false);
                                 <textarea x-model="conceptForm.caption" rows="3" :style="`color:${conceptForm.briefDetails.captionColor || '#6B7280'}`" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" placeholder="The caption/text that will be posted with this content..."></textarea>
                             </div>
                             <div class="col-span-2" x-show="conceptMediaType === 'graphic'">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference Images (up to 2)</label>
-                                <div class="flex items-start gap-4">
-                                    <!-- Reference Image 1 -->
-                                    <div class="flex-1">
-                                        <div class="w-full h-24 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-2 cursor-pointer transition-colors"
-                                            :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 0}"
-                                            @dragover.prevent="dragOverIndex = 0"
-                                            @dragleave.prevent="dragOverIndex = null"
-                                            @drop.prevent="handleReferenceDrop($event, 0)"
-                                            @click="$refs.refInput0.click()">
-                                            <template x-if="referenceImagePreviews[0]">
-                                                <img :src="referenceImagePreviews[0]" alt="Reference image 1" class="w-full h-full object-cover" />
-                                            </template>
-                                            <template x-if="!referenceImagePreviews[0]">
-                                                <div class="text-xs text-gray-500 text-center px-2">Image 1<br><span class="text-gray-400">Drop or click</span></div>
-                                            </template>
-                                        </div>
-                                        <input type="file" accept="image/*" @change="handleReferenceImage($event, 0)" x-ref="refInput0" class="hidden" />
-                                        <div class="mt-1 flex items-center gap-2">
-                                            <button type="button" x-show="referenceImageFiles[0]" @click="clearReferenceImage(0)" class="text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Remove</button>
-                                            <span class="text-xs text-gray-500 truncate" x-show="referenceImageFiles[0]" x-text="referenceImageFiles[0]?.name"></span>
-                                        </div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Reference / Carousel Images
+                                    <span class="font-normal text-gray-500" x-text="'(' + referenceImageCount() + '/10)'"></span>
+                                </label>
+                                <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-3"
+                                     :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 'refs'}"
+                                     @dragover.prevent="dragOverIndex = 'refs'"
+                                     @dragleave.prevent="dragOverIndex = null"
+                                     @drop.prevent="handleReferenceMultiDrop($event)">
+                                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3" x-show="referenceImagePreviews.some(Boolean)">
+                                        <template x-for="(preview, index) in referenceImagePreviews" :key="'ref-prev-' + index">
+                                            <div x-show="preview" class="relative group">
+                                                <img :src="preview" :alt="'Reference ' + (index + 1)" class="w-full h-24 rounded-lg object-cover border border-gray-200 dark:border-gray-600" />
+                                                <button type="button" @click="clearReferenceImage(index)" class="absolute top-1 right-1 bg-black/70 text-white text-xs rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                                                <p class="mt-1 text-[10px] text-gray-500 truncate" x-text="referenceImageFiles[index]?.name || ('Image ' + (index + 1))"></p>
+                                            </div>
+                                        </template>
                                     </div>
-                                    <!-- Reference Image 2 -->
-                                    <div class="flex-1">
-                                        <div class="w-full h-24 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-2 cursor-pointer transition-colors"
-                                            :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 1}"
-                                            @dragover.prevent="dragOverIndex = 1"
-                                            @dragleave.prevent="dragOverIndex = null"
-                                            @drop.prevent="handleReferenceDrop($event, 1)"
-                                            @click="$refs.refInput1.click()">
-                                            <template x-if="referenceImagePreviews[1]">
-                                                <img :src="referenceImagePreviews[1]" alt="Reference image 2" class="w-full h-full object-cover" />
-                                            </template>
-                                            <template x-if="!referenceImagePreviews[1]">
-                                                <div class="text-xs text-gray-500 text-center px-2">Image 2<br><span class="text-gray-400">Drop or click</span></div>
-                                            </template>
-                                        </div>
-                                        <input type="file" accept="image/*" @change="handleReferenceImage($event, 1)" x-ref="refInput1" class="hidden" />
-                                        <div class="mt-1 flex items-center gap-2">
-                                            <button type="button" x-show="referenceImageFiles[1]" @click="clearReferenceImage(1)" class="text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Remove</button>
-                                            <span class="text-xs text-gray-500 truncate" x-show="referenceImageFiles[1]" x-text="referenceImageFiles[1]?.name"></span>
-                                        </div>
+                                    <div class="flex flex-col items-center justify-center py-4 cursor-pointer" @click="$refs.refMultiInput.click()" x-show="referenceImageCount() < 10">
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Drop images here or click to select</p>
+                                        <p class="text-xs text-gray-500 mt-1">Up to 10 PNG/JPG images · 10MB each · ideal for carousels</p>
                                     </div>
+                                    <p class="text-xs text-amber-700 text-center py-2" x-show="referenceImageCount() >= 10">Maximum of 10 images reached</p>
+                                    <input type="file" accept="image/*" multiple @change="handleReferenceMultiSelect($event)" x-ref="refMultiInput" class="hidden" />
                                 </div>
-                                <p class="mt-2 text-xs text-gray-500">PNG/JPG up to 10MB each. Useful for carousel posts or multiple references.</p>
                             </div>
                             <div class="col-span-2" x-show="conceptMediaType === 'video'">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inspiration Images (optional, up to 2)</label>
-                                <div class="flex items-start gap-4">
-                                    <div class="flex-1">
-                                        <div class="w-full h-24 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-2 cursor-pointer transition-colors"
-                                            :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 0}"
-                                            @dragover.prevent="dragOverIndex = 0" @dragleave.prevent="dragOverIndex = null" @drop.prevent="handleReferenceDrop($event, 0)" @click="$refs.refInput0.click()">
-                                            <template x-if="referenceImagePreviews[0]"><img :src="referenceImagePreviews[0]" alt="Inspiration 1" class="w-full h-full object-cover" /></template>
-                                            <template x-if="!referenceImagePreviews[0]"><div class="text-xs text-gray-500 text-center px-2">Image 1<br><span class="text-gray-400">Drop or click</span></div></template>
-                                        </div>
-                                        <input type="file" accept="image/*" @change="handleReferenceImage($event, 0)" x-ref="refInput0" class="hidden" />
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Inspiration Images (optional)
+                                    <span class="font-normal text-gray-500" x-text="'(' + referenceImageCount() + '/10)'"></span>
+                                </label>
+                                <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-3"
+                                     :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 'refs'}"
+                                     @dragover.prevent="dragOverIndex = 'refs'"
+                                     @dragleave.prevent="dragOverIndex = null"
+                                     @drop.prevent="handleReferenceMultiDrop($event)">
+                                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3" x-show="referenceImagePreviews.some(Boolean)">
+                                        <template x-for="(preview, index) in referenceImagePreviews" :key="'insp-prev-' + index">
+                                            <div x-show="preview" class="relative group">
+                                                <img :src="preview" :alt="'Inspiration ' + (index + 1)" class="w-full h-24 rounded-lg object-cover border border-gray-200 dark:border-gray-600" />
+                                                <button type="button" @click="clearReferenceImage(index)" class="absolute top-1 right-1 bg-black/70 text-white text-xs rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                                            </div>
+                                        </template>
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="w-full h-24 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-2 cursor-pointer transition-colors"
-                                            :class="{'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20': dragOverIndex === 1}"
-                                            @dragover.prevent="dragOverIndex = 1" @dragleave.prevent="dragOverIndex = null" @drop.prevent="handleReferenceDrop($event, 1)" @click="$refs.refInput1.click()">
-                                            <template x-if="referenceImagePreviews[1]"><img :src="referenceImagePreviews[1]" alt="Inspiration 2" class="w-full h-full object-cover" /></template>
-                                            <template x-if="!referenceImagePreviews[1]"><div class="text-xs text-gray-500 text-center px-2">Image 2<br><span class="text-gray-400">Drop or click</span></div></template>
-                                        </div>
-                                        <input type="file" accept="image/*" @change="handleReferenceImage($event, 1)" x-ref="refInput1" class="hidden" />
+                                    <div class="flex flex-col items-center justify-center py-4 cursor-pointer" @click="$refs.refMultiInputVideo.click()" x-show="referenceImageCount() < 10">
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Drop images here or click to select</p>
+                                        <p class="text-xs text-gray-500 mt-1">Optional mood board / frame references · up to 10</p>
                                     </div>
+                                    <input type="file" accept="image/*" multiple @change="handleReferenceMultiSelect($event)" x-ref="refMultiInputVideo" class="hidden" />
                                 </div>
-                                <p class="mt-2 text-xs text-gray-500">Optional mood board or frame references for the video team.</p>
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -2147,17 +2127,32 @@ show_admin_bar(false);
                                  @dragover.prevent="conceptDragOver = true"
                                  @dragleave.prevent="conceptDragOver = false"
                                  @drop.prevent="conceptDragOver = false; handleConceptFileDrop($event)">
-                                <input type="file" @change="handleConceptFileUpload($event)" accept=".pdf,.ai,.psd,.png,.jpg,.jpeg,.svg,.eps" class="hidden" id="conceptFileInput">
+                                <input type="file" @change="handleConceptFileUpload($event)" accept=".pdf,.ai,.psd,.png,.jpg,.jpeg,.svg,.eps" class="hidden" id="conceptFileInput" :multiple="selectedConcept?.contentType === 'carousel'">
                                 <label for="conceptFileInput" class="cursor-pointer flex flex-col items-center">
                                     <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                     </svg>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
                                         <span x-show="selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected'">Click or drag and drop to upload revised design</span>
-                                        <span x-show="selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected'">Click to upload design or drag and drop</span>
+                                        <span x-show="selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected' && selectedConcept?.contentType === 'carousel'">Click or drag to upload carousel slides (up to 10)</span>
+                                        <span x-show="selectedConcept?.status !== 'needs_revision' && selectedConcept?.status !== 'rejected' && selectedConcept?.contentType !== 'carousel'">Click to upload design or drag and drop</span>
                                     </p>
-                                    <p class="text-xs text-gray-500 mt-1">PDF, AI, PSD, PNG, JPG, SVG, EPS (max 50MB)</p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <span x-show="selectedConcept?.contentType === 'carousel'">PNG/JPG preferred · select multiple slides · max 10 total · 50MB each</span>
+                                        <span x-show="selectedConcept?.contentType !== 'carousel'">PDF, AI, PSD, PNG, JPG, SVG, EPS (max 50MB)</span>
+                                    </p>
                                 </label>
+                            </div>
+                            <div x-show="selectedConcept?.contentType === 'carousel' && getDesignImages(selectedConcept).length" class="mt-3">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2" x-text="'Carousel slides (' + getDesignImages(selectedConcept).length + '/10)'"></p>
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                    <template x-for="(url, slideIdx) in getDesignImages(selectedConcept)" :key="'design-slide-' + slideIdx">
+                                        <button type="button" @click="lightboxImage = url" class="relative group">
+                                            <img :src="url" class="w-full h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600" :alt="'Slide ' + (slideIdx + 1)" />
+                                            <span class="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 rounded" x-text="slideIdx + 1"></span>
+                                        </button>
+                                    </template>
+                                </div>
                             </div>
 
                             <!-- Graphic: Google Drive Link for PSD/Source Files -->
@@ -3324,9 +3319,10 @@ show_admin_bar(false);
                 selectedConceptMentions: [],
                 showConceptMentionDropdown: false,
                 filteredConceptUsers: [],
-                referenceImageFiles: [null, null],
-                referenceImagePreviews: ['', ''],
+                referenceImageFiles: [],
+                referenceImagePreviews: [],
                 dragOverIndex: null,
+                maxConceptImages: 10,
                 lightboxImage: null,
                 lightboxGallery: [],
                 lightboxIndex: 0,
@@ -3824,16 +3820,66 @@ show_admin_bar(false);
                     };
                     this.clearAllReferenceImages();
                     const existingImages = this.getConceptImages(concept);
-                    existingImages.forEach((url, idx) => {
-                        if (url && idx < 2) this.referenceImagePreviews[idx] = url;
+                    existingImages.forEach((url) => {
+                        if (!url) return;
+                        this.referenceImagePreviews.push(url);
+                        this.referenceImageFiles.push(null);
                     });
                     this.showConceptDetail = false;
                     this.showConceptModal = true;
                 },
 
+                referenceImageCount() {
+                    return (this.referenceImagePreviews || []).filter(Boolean).length;
+                },
+
+                addReferenceFiles(fileList) {
+                    const incoming = Array.from(fileList || []);
+                    if (!incoming.length) return;
+
+                    const remaining = this.maxConceptImages - this.referenceImageCount();
+                    if (remaining <= 0) {
+                        this.showToast('Maximum of 10 images per concept', 'error');
+                        return;
+                    }
+
+                    let added = 0;
+                    for (const file of incoming) {
+                        if (added >= remaining) {
+                            this.showToast('Only 10 images allowed — extra files were skipped', 'error');
+                            break;
+                        }
+                        if (!file.type.startsWith('image/')) {
+                            this.showToast(`${file.name} is not an image`, 'error');
+                            continue;
+                        }
+                        if (file.size > 10 * 1024 * 1024) {
+                            this.showToast(`${file.name} must be under 10MB`, 'error');
+                            continue;
+                        }
+                        this.referenceImageFiles.push(file);
+                        this.referenceImagePreviews.push(URL.createObjectURL(file));
+                        added += 1;
+                    }
+                },
+
+                handleReferenceMultiSelect(event) {
+                    this.addReferenceFiles(event?.target?.files);
+                    if (event?.target) event.target.value = '';
+                },
+
+                handleReferenceMultiDrop(event) {
+                    this.dragOverIndex = null;
+                    this.addReferenceFiles(event?.dataTransfer?.files);
+                },
+
                 handleReferenceImage(event, index) {
                     const file = event?.target?.files?.[0];
-                    if (!file || index < 0 || index > 1) return;
+                    if (!file || index < 0 || index >= this.maxConceptImages) return;
+                    while (this.referenceImageFiles.length <= index) {
+                        this.referenceImageFiles.push(null);
+                        this.referenceImagePreviews.push('');
+                    }
                     this.referenceImageFiles[index] = file;
                     if (this.referenceImagePreviews[index] && this.referenceImagePreviews[index].startsWith('blob:')) {
                         URL.revokeObjectURL(this.referenceImagePreviews[index]);
@@ -3844,16 +3890,18 @@ show_admin_bar(false);
                 handleReferenceDrop(event, index) {
                     this.dragOverIndex = null;
                     const file = event.dataTransfer?.files?.[0];
-                    if (!file || index < 0 || index > 1) return;
-                    // Validate it's an image
+                    if (!file || index < 0 || index >= this.maxConceptImages) return;
                     if (!file.type.startsWith('image/')) {
                         this.showToast('Please drop an image file (PNG, JPG, etc.)', 'error');
                         return;
                     }
-                    // Validate size (10MB max)
                     if (file.size > 10 * 1024 * 1024) {
                         this.showToast('Image must be under 10MB', 'error');
                         return;
+                    }
+                    while (this.referenceImageFiles.length <= index) {
+                        this.referenceImageFiles.push(null);
+                        this.referenceImagePreviews.push('');
                     }
                     this.referenceImageFiles[index] = file;
                     if (this.referenceImagePreviews[index] && this.referenceImagePreviews[index].startsWith('blob:')) {
@@ -3863,18 +3911,20 @@ show_admin_bar(false);
                 },
 
                 clearReferenceImage(index) {
-                    if (index < 0 || index > 1) return;
-                    this.referenceImageFiles[index] = null;
+                    if (index < 0 || index >= this.referenceImagePreviews.length) return;
                     if (this.referenceImagePreviews[index] && this.referenceImagePreviews[index].startsWith('blob:')) {
                         URL.revokeObjectURL(this.referenceImagePreviews[index]);
                     }
-                    this.referenceImagePreviews[index] = '';
+                    this.referenceImageFiles.splice(index, 1);
+                    this.referenceImagePreviews.splice(index, 1);
                 },
 
                 clearAllReferenceImages() {
-                    for (let i = 0; i < 2; i++) {
-                        this.clearReferenceImage(i);
-                    }
+                    (this.referenceImagePreviews || []).forEach((preview) => {
+                        if (preview && preview.startsWith('blob:')) URL.revokeObjectURL(preview);
+                    });
+                    this.referenceImageFiles = [];
+                    this.referenceImagePreviews = [];
                 },
 
                 getConceptImages(concept) {
@@ -3882,7 +3932,7 @@ show_admin_bar(false);
                     if (Array.isArray(finals) && finals.length > 0) {
                         const finalImages = finals.filter(x => (x?.mimetype || '').startsWith('image/')).map(x => x?.url || '').filter(Boolean);
                         if (finalImages.length > 0) {
-                            return finalImages.slice(0, 2);
+                            return finalImages.slice(0, this.maxConceptImages || 10);
                         }
                     }
                     
@@ -3892,7 +3942,18 @@ show_admin_bar(false);
                     if (!refs.length) {
                         refs = a.filter(x => (x?.mimetype || '').startsWith('image/')).map(x => x?.url || '').filter(Boolean);
                     }
-                    return refs.slice(0, 2);
+                    return refs.slice(0, this.maxConceptImages || 10);
+                },
+
+                getDesignImages(concept) {
+                    const a = concept?.attachments;
+                    if (!Array.isArray(a) || a.length === 0) return [];
+                    return a
+                        .filter(x => x?.kind === 'design' && (x?.mimetype || '').startsWith('image/'))
+                        .sort((left, right) => new Date(left.uploadedAt) - new Date(right.uploadedAt))
+                        .map(x => x?.url || '')
+                        .filter(Boolean)
+                        .slice(0, this.maxConceptImages || 10);
                 },
 
                 getReferenceAttachments(concept) {
@@ -3902,20 +3963,22 @@ show_admin_bar(false);
                     if (!refs.length) {
                         refs = a.filter(x => (x?.mimetype || '').startsWith('image/'));
                     }
-                    return refs;
+                    return refs.slice(0, this.maxConceptImages || 10);
                 },
 
                 getLatestDesignImage(concept) {
+                    const designs = this.getDesignImages(concept);
+                    if (designs.length) return designs[designs.length - 1];
                     const a = concept?.attachments;
                     if (!Array.isArray(a) || a.length === 0) return null;
-                    const designs = a.filter(x => {
+                    const fallback = a.filter(x => {
                         const isDesignKind = x?.kind === 'design';
                         const isImage = (x?.mimetype || '').startsWith('image/');
                         const notReference = x?.kind !== 'reference';
                         return isImage && (isDesignKind || notReference);
                     });
-                    if (designs.length === 0) return null;
-                    const latest = designs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
+                    if (fallback.length === 0) return null;
+                    const latest = fallback.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
                     return latest?.url || null;
                 },
 
@@ -4185,7 +4248,7 @@ show_admin_bar(false);
                             const conceptId = d.concept?._id || this.editingConcept?._id;
 
                             if (conceptId) {
-                                for (let i = 0; i < 2; i++) {
+                                for (let i = 0; i < this.referenceImageFiles.length; i++) {
                                     if (this.referenceImageFiles[i]) {
                                         const fd = new FormData();
                                         fd.append('file', this.referenceImageFiles[i]);
@@ -4388,56 +4451,92 @@ show_admin_bar(false);
                 },
 
                 async handleConceptFileDrop(event) {
-                    const file = event?.dataTransfer?.files?.[0];
-                    if (!file) return;
-                    // Reuse the same upload logic by creating a fake event
-                    const fakeEvent = { target: { files: [file] } };
+                    const files = Array.from(event?.dataTransfer?.files || []);
+                    if (!files.length) return;
+                    const fakeEvent = { target: { files, value: '' } };
                     await this.handleConceptFileUpload(fakeEvent);
                 },
 
                 async handleConceptFileUpload(event) {
-                    const file = event?.target?.files?.[0];
-                    if (!file) return;
-                    
-                    const maxSize = 50 * 1024 * 1024; // 50MB
-                    if (file.size > maxSize) {
-                        this.showToast('File size must be less than 50MB', 'error');
-                        return;
-                    }
-                    
-                    const token = localStorage.getItem('token');
-                    const formData = new FormData();
-                    formData.append('file', file);
+                    const files = Array.from(event?.target?.files || []);
+                    if (!files.length) return;
 
-                    const shouldReplace = ['needs_revision', 'rejected'].includes(this.selectedConcept?.status);
-                    const uploadUrl = `${API_URL}/workflow/concepts/${this.selectedConcept._id}/attachments?kind=design&replace=${shouldReplace ? 'true' : 'false'}`;
-                    
-                    try {
-                        const response = await fetch(uploadUrl, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data?.concept) {
-                                this.selectedConcept = data.concept;
-                            } else {
-                                // Safety: refresh full concept so status/actions don't disappear
-                                const r = await fetch(`${API_URL}/workflow/concepts/${this.selectedConcept._id}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                                if (r.ok) { const d = await r.json(); this.selectedConcept = d.concept; }
-                            }
-                            this.showToast('File uploaded successfully', 'success');
-                            event.target.value = '';
-                        } else {
-                            const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-                            this.showToast(error.message || 'Failed to upload file', 'error');
+                    const isCarousel = this.selectedConcept?.contentType === 'carousel';
+                    const shouldReplace = ['needs_revision', 'rejected'].includes(this.selectedConcept?.status) && !isCarousel;
+                    const existingDesignCount = (this.selectedConcept?.attachments || []).filter(a => a?.kind === 'design').length;
+                    const maxFiles = this.maxConceptImages || 10;
+
+                    let queue = files;
+                    if (isCarousel && !shouldReplace) {
+                        const remaining = Math.max(0, maxFiles - existingDesignCount);
+                        if (remaining <= 0) {
+                            this.showToast('Carousel already has 10 slides', 'error');
+                            if (event?.target) event.target.value = '';
+                            return;
                         }
-                    } catch (error) {
-                        console.error('File upload error:', error);
-                        this.showToast('Failed to upload file', 'error');
+                        if (queue.length > remaining) {
+                            this.showToast(`Only ${remaining} more slide(s) can be added (max 10)`, 'error');
+                            queue = queue.slice(0, remaining);
+                        }
+                    } else if (!isCarousel) {
+                        queue = [files[0]];
+                    } else if (queue.length > maxFiles) {
+                        this.showToast('Maximum of 10 carousel slides', 'error');
+                        queue = queue.slice(0, maxFiles);
                     }
+
+                    const maxSize = 50 * 1024 * 1024; // 50MB
+                    const token = localStorage.getItem('token');
+                    let uploaded = 0;
+
+                    for (let i = 0; i < queue.length; i++) {
+                        const file = queue[i];
+                        if (file.size > maxSize) {
+                            this.showToast(`${file.name} must be less than 50MB`, 'error');
+                            continue;
+                        }
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        const replaceFlag = shouldReplace && i === 0 ? 'true' : 'false';
+                        const uploadUrl = `${API_URL}/workflow/concepts/${this.selectedConcept._id}/attachments?kind=design&replace=${replaceFlag}`;
+
+                        try {
+                            const response = await fetch(uploadUrl, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` },
+                                body: formData
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data?.concept) {
+                                    this.selectedConcept = data.concept;
+                                }
+                                uploaded += 1;
+                            } else {
+                                const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+                                this.showToast(error.message || `Failed to upload ${file.name}`, 'error');
+                            }
+                        } catch (error) {
+                            console.error('File upload error:', error);
+                            this.showToast(`Failed to upload ${file.name}`, 'error');
+                        }
+                    }
+
+                    if (uploaded > 0) {
+                        this.showToast(
+                            isCarousel
+                                ? `${uploaded} carousel slide${uploaded === 1 ? '' : 's'} uploaded`
+                                : 'File uploaded successfully',
+                            'success'
+                        );
+                        if (!this.selectedConcept?.attachments) {
+                            const r = await fetch(`${API_URL}/workflow/concepts/${this.selectedConcept._id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                            if (r.ok) { const d = await r.json(); this.selectedConcept = d.concept; }
+                        }
+                    }
+                    if (event?.target) event.target.value = '';
                 },
 
                 handleConceptMentionInput(event) {
