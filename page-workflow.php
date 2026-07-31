@@ -331,6 +331,10 @@ show_admin_bar(false);
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                             <span class="hidden sm:inline">Content Bank</span>
                         </button>
+                        <button type="button" role="tab" :aria-selected="activeTab === 'assets'" x-show="viewMode !== 'client'" @click="navigateTab('assets')" :class="activeTab === 'assets' ? 'bg-white dark:bg-gray-800 shadow text-indigo-700 dark:text-indigo-200' : 'text-gray-600 dark:text-gray-400'" class="wf-tab shrink-0 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="hidden sm:inline">Assets</span>
+                        </button>
                         <button type="button" role="tab" :aria-selected="activeTab === 'tasks'" x-show="viewMode !== 'client'" @click="navigateTab('tasks')" :class="activeTab === 'tasks' ? 'bg-white dark:bg-gray-800 shadow text-indigo-700 dark:text-indigo-200' : 'text-gray-600 dark:text-gray-400'" class="wf-tab shrink-0 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                             <span class="hidden sm:inline">My Tasks</span>
@@ -1052,6 +1056,72 @@ show_admin_bar(false);
                     </div>
                 </div>
 
+                <!-- Brand Assets Tab -->
+                <div x-show="activeTab === 'assets'" x-cloak>
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <select x-model="assetClientFilter" @change="loadBrandAssets()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">All Brands</option>
+                                <template x-for="client in clients" :key="'asset-client-' + client._id">
+                                    <option :value="client._id" x-text="client.brandName || client.name"></option>
+                                </template>
+                            </select>
+                            <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1 gap-1 overflow-x-auto">
+                                <button type="button" @click="assetCategoryFilter = ''; loadBrandAssets()"
+                                        :class="assetCategoryFilter === '' ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap">All</button>
+                                <template x-for="cat in brandAssetCategories" :key="'cat-btn-' + cat.value">
+                                    <button type="button" @click="assetCategoryFilter = cat.value; loadBrandAssets()"
+                                            :class="assetCategoryFilter === cat.value ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap"
+                                            x-text="cat.label"></button>
+                                </template>
+                            </div>
+                            <input type="text" x-model="assetSearch" @input.debounce.300ms="loadBrandAssets()" placeholder="Search assets..." class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[180px]">
+                        </div>
+                        <button type="button" x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openAssetUploadModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Upload Asset
+                        </button>
+                    </div>
+
+                    <div x-show="brandAssets.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        <template x-for="asset in brandAssets" :key="asset._id">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+                                <div class="h-40 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center relative overflow-hidden">
+                                    <template x-if="isPreviewableAsset(asset)">
+                                        <img :src="assetFileUrl(asset.url)" :alt="asset.name" class="w-full h-full object-contain p-3" @error="$event.target.style.display='none'" />
+                                    </template>
+                                    <template x-if="!isPreviewableAsset(asset)">
+                                        <div class="flex flex-col items-center gap-2 text-gray-400">
+                                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                            <span class="text-xs uppercase tracking-wide" x-text="assetFileExt(asset)"></span>
+                                        </div>
+                                    </template>
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-white/90 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200" x-text="assetCategoryLabel(asset.category)"></span>
+                                </div>
+                                <div class="p-4 flex-1 flex flex-col gap-2">
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white truncate" x-text="asset.name" :title="asset.name"></p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="asset.clientId?.brandName || asset.clientId?.name || '—'"></p>
+                                    </div>
+                                    <p x-show="asset.notes" class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2" x-text="asset.notes"></p>
+                                    <div class="mt-auto flex items-center gap-2 pt-2">
+                                        <a :href="assetFileUrl(asset.url)" target="_blank" rel="noopener noreferrer" download class="flex-1 px-3 py-1.5 text-xs text-center rounded-lg border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">Download</a>
+                                        <button type="button" x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="deleteBrandAsset(asset)" class="px-3 py-1.5 text-xs rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div x-show="brandAssets.length === 0" class="text-center py-16">
+                        <svg class="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No brand assets yet</h3>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Upload logos, product shots, gradients, fonts, and other creative files per brand</p>
+                    </div>
+                </div>
+
                 <!-- Planner Tab -->
                 <div x-show="activeTab === 'planner'" x-cloak>
                     
@@ -1639,7 +1709,7 @@ show_admin_bar(false);
                                 </div>
                                 <div x-show="open" x-cloak class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                     <template x-for="client in clients.filter(c => (c.brandName || c.name).toLowerCase().includes(search.toLowerCase()))" :key="client._id">
-                                        <div @click="conceptForm.clientId = client._id; search = ''; open = false" 
+                                        <div @click="conceptForm.clientId = client._id; conceptForm.assetIds = []; search = ''; open = false; loadConceptAssetOptions()" 
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
                                             :class="{'bg-indigo-50 dark:bg-indigo-900/30': conceptForm.clientId === client._id}"
                                             x-text="client.brandName || client.name"></div>
@@ -1782,6 +1852,39 @@ show_admin_bar(false);
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Additional Notes</label>
                                 <textarea x-model="conceptForm.briefDetails.additionalNotes" rows="2" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                             </div>
+                            <div class="col-span-2">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand Assets <span class="text-xs font-normal text-gray-500">(optional)</span></label>
+                                    <button type="button" x-show="conceptForm.clientId" @click="loadConceptAssetOptions()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Refresh</button>
+                                </div>
+                                <p x-show="!conceptForm.clientId" class="text-xs text-gray-500 mb-2">Select a brand first to link assets.</p>
+                                <div x-show="conceptForm.clientId" class="rounded-lg border border-gray-200 dark:border-gray-600 max-h-48 overflow-y-auto p-2 space-y-1 bg-gray-50 dark:bg-gray-700/40">
+                                    <div x-show="conceptAssetOptions.length === 0" class="px-2 py-3 text-xs text-gray-500 text-center">No assets for this brand yet. Upload them in the Assets tab.</div>
+                                    <template x-for="asset in conceptAssetOptions" :key="'pick-' + asset._id">
+                                        <label class="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white dark:hover:bg-gray-700">
+                                            <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                   :checked="conceptForm.assetIds.includes(asset._id)"
+                                                   @change="toggleConceptAsset(asset._id)">
+                                            <div class="w-9 h-9 rounded bg-white dark:bg-gray-800 border dark:border-gray-600 flex items-center justify-center overflow-hidden shrink-0">
+                                                <img x-show="isPreviewableAsset(asset)" :src="assetFileUrl(asset.url)" class="w-full h-full object-contain" alt="" />
+                                                <span x-show="!isPreviewableAsset(asset)" class="text-[9px] uppercase text-gray-400" x-text="assetFileExt(asset)"></span>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-sm text-gray-800 dark:text-gray-100 truncate" x-text="asset.name"></p>
+                                                <p class="text-[11px] text-gray-500" x-text="assetCategoryLabel(asset.category)"></p>
+                                            </div>
+                                        </label>
+                                    </template>
+                                </div>
+                                <div x-show="conceptForm.assetIds.length" class="flex flex-wrap gap-2 mt-2">
+                                    <template x-for="aid in conceptForm.assetIds" :key="'sel-' + aid">
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                                            <span x-text="conceptAssetOptions.find(a => a._id === aid)?.name || 'Asset'"></span>
+                                            <button type="button" @click="toggleConceptAsset(aid)" class="hover:text-indigo-900 dark:hover:text-white">×</button>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                         <div class="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700">
                             <button type="button" @click="showConceptModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
@@ -1870,6 +1973,24 @@ show_admin_bar(false);
                         <div x-show="selectedConcept?.briefDetails?.keyMessage" class="mb-4">
                             <p class="text-sm text-gray-500 dark:text-gray-400">Key Message</p>
                             <p class="text-gray-900 dark:text-white" x-text="selectedConcept?.briefDetails?.keyMessage"></p>
+                        </div>
+                        <!-- Linked Brand Assets -->
+                        <div x-show="(selectedConcept?.assetIds || []).length > 0" class="mb-6">
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Assigned Brand Assets</p>
+                            <div class="flex flex-wrap gap-3">
+                                <template x-for="asset in (selectedConcept?.assetIds || [])" :key="'linked-' + (asset._id || asset)">
+                                    <a :href="assetFileUrl(asset.url || '')" target="_blank" rel="noopener noreferrer" class="group w-28 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-gray-700/40 hover:border-indigo-400 transition-colors">
+                                        <div class="h-20 flex items-center justify-center bg-white dark:bg-gray-800">
+                                            <img x-show="isPreviewableAsset(asset)" :src="assetFileUrl(asset.url)" class="w-full h-full object-contain p-1" alt="" />
+                                            <span x-show="!isPreviewableAsset(asset)" class="text-[10px] uppercase text-gray-400" x-text="assetFileExt(asset)"></span>
+                                        </div>
+                                        <div class="px-2 py-1.5">
+                                            <p class="text-[11px] font-medium text-gray-800 dark:text-gray-100 truncate" x-text="asset.name || 'Asset'"></p>
+                                            <p class="text-[10px] text-gray-500 truncate" x-text="assetCategoryLabel(asset.category)"></p>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
                         </div>
                         <!-- Reference Images Preview -->
                         <div x-show="getReferenceAttachments(selectedConcept).length > 0 || selectedConcept?.referenceLink" class="mb-6">
@@ -2672,6 +2793,57 @@ show_admin_bar(false);
             </div>
         </div>
 
+        <!-- Brand Asset Upload Modal -->
+        <div x-show="showAssetUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showAssetUploadModal = false">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 bg-black opacity-50" @click="showAssetUploadModal = false"></div>
+                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full">
+                    <div class="px-6 py-4 border-b dark:border-gray-700 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upload Brand Asset</h3>
+                        <button type="button" @click="showAssetUploadModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="uploadBrandAsset()" class="px-6 py-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand *</label>
+                            <select x-model="assetUploadForm.clientId" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Select brand</option>
+                                <template x-for="client in clients" :key="'upload-client-' + client._id">
+                                    <option :value="client._id" x-text="client.brandName || client.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
+                            <input type="text" x-model="assetUploadForm.name" required placeholder="e.g. Primary Logo" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category *</label>
+                            <select x-model="assetUploadForm.category" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <template x-for="cat in brandAssetCategories" :key="'upload-cat-' + cat.value">
+                                    <option :value="cat.value" x-text="cat.label"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+                            <textarea x-model="assetUploadForm.notes" rows="2" placeholder="Optional usage notes" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File *</label>
+                            <input id="brandAssetFileInput" type="file" required accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.ttf,.otf,.woff,.woff2,image/*,application/pdf,font/*" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <p class="mt-1 text-xs text-gray-500">Images, fonts (ttf/otf/woff), or PDF · max 50MB</p>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-2 border-t dark:border-gray-700">
+                            <button type="button" @click="showAssetUploadModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                            <button type="submit" :disabled="assetUploading" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50" x-text="assetUploading ? 'Uploading…' : 'Upload'"></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Manual Upload Modal -->
         <div x-show="showManualUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showManualUploadModal = false">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
@@ -3153,8 +3325,29 @@ show_admin_bar(false);
                 conceptForm: {
                     title: '', description: '', caption: '', clientId: '', contentType: '', mediaCategory: '', platform: [],
                     priority: 'medium', dueDate: '', assignedTo: '', referenceLink: '',
+                    assetIds: [],
                     briefDetails: { keyMessage: '', callToAction: '', additionalNotes: '', descriptionColor: '#111827', captionColor: '#6B7280' }
                 },
+                brandAssets: [],
+                brandAssetCategories: [
+                    { value: 'logos', label: 'Logos' },
+                    { value: 'products', label: 'Products' },
+                    { value: 'gradients', label: 'Gradients/Backgrounds' },
+                    { value: 'fonts', label: 'Fonts' },
+                    { value: 'other', label: 'Other' }
+                ],
+                assetClientFilter: '',
+                assetCategoryFilter: '',
+                assetSearch: '',
+                showAssetUploadModal: false,
+                assetUploading: false,
+                assetUploadForm: {
+                    clientId: '',
+                    name: '',
+                    category: 'logos',
+                    notes: ''
+                },
+                conceptAssetOptions: [],
                 taskForm: {
                     title: '', description: '', taskType: '', assignedTo: '', dueDate: '', priority: 'medium'
                 },
@@ -3364,7 +3557,7 @@ show_admin_bar(false);
                 syncActiveTabFromLocation() {
                     const sp = new URLSearchParams(window.location.search);
                     const t = sp.get('tab');
-                    const fromQuery = { dashboard: 'dashboard', concepts: 'concepts', productions: 'productions', contentBank: 'contentBank', tasks: 'tasks', planner: 'planner', feed: 'feed' };
+                    const fromQuery = { dashboard: 'dashboard', concepts: 'concepts', productions: 'productions', contentBank: 'contentBank', assets: 'assets', tasks: 'tasks', planner: 'planner', feed: 'feed' };
                     if (t && fromQuery[t]) {
                         this.activeTab = fromQuery[t];
                         return;
@@ -3379,6 +3572,8 @@ show_admin_bar(false);
                         this.activeTab = 'productions';
                     } else if (pathLower.startsWith(baseLower + '/contentbank')) {
                         this.activeTab = 'contentBank';
+                    } else if (pathLower.startsWith(baseLower + '/assets')) {
+                        this.activeTab = 'assets';
                     } else if (pathLower.startsWith(baseLower + '/tasks')) {
                         this.activeTab = 'tasks';
                     } else if (pathLower.startsWith(baseLower + '/planner')) {
@@ -3398,6 +3593,7 @@ show_admin_bar(false);
 
                 loadTabData() {
                     if (this.activeTab === 'contentBank') this.loadContentBank();
+                    else if (this.activeTab === 'assets') this.loadBrandAssets();
                     else if (this.activeTab === 'productions') this.loadProductions();
                     else if (this.activeTab === 'planner') this.loadPlans();
                     else if (this.activeTab === 'feed') this.loadFeed();
@@ -3462,6 +3658,7 @@ show_admin_bar(false);
                         await this.loadTasks();
                         await this.loadProductions();
                         if (this.activeTab === 'contentBank') await this.loadContentBank();
+                        if (this.activeTab === 'assets') await this.loadBrandAssets();
                         if (this.activeTab === 'planner') await this.loadPlans();
                         if (this.activeTab === 'feed') await this.loadFeed();
                         // Load last feed check from localStorage and check for unread items
@@ -3558,8 +3755,10 @@ show_admin_bar(false);
                         dueDate: defaultDue,
                         assignedTo: '',
                         referenceLink: '',
+                        assetIds: [],
                         briefDetails: { keyMessage: '', callToAction: '', additionalNotes: '', descriptionColor: '#111827', captionColor: '#6B7280' }
                     };
+                    this.conceptAssetOptions = [];
                     this.clearAllReferenceImages();
                     this.showConceptTypePicker = false;
                     this.showConceptModal = true;
@@ -3645,11 +3844,13 @@ show_admin_bar(false);
                     this.editingConcept = concept;
                     this.conceptMediaType = concept.mediaCategory || (this.isVideoConcept(concept) ? 'video' : 'graphic');
                     this.conceptDescriptionNA = concept.description === 'N/A';
+                    const linkedAssets = Array.isArray(concept.assetIds) ? concept.assetIds : [];
                     this.conceptForm = {
                         title: concept.title, description: concept.description, caption: concept.caption || '', clientId: concept.clientId?._id || concept.clientId,
                         contentType: concept.contentType, mediaCategory: concept.mediaCategory || this.conceptMediaType, platform: concept.platform || [], priority: concept.priority,
                         dueDate: concept.dueDate ? concept.dueDate.split('T')[0] : '', assignedTo: concept.assignedTo?._id || concept.assignedTo || '',
                         referenceLink: concept.referenceLink || '',
+                        assetIds: linkedAssets.map(a => a._id || a).filter(Boolean),
                         briefDetails: {
                             keyMessage: concept.briefDetails?.keyMessage || '',
                             callToAction: concept.briefDetails?.callToAction || '',
@@ -3667,6 +3868,7 @@ show_admin_bar(false);
                     });
                     this.showConceptDetail = false;
                     this.showConceptModal = true;
+                    this.loadConceptAssetOptions();
                 },
 
                 referenceImageCount() {
@@ -5319,6 +5521,153 @@ show_admin_bar(false);
                     };
                     const fileInput = document.getElementById('manualUploadFiles');
                     if (fileInput) fileInput.value = '';
+                },
+
+                assetCategoryLabel(value) {
+                    return this.brandAssetCategories.find(c => c.value === value)?.label || value || 'Other';
+                },
+
+                assetFileUrl(url) {
+                    if (!url) return '';
+                    if (/^https?:\/\//i.test(url)) return url;
+                    const base = String(API_URL || '').replace(/\/api\/?$/, '');
+                    return base + (url.startsWith('/') ? url : '/' + url);
+                },
+
+                assetFileExt(asset) {
+                    const name = asset?.originalName || asset?.url || '';
+                    const parts = String(name).split('.');
+                    return parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
+                },
+
+                isPreviewableAsset(asset) {
+                    const mt = (asset?.mimetype || '').toLowerCase();
+                    if (mt.startsWith('image/')) return true;
+                    const ext = this.assetFileExt(asset).toLowerCase();
+                    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                },
+
+                async loadBrandAssets() {
+                    const token = localStorage.getItem('token');
+                    try {
+                        const params = new URLSearchParams();
+                        if (this.assetClientFilter) params.set('clientId', this.assetClientFilter);
+                        if (this.assetCategoryFilter) params.set('category', this.assetCategoryFilter);
+                        if (this.assetSearch?.trim()) params.set('search', this.assetSearch.trim());
+                        const response = await fetch(`${API_URL}/workflow/assets?${params}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.brandAssets = data.assets || [];
+                        }
+                    } catch (error) {
+                        console.error('Load brand assets error:', error);
+                    }
+                },
+
+                openAssetUploadModal() {
+                    this.assetUploadForm = {
+                        clientId: this.assetClientFilter || this.selectedViewClient || '',
+                        name: '',
+                        category: this.assetCategoryFilter || 'logos',
+                        notes: ''
+                    };
+                    const input = document.getElementById('brandAssetFileInput');
+                    if (input) input.value = '';
+                    this.showAssetUploadModal = true;
+                },
+
+                async uploadBrandAsset() {
+                    const token = localStorage.getItem('token');
+                    const fileInput = document.getElementById('brandAssetFileInput');
+                    const file = fileInput?.files?.[0];
+                    if (!this.assetUploadForm.clientId || !this.assetUploadForm.name?.trim()) {
+                        this.showToast('Brand and name are required', 'error');
+                        return;
+                    }
+                    if (!file) {
+                        this.showToast('Please choose a file', 'error');
+                        return;
+                    }
+                    this.assetUploading = true;
+                    try {
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        fd.append('clientId', this.assetUploadForm.clientId);
+                        fd.append('name', this.assetUploadForm.name.trim());
+                        fd.append('category', this.assetUploadForm.category || 'other');
+                        fd.append('notes', this.assetUploadForm.notes || '');
+                        const response = await fetch(`${API_URL}/workflow/assets`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: fd
+                        });
+                        if (response.ok) {
+                            this.showAssetUploadModal = false;
+                            this.showToast('Asset uploaded', 'success');
+                            await this.loadBrandAssets();
+                        } else {
+                            const err = await response.json().catch(() => ({}));
+                            this.showToast(err.message || 'Upload failed', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Upload brand asset error:', error);
+                        this.showToast('Upload failed', 'error');
+                    } finally {
+                        this.assetUploading = false;
+                    }
+                },
+
+                async deleteBrandAsset(asset) {
+                    if (!asset?._id) return;
+                    if (!confirm(`Delete "${asset.name}"? This cannot be undone.`)) return;
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/workflow/assets/${asset._id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            this.showToast('Asset deleted', 'success');
+                            await this.loadBrandAssets();
+                        } else {
+                            const err = await response.json().catch(() => ({}));
+                            this.showToast(err.message || 'Delete failed', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Delete brand asset error:', error);
+                        this.showToast('Delete failed', 'error');
+                    }
+                },
+
+                async loadConceptAssetOptions() {
+                    const clientId = this.conceptForm?.clientId;
+                    if (!clientId) {
+                        this.conceptAssetOptions = [];
+                        return;
+                    }
+                    const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch(`${API_URL}/workflow/assets?clientId=${encodeURIComponent(clientId)}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.conceptAssetOptions = data.assets || [];
+                        }
+                    } catch (error) {
+                        console.error('Load concept asset options error:', error);
+                    }
+                },
+
+                toggleConceptAsset(assetId) {
+                    if (!assetId) return;
+                    const ids = Array.isArray(this.conceptForm.assetIds) ? [...this.conceptForm.assetIds] : [];
+                    const idx = ids.indexOf(assetId);
+                    if (idx >= 0) ids.splice(idx, 1);
+                    else ids.push(assetId);
+                    this.conceptForm.assetIds = ids;
                 },
 
                 async scheduleContent(item) {
