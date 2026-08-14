@@ -1417,9 +1417,16 @@ show_admin_bar(false);
                         <div class="flex flex-wrap gap-2">
                             <button 
                                 x-show="!socialMediaStatus.facebook?.connected"
-                                @click="connectFacebook(customizingClient._id)" 
+                                @click="connectFacebook(customizingClient._id, 'business')" 
                                 class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
-                                Connect Account
+                                Connect via Business
+                            </button>
+                            <button 
+                                x-show="!socialMediaStatus.facebook?.connected"
+                                @click="connectFacebook(customizingClient._id, 'pages')" 
+                                class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition-colors"
+                                title="Use when the brand Page is not in a Business Portfolio">
+                                Connect Page only
                             </button>
                             <button 
                                 x-show="socialMediaStatus.facebook?.connected"
@@ -1445,6 +1452,10 @@ show_admin_bar(false);
                                 Disconnect
                             </button>
                         </div>
+                        <p x-show="!socialMediaStatus.facebook?.connected" class="text-[11px] text-gray-500 mt-2">
+                            <strong>Connect via Business</strong> uses Meta Business portfolios.
+                            <strong>Connect Page only</strong> lists Pages you personally admin — use this when the brand has no Business Portfolio.
+                        </p>
                         <div x-show="socialMediaDiagnosis" class="mt-3 text-xs">
                             <!-- Healthy: compact status -->
                             <div x-show="socialMediaDiagnosis?.metaSetup?.verdict === 'ok'" class="rounded-lg p-3 border bg-green-50 border-green-200 flex items-center justify-between gap-2">
@@ -1487,10 +1498,10 @@ show_admin_bar(false);
                         </div>
                         <div x-show="!socialMediaStatus.facebook?.connected" class="mt-3 pt-3 border-t border-blue-200 space-y-2">
                             <button type="button" @click="showManualMetaConnect = !showManualMetaConnect" class="text-xs font-medium text-indigo-700 hover:underline">
-                                <span x-text="showManualMetaConnect ? 'Hide manual Page connect' : 'Page admin but Business Manager blocked? Connect manually'"></span>
+                                <span x-text="showManualMetaConnect ? 'Hide manual Page connect' : 'Still stuck? Paste Page ID + token manually'"></span>
                             </button>
                             <div x-show="showManualMetaConnect" class="space-y-2 rounded-lg border border-indigo-200 bg-white/80 p-3">
-                                <p class="text-xs text-gray-600">Use this when you are a <strong>full admin on the Page</strong> but cannot add it via Business Manager / OAuth page list. Paste the numeric Page ID and a <strong>Page access token</strong> (Graph API Explorer → select this Page).</p>
+                                <p class="text-xs text-gray-600">Use when neither OAuth option lists the Page. Paste the numeric Page ID and a <strong>Page access token</strong> from <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener" class="underline">Graph API Explorer</a> (select this Page first).</p>
                                 <input type="text" x-model="manualMetaPageId" placeholder="Facebook Page ID" class="w-full border rounded px-2 py-1.5 text-xs">
                                 <input type="password" x-model="manualMetaPageToken" placeholder="Page access token" class="w-full border rounded px-2 py-1.5 text-xs" autocomplete="off">
                                 <input type="text" x-model="manualMetaPageName" placeholder="Page name (optional)" class="w-full border rounded px-2 py-1.5 text-xs">
@@ -2389,11 +2400,15 @@ show_admin_bar(false);
                     }
                 },
 
-                async connectFacebook(clientId) {
+                async connectFacebook(clientId, mode = 'business') {
                     try {
-                        const response = await fetch(`${API_URL}/social-media/auth/facebook?clientId=${clientId}`, {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                        });
+                        const connectMode = mode === 'pages' ? 'pages' : 'business';
+                        const response = await fetch(
+                            `${API_URL}/social-media/auth/facebook?clientId=${clientId}&mode=${connectMode}`,
+                            {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                            }
+                        );
                         const data = await response.json();
                         
                         if (data.success && data.authUrl) {
