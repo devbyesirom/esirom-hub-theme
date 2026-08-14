@@ -305,7 +305,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                      :style="'width: ' + Math.min(goal.percentage || 0, 100) + '%'"></div>
                             </div>
                             <div x-show="goal.percentage === null" class="text-xs text-amber-600 dark:text-amber-400 mb-2"
-                                 x-text="goal.id === 'monthly_reports' ? 'Report deadline has not passed yet — due by end of the first week of this month.' : goal.id === 'concept_deadline' ? 'Concept deadline has not passed yet — tracking begins after the 2nd Friday.' : 'Deadline has not passed yet — tracking will begin after the due date.'"></div>
+                                 x-text="goal.id === 'monthly_reports' ? 'Report deadline has not passed yet — due by end of the first week of this month.' : goal.id === 'concept_deadline' ? 'Concept deadline has not passed yet — due by the 2nd Friday of this month.' : 'Deadline has not passed yet — tracking will begin after the due date.'"></div>
 
                             <p x-show="goal.percentage !== null" class="text-xs text-gray-500 dark:text-gray-400" x-text="(goal.percentage || 0) + '% complete'"></p>
 
@@ -474,7 +474,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                             <template x-for="goal in member.goals" :key="goal.id">
                                                 <div class="flex items-center gap-2">
                                                     <!-- Label -->
-                                                    <span class="text-[11px] text-gray-500 dark:text-gray-400 w-28 flex-shrink-0 truncate leading-tight" x-text="goal.label"></span>
+                                                    <span class="text-[11px] text-gray-500 dark:text-gray-400 w-32 flex-shrink-0 leading-tight" :title="goal.label" x-text="goal.shortLabel || goal.label"></span>
                                                     <!-- Bar -->
                                                     <div class="flex-1 max-w-[80px] h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                                         <div class="h-1.5 rounded-full transition-all"
