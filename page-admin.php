@@ -1566,6 +1566,7 @@ show_admin_bar(false);
                             </button>
                         </div>
                         <p class="text-xs text-gray-500 mt-3">Syncs channel videos with views, likes, comments, and watch time into the brand dashboard.</p>
+                        <p class="text-xs text-gray-500 mt-2 leading-relaxed">On Google's list, pick the <strong>brand/channel name</strong>, not your personal Gmail. Google only shows Brand Accounts this login can sign in as. Channels where you are a YouTube Studio manager or editor will stay hidden until the owner adds this Google account to that Brand Account at <span class="font-medium">myaccount.google.com/brandaccounts</span>, then connect again.</p>
                     </div>
 
                     <!-- Google Analytics Connection -->
