@@ -122,7 +122,15 @@ $admin_url = esc_url(get_permalink(get_page_by_path('admin')));
 
             <div x-show="!loading && selectedClient && filteredThreads.length === 0" x-cloak class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-10 text-center">
                 <p class="text-gray-600 dark:text-gray-400 text-sm">No conversations yet for this brand.</p>
-                <p class="text-xs text-gray-500 mt-2">Threads appear here once Messenger or Instagram messaging is connected and active.</p>
+                <p class="text-xs text-gray-500 mt-2" x-show="platformFilter !== 'instagram'">Threads appear here once Messenger or Instagram messaging is connected and active.</p>
+                <div x-show="platformFilter === 'instagram'" class="text-xs text-gray-500 mt-3 space-y-2 max-w-md mx-auto text-left">
+                    <p>If Instagram DMs should appear here:</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>In Instagram → Settings → Messages and story replies → turn on <strong>Connected tools</strong> / Allow access to messages.</li>
+                        <li>Reconnect Facebook for this brand in Admin so the Page token includes <code class="text-[11px]">instagram_manage_messages</code>.</li>
+                        <li>Your Meta app needs Advanced Access for Instagram messaging (not Development-only testers).</li>
+                    </ul>
+                </div>
             </div>
 
             <div x-show="!loading && filteredThreads.length > 0" x-cloak class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden flex flex-col md:flex-row min-h-[520px] max-h-[calc(100dvh-220px)]">
