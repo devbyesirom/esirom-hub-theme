@@ -766,7 +766,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             </template>
                                         </div>
                                         <div x-show="getInstagramOnlineFollowers().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
-                                            <p x-show="!getAudienceActivityErrors().length">Instagram active times are not available yet. Meta may withhold this breakdown, or the account needs 100+ followers. Click <strong>Refresh audience</strong> after syncing posts.</p>
+                                            <p x-show="!getAudienceActivityErrors().length">Instagram peak hours need a Business/Creator account with 100+ followers and Instagram insights permission. After Sync Posts, click <strong>Refresh</strong>. Meta still withholds this for some accounts.</p>
                                             <template x-for="err in getAudienceActivityErrors().filter(e => /instagram/i.test(e)).slice(0,2)" :key="err">
                                                 <p class="text-amber-700 dark:text-amber-300 mt-2" x-text="err"></p>
                                             </template>
@@ -783,8 +783,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                                 </div>
                                             </template>
                                         </div>
-                                        <div x-show="getFacebookFansOnline().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
-                                            <p>Facebook fan active times are no longer provided by Meta for most pages. Use Instagram active times and account metrics above for scheduling guidance.</p>
+                                        <div x-show="getFacebookFansOnline().length === 0" class="text-xs text-gray-500 dark:text-gray-400">
+                                            <p>Meta no longer provides Facebook fan active times for most Pages. Use Instagram hours above when available.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2798,6 +2798,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     if (dashboardConfig.platforms && dashboardConfig.platforms.length > 0) {
                             this.clientPlatforms = dashboardConfig.platforms;
                             this.activePlatforms = [...dashboardConfig.platforms];
+                            this.mergeConnectedPlatforms();
                             console.log('Platforms loaded from database:', this.clientPlatforms);
                         }
                         
@@ -5067,7 +5068,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         });
                     }
 
-                    return mapped;
+                    if (Number(activity.content_breakdown?.reels_views) > 0) {
+                        mapped.push({
+                            label: 'Reel views',
+                            facebook: 0,
+                            instagram: Number(activity.content_breakdown.reels_views) || 0,
+                            total: Number(activity.content_breakdown.reels_views) || 0
+                        });
+                    }
+
+                    const alwaysShow = ['Reach', 'Impressions', 'Views', 'Interactions', 'Profile visits'];
+                    return mapped.filter((row) => row.total > 0 || alwaysShow.includes(row.label));
                 },
 
                 formatHourLabel(hour) {
@@ -5833,10 +5844,26 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         });
                         const data = await response.json();
                         this.socialMediaStatus = data.success ? (data.data || {}) : {};
+                        this.mergeConnectedPlatforms();
                     } catch (error) {
                         console.error('Error loading social media status:', error);
                         this.socialMediaStatus = {};
                     }
+                },
+
+                mergeConnectedPlatforms() {
+                    const connected = [];
+                    if (this.socialMediaStatus?.facebook?.connected) connected.push('facebook');
+                    if (this.socialMediaStatus?.instagram?.connected || this.socialMediaStatus?.instagram?.accountId) {
+                        connected.push('instagram');
+                    }
+                    if (this.socialMediaStatus?.youtube?.connected) connected.push('youtube');
+                    if (!connected.length) return;
+                    const merged = [...new Set([...(this.clientPlatforms || []), ...connected])];
+                    this.clientPlatforms = merged;
+                    connected.forEach((platform) => {
+                        if (!this.activePlatforms.includes(platform)) this.activePlatforms.push(platform);
+                    });
                 },
 
                 hasConnectedSocialChannels() {
