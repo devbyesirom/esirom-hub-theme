@@ -2270,6 +2270,10 @@ show_admin_bar(false);
                                 'Google Analytics OAuth',
                                 `width=${width},height=${height},left=${left},top=${top}`
                             );
+                            if (!popup) {
+                                this.showToast('Popup blocked. Allow popups for this site to connect Google Analytics.', 'error', 5000);
+                                return;
+                            }
 
                             const checkPopup = setInterval(() => {
                                 if (popup.closed) {
@@ -2383,6 +2387,10 @@ show_admin_bar(false);
                                 'YouTube OAuth',
                                 `width=${width},height=${height},left=${left},top=${top}`
                             );
+                            if (!popup) {
+                                this.showToast('Popup blocked. Allow popups for this site to connect YouTube.', 'error', 5000);
+                                return;
+                            }
 
                             const checkPopup = setInterval(() => {
                                 if (popup.closed) {
@@ -2423,8 +2431,11 @@ show_admin_bar(false);
                                 'Facebook OAuth',
                                 `width=${width},height=${height},left=${left},top=${top}`
                             );
-                            
-                            // Check for popup close and reload status
+                            if (!popup) {
+                                this.showToast('Popup blocked. Allow popups for this site to connect Meta.', 'error', 5000);
+                                return;
+                            }
+
                             const checkPopup = setInterval(() => {
                                 if (popup.closed) {
                                     clearInterval(checkPopup);

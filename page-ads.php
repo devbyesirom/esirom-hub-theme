@@ -372,7 +372,7 @@ function adsApp() {
                 }
                 if (this.user.role === 'brand_rep') this.viewMode = 'brand_rep';
                 await this.loadClients();
-                const saved = localStorage.getItem('hubSelectedClientId');
+                const saved = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                 if (saved && this.clients.some(c => c._id === saved)) {
                     await this.selectClient(this.clients.find(c => c._id === saved));
                 } else if (this.clients.length === 1) {
@@ -404,7 +404,16 @@ function adsApp() {
             this.selectedClient = client._id;
             this.selectedClientName = client.brandName || client.name;
             localStorage.setItem('hubSelectedClientId', client._id);
+            localStorage.setItem('selectedClientId', client._id);
             this.platformFilter = 'all';
+            this.manualAdAccountId = '';
+            this.manualAdAccountName = '';
+            this.editingAdAccount = false;
+            this.adAccountId = null;
+            this.adAccountName = '';
+            this.selectedAdAccountId = '';
+            this.adAccounts = [];
+            this.adsError = null;
             await this.loadAds();
         },
 
@@ -429,10 +438,8 @@ function adsApp() {
                         maxMonthlyUsd: this.adsBudget.maxMonthlyUsd,
                         maxDailyBoostUsd: this.adsBudget.maxDailyBoostUsd
                     };
-                    if (!this.manualAdAccountId && this.adAccountId) {
-                        this.manualAdAccountId = 'act_' + this.adAccountId;
-                        this.manualAdAccountName = this.adAccountName || '';
-                    }
+                    this.manualAdAccountId = this.adAccountId ? ('act_' + this.adAccountId) : '';
+                    this.manualAdAccountName = this.adAccountName || '';
                 }
             } finally {
                 this.loading = false;

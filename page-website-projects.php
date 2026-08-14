@@ -556,6 +556,12 @@ function websiteProjectsApp() {
             setTimeout(() => { this.toast.show = false; }, 4000);
         },
 
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = LOGIN_URL;
+        },
+
         typeLabel(v) { return this.typeOptions.find(t => t.value === v)?.label || v; },
         statusLabel(v) { return this.statusOptions.find(s => s.value === v)?.label || v; },
         typeBadge(v) {

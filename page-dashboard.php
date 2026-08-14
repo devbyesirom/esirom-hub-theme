@@ -2437,6 +2437,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.periodAccountActivity = null;
                     this.previousPeriodAccountActivity = null;
                     this.posts = [];
+                    this.socialMediaStatus = {};
                     await this.loadDashboardData(token);
                     await this.loadSocialMediaStatusForDashboard();
                     await this.loadReports(token);
@@ -2668,12 +2669,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 }
                             } else {
                                 // Restore previously selected client or use first (admin/brand rep)
-                                const savedClientId = localStorage.getItem('selectedClientId');
+                                const savedClientId = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                                 if (savedClientId && this.availableClients.length > 0) {
                                     const savedClient = this.availableClients.find(c => c._id === savedClientId);
                                     this.selectedClient = savedClient || this.availableClients[0];
                                 } else if (this.availableClients.length > 0) {
                                     this.selectedClient = this.availableClients[0];
+                                }
+                                if (this.selectedClient?._id) {
+                                    localStorage.setItem('selectedClientId', this.selectedClient._id);
+                                    localStorage.setItem('hubSelectedClientId', this.selectedClient._id);
                                 }
                             }
                         }
@@ -2685,6 +2690,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 async switchClient(client) {
                     this.selectedClient = client;
                     localStorage.setItem('selectedClientId', client._id);
+                    localStorage.setItem('hubSelectedClientId', client._id);
                     await this.reloadClientScopedData();
                 },
 
@@ -2798,7 +2804,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     if (dashboardConfig.platforms && dashboardConfig.platforms.length > 0) {
                             this.clientPlatforms = dashboardConfig.platforms;
                             this.activePlatforms = [...dashboardConfig.platforms];
-                            this.mergeConnectedPlatforms();
                             console.log('Platforms loaded from database:', this.clientPlatforms);
                         }
                         
@@ -3653,7 +3658,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 [`${platform}_views_non_followers`]: perf.views_non_followers || 0,
                                 [`${platform}_interactions`]: perf.interactions || perf.engagement || 0,
                                 [`${platform}_clicks`]: perf.clicks || 0,
-                                [`${platform}_plays_3s`]: perf.plays_3s || perf.views || 0,
+                                [`${platform}_plays_3s`]: Number(perf.plays_3s) || 0,
                                 [`${platform}_profile_activity`]: perf.profile_activity || 0,
                                 [`${platform}_profile_visits`]: perf.profile_visits || 0,
                                 [`${platform}_follows`]: perf.follows || 0,
@@ -5049,7 +5054,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             label: row.label,
                             facebook: Number(source.facebook) || 0,
                             instagram: Number(source.instagram) || 0,
-                            total: Number(source.total) || 0
+                            total: Number(source.total) || ((Number(source.facebook) || 0) + (Number(source.instagram) || 0))
                         };
                     });
 
@@ -5253,9 +5258,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 hasVideoInsights() {
+                    const activityViews = Number(this.getActiveAccountActivity(false)?.content_breakdown?.reels_views) || 0;
                     return (
                         this.getVideoViews() > 0 ||
                         this.getVideoPlays() > 0 ||
+                        activityViews > 0 ||
                         this.calculateFilteredKPI('watch_time') > 0 ||
                         this.calculateFilteredKPI('views_followers') > 0 ||
                         this.calculateFilteredKPI('views_non_followers') > 0 ||
@@ -5270,17 +5277,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return this.posts.filter((post) => {
                         if (!this.isPublishedInsightPost(post) || !filterFunc(post)) return false;
                         const type = String(post.mediaType || post.contentType || '').toLowerCase();
-                        return type === 'reel' || type === 'video' || type === 'youtube';
+                        return type === 'reel' || type === 'video' || type === 'youtube' || type.includes('video');
                     });
                 },
 
                 getVideoViews(usePreviousPeriod = false) {
-                    return this.getVideoInsightPosts(usePreviousPeriod).reduce((sum, post) => {
+                    const fromPosts = this.getVideoInsightPosts(usePreviousPeriod).reduce((sum, post) => {
                         return sum + (post.platforms || []).reduce((postSum, platform) => {
                             if (!this.activePlatforms.includes(platform)) return postSum;
                             return postSum + (Number(post.kpis?.[`${platform}_views`]) || 0);
                         }, 0);
                     }, 0);
+                    const activity = this.getActiveAccountActivity(usePreviousPeriod);
+                    const accountReels = Number(activity?.content_breakdown?.reels_views) || 0;
+                    return Math.max(fromPosts, accountReels);
                 },
 
                 getVideoPlays(usePreviousPeriod = false) {
@@ -5854,16 +5864,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 mergeConnectedPlatforms() {
                     const connected = [];
                     if (this.socialMediaStatus?.facebook?.connected) connected.push('facebook');
-                    if (this.socialMediaStatus?.instagram?.connected || this.socialMediaStatus?.instagram?.accountId) {
-                        connected.push('instagram');
-                    }
+                    if (this.socialMediaStatus?.instagram?.connected) connected.push('instagram');
                     if (this.socialMediaStatus?.youtube?.connected) connected.push('youtube');
                     if (!connected.length) return;
                     const merged = [...new Set([...(this.clientPlatforms || []), ...connected])];
                     this.clientPlatforms = merged;
+                    this.activePlatforms = this.activePlatforms.filter((platform) => merged.includes(platform));
                     connected.forEach((platform) => {
                         if (!this.activePlatforms.includes(platform)) this.activePlatforms.push(platform);
                     });
+                    if (!this.activePlatforms.length) this.activePlatforms = [...merged];
                 },
 
                 hasConnectedSocialChannels() {

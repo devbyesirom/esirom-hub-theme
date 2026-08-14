@@ -169,12 +169,28 @@ function esirom_hub_scripts() {
 add_action('wp_enqueue_scripts', 'esirom_hub_scripts');
 
 function esirom_hub_api_url_script() {
-    if (
-        is_page_template('page-login.php') ||
-        is_page_template('page-dashboard.php') ||
-        is_page_template('page-admin.php') ||
-        is_page_template('page-password-vault.php')
-    ) {
+    $hub_templates = array(
+        'page-login.php',
+        'page-dashboard.php',
+        'page-admin.php',
+        'page-password-vault.php',
+        'page-workflow.php',
+        'page-overview.php',
+        'page-content-calendar.php',
+        'page-ads.php',
+        'page-messages.php',
+        'page-inventory.php',
+        'page-website-projects.php',
+        'page-progress.php'
+    );
+    $is_hub = false;
+    foreach ($hub_templates as $template) {
+        if (is_page_template($template)) {
+            $is_hub = true;
+            break;
+        }
+    }
+    if ($is_hub) {
         $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
         echo '<script>const ESIROM_API_URL = ' . wp_json_encode(esc_url_raw($api_url)) . ';</script>';
     }

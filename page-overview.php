@@ -681,7 +681,7 @@ show_admin_bar(false);
     </div>
 
     <script>
-        const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
+        const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : <?php echo wp_json_encode(get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api')); ?>;
         const DASHBOARD_URL = '<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>';
         const LOGIN_URL = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
         const WORKFLOW_URL = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>';
@@ -1022,6 +1022,7 @@ show_admin_bar(false);
 
                 navigateToBrand(brandId) {
                     localStorage.setItem('selectedClientId', brandId);
+                    localStorage.setItem('hubSelectedClientId', brandId);
                     window.location.href = DASHBOARD_URL;
                 },
 

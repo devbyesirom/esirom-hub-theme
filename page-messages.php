@@ -265,7 +265,7 @@ function messagesApp() {
                     this.viewMode = 'admin';
                 }
                 await this.loadClients();
-                const saved = localStorage.getItem('hubSelectedClientId');
+                const saved = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                 if (saved && this.clients.some(c => c._id === saved)) {
                     const client = this.clients.find(c => c._id === saved);
                     await this.selectClient(client);
@@ -293,6 +293,7 @@ function messagesApp() {
             this.selectedClient = client._id;
             this.selectedClientName = client.brandName || client.name;
             localStorage.setItem('hubSelectedClientId', client._id);
+            localStorage.setItem('selectedClientId', client._id);
             this.activeThread = null;
             this.threadMessages = [];
             await this.loadMessages();

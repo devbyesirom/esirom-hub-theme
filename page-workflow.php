@@ -26,6 +26,7 @@ if ($esirom_wf_id > 0) {
 }
 
 show_admin_bar(false);
+$api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?> class="h-full">
@@ -3241,7 +3242,7 @@ show_admin_bar(false);
     </div>
 
     <script>
-        const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
+        const API_URL = '<?php echo esc_js($api_url); ?>';
         const LOGIN_URL = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
         const DASHBOARD_URL = '<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>';
         const WORKFLOW_PAGE_PATH = <?php echo wp_json_encode($esirom_workflow_page_path, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
@@ -3484,7 +3485,7 @@ show_admin_bar(false);
                             if (!Number.isNaN(am)) this.efficiencyMonth = am;
                             await this.loadConcepts();
                         }
-                        const deepConcept = sp.get('concept');
+                        const deepConcept = sp.get('concept') || sp.get('conceptId');
                         if (deepConcept) {
                             this.activeTab = 'concepts';
                             await this.openConceptFromFeed(deepConcept);
@@ -3500,6 +3501,9 @@ show_admin_bar(false);
                             this.activeTab = 'productions';
                             await this.loadProductions();
                             await this.viewProduction({ _id: deepProject });
+                        }
+                        if (this.viewMode === 'client' && this.activeTab !== 'feed' && this.activeTab !== 'contentBank') {
+                            this.activeTab = 'contentBank';
                         }
                     } catch (e) { console.error('Hub deep link error', e); }
                 },
