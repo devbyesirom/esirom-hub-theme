@@ -661,24 +661,27 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p class="text-xs text-gray-500 dark:text-gray-400" x-show="!hasVideoInsights()">No video metrics in this period yet</p>
                             </div>
                             <div x-show="hasVideoInsights()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div x-show="isWidgetVisible('watch_time')" class="hub-stat-card hub-stat-card--blue">
+                                <div class="hub-stat-card hub-stat-card--blue">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Reel &amp; Video Views</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getVideoViews())"></p>
+                                    <p class="text-[10px] text-gray-400 mt-1">Published video content</p>
+                                </div>
+                                <div class="hub-stat-card hub-stat-card--emerald">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Plays</h3>
+                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getVideoPlays())"></p>
+                                    <p class="text-[10px] text-gray-400 mt-1">Meta-provided where available</p>
+                                </div>
+                                <div x-show="calculateFilteredKPI('watch_time') > 0" class="hub-stat-card hub-stat-card--amber">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Watch Time</h3>
                                     <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatWatchTime(calculateFilteredKPI('watch_time'))"></p>
                                 </div>
-                                <div x-show="isWidgetVisible('skip_rate')" class="hub-stat-card hub-stat-card--amber">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Skip Rate</h3>
-                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="calculateAvgSkipRate() + '%'"></p>
-                                </div>
-                                <div x-show="isWidgetVisible('follower_views')" class="hub-stat-card hub-stat-card--emerald">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Follower Views</h3>
-                                    <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('views_followers'))"></p>
-                                </div>
-                                <div x-show="isWidgetVisible('non_follower_views')" class="hub-stat-card hub-stat-card--pink">
+                                <div x-show="calculateFilteredKPI('views_non_followers') > 0 || calculateFilteredKPI('views_followers') > 0" class="hub-stat-card hub-stat-card--pink">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discovery Views</h3>
                                     <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(calculateFilteredKPI('views_non_followers'))"></p>
+                                    <p class="text-[10px] text-gray-400 mt-1" x-text="'Followers: ' + formatNumber(calculateFilteredKPI('views_followers'))"></p>
                                 </div>
                             </div>
-                            <div x-show="!hasVideoInsights()" class="hub-insights-empty text-sm">Video metrics appear here when reels or YouTube content has watch-time data in the selected period.</div>
+                            <div x-show="!hasVideoInsights()" class="hub-insights-empty text-sm">Video metrics appear here once reels or video posts are synced from Meta for the selected period.</div>
                         </div>
 
                         <!-- Audience Intelligence -->
@@ -796,8 +799,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Facebook & Instagram account metrics</h3>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Account-level totals from Meta · <span x-text="currentPeriodLabel"></span></p>
                                 </div>
+                                <div x-show="hasMetaAccountActivity()" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                                    <template x-for="row in getMetaAccountActivityRows().slice(0, 4)" :key="'summary-' + row.label">
+                                        <div class="rounded-xl border border-gray-200 bg-gradient-to-br from-white to-indigo-50/60 p-4 dark:border-gray-700 dark:from-gray-800 dark:to-indigo-950/20">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" x-text="row.label"></p>
+                                            <p class="text-2xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatNumber(row.total)"></p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                                                <span x-show="clientPlatforms.includes('instagram')">IG <span x-text="formatNumber(row.instagram)"></span></span>
+                                                <span x-show="clientPlatforms.includes('facebook')" :class="clientPlatforms.includes('instagram') ? 'ml-2' : ''">FB <span x-text="formatNumber(row.facebook)"></span></span>
+                                            </p>
+                                        </div>
+                                    </template>
+                                </div>
                                 <div x-show="hasMetaAccountActivity()" class="overflow-x-auto">
-                                    <table class="min-w-full text-sm">
+                                    <table class="min-w-full text-sm rounded-xl overflow-hidden">
                                         <thead>
                                             <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                                                 <th class="py-2 pr-4">Metric</th>
@@ -5228,11 +5243,42 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 hasVideoInsights() {
                     return (
+                        this.getVideoViews() > 0 ||
+                        this.getVideoPlays() > 0 ||
                         this.calculateFilteredKPI('watch_time') > 0 ||
                         this.calculateFilteredKPI('views_followers') > 0 ||
                         this.calculateFilteredKPI('views_non_followers') > 0 ||
                         this.calculateAvgSkipRate() > 0
                     );
+                },
+
+                getVideoInsightPosts(usePreviousPeriod = false) {
+                    const filterFunc = usePreviousPeriod
+                        ? this.isPostInPreviousPeriod.bind(this)
+                        : this.isPostInDateRange.bind(this);
+                    return this.posts.filter((post) => {
+                        if (!this.isPublishedInsightPost(post) || !filterFunc(post)) return false;
+                        const type = String(post.mediaType || post.contentType || '').toLowerCase();
+                        return type === 'reel' || type === 'video' || type === 'youtube';
+                    });
+                },
+
+                getVideoViews(usePreviousPeriod = false) {
+                    return this.getVideoInsightPosts(usePreviousPeriod).reduce((sum, post) => {
+                        return sum + (post.platforms || []).reduce((postSum, platform) => {
+                            if (!this.activePlatforms.includes(platform)) return postSum;
+                            return postSum + (Number(post.kpis?.[`${platform}_views`]) || 0);
+                        }, 0);
+                    }, 0);
+                },
+
+                getVideoPlays(usePreviousPeriod = false) {
+                    return this.getVideoInsightPosts(usePreviousPeriod).reduce((sum, post) => {
+                        return sum + (post.platforms || []).reduce((postSum, platform) => {
+                            if (!this.activePlatforms.includes(platform)) return postSum;
+                            return postSum + (Number(post.kpis?.[`${platform}_plays_3s`]) || 0);
+                        }, 0);
+                    }, 0);
                 },
 
                 hasDemographicsData() {
