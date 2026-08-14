@@ -94,48 +94,109 @@ $admin_url = esc_url(get_permalink(get_page_by_path('admin')));
 
             <template x-if="selectedClient">
                 <div class="space-y-4">
-                    <!-- Setup banner -->
                     <div x-show="!platforms.facebook?.connected" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-900 dark:text-amber-100">
                         Connect Facebook for this brand in <a href="<?php echo $admin_url; ?>" class="font-semibold underline">Admin</a> before boosting posts.
                     </div>
 
+                    <div x-show="platforms.facebook?.connected && !platforms.instagram?.connected" class="rounded-xl border border-pink-200 dark:border-pink-800 bg-pink-50 dark:bg-pink-900/20 p-4 text-sm text-pink-900 dark:text-pink-100">
+                        Instagram is not linked for this brand — only Facebook posts will appear. Link IG in <a href="<?php echo $admin_url; ?>" class="font-semibold underline">Admin</a>, then reopen Ads.
+                    </div>
+
+                    <!-- Ad account linking -->
                     <div x-show="platforms.facebook?.connected && (!adAccountId || editingAdAccount)" class="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 p-4">
                         <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-100 mb-2">Link a Meta ad account</p>
-                        <p class="text-xs text-indigo-800/80 dark:text-indigo-200/80 mb-3">Choose the ad account that pays for boosts. Requires <code class="text-[11px]">ads_management</code> on your Meta Login for Business config.</p>
+                        <p class="text-xs text-indigo-800/80 dark:text-indigo-200/80 mb-3">
+                            Paste the Ad Account ID from Meta Ads Manager (e.g. <code class="text-[11px]">act_123456789</code>), or pick from the list if Facebook was reconnected with <code class="text-[11px]">ads_management</code>.
+                        </p>
                         <div x-show="adsError" class="text-xs text-red-600 dark:text-red-400 mb-2" x-text="adsError"></div>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <select x-model="selectedAdAccountId" class="flex-1 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-                                <option value="">Select ad account…</option>
-                                <template x-for="account in adAccounts" :key="account.id">
-                                    <option :value="account.id" x-text="account.name + ' (' + account.id + ')'"></option>
-                                </template>
-                            </select>
-                            <button @click="saveAdAccount()" :disabled="!selectedAdAccountId || savingAdAccount" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold disabled:opacity-60">
-                                <span x-show="!savingAdAccount">Save ad account</span>
-                                <span x-show="savingAdAccount">Saving…</span>
-                            </button>
-                            <button @click="loadAdAccounts()" class="px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 text-sm font-semibold text-indigo-700 dark:text-indigo-300">Refresh</button>
+
+                        <div class="space-y-3">
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="text"
+                                       x-model="manualAdAccountId"
+                                       placeholder="act_123456789"
+                                       class="flex-1 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono">
+                                <input type="text"
+                                       x-model="manualAdAccountName"
+                                       placeholder="Optional name"
+                                       class="sm:w-48 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+                                <button @click="saveManualAdAccount()" :disabled="!manualAdAccountId || savingAdAccount" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold disabled:opacity-60">
+                                    <span x-show="!savingAdAccount">Save ID</span>
+                                    <span x-show="savingAdAccount">Saving…</span>
+                                </button>
+                            </div>
+
+                            <div x-show="adAccounts.length > 0" class="flex flex-col sm:flex-row gap-2 pt-1 border-t border-indigo-200/60 dark:border-indigo-800/60">
+                                <select x-model="selectedAdAccountId" class="flex-1 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+                                    <option value="">Select from linked accounts…</option>
+                                    <template x-for="account in adAccounts" :key="account.id">
+                                        <option :value="account.id" x-text="account.name + ' (' + account.id + ')'"></option>
+                                    </template>
+                                </select>
+                                <button @click="saveAdAccount()" :disabled="!selectedAdAccountId || savingAdAccount" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold disabled:opacity-60">Save selection</button>
+                                <button @click="loadAdAccounts()" class="px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 text-sm font-semibold text-indigo-700 dark:text-indigo-300">Refresh list</button>
+                            </div>
+                            <div x-show="adAccounts.length === 0" class="flex gap-2">
+                                <button @click="loadAdAccounts()" class="px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 text-sm font-semibold text-indigo-700 dark:text-indigo-300">Try load account list</button>
+                            </div>
                         </div>
                     </div>
 
                     <div x-show="adAccountId && !editingAdAccount" class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-sm">
                         <div>
                             <span class="font-semibold text-emerald-900 dark:text-emerald-100">Ad account:</span>
-                            <span class="text-emerald-800 dark:text-emerald-200 ml-1" x-text="adAccountName || adAccountId"></span>
+                            <span class="text-emerald-800 dark:text-emerald-200 ml-1" x-text="adAccountName || ('act_' + adAccountId)"></span>
                         </div>
-                        <button @click="editingAdAccount = true; selectedAdAccountId = adAccountId" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 underline">Change</button>
+                        <button @click="editingAdAccount = true; selectedAdAccountId = adAccountId; manualAdAccountId = adAccountId ? ('act_' + adAccountId) : ''; manualAdAccountName = adAccountName || ''" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 underline">Change</button>
+                    </div>
+
+                    <!-- Budget caps -->
+                    <div x-show="platforms.facebook?.connected" class="rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white">Boost budget caps</p>
+                                <p class="text-xs text-gray-500 mt-0.5">
+                                    Month used: $<span x-text="fmtMoney(adsBudget.monthSpendUsd)"></span>
+                                    <span x-show="adsBudget.maxMonthlyUsd != null"> / $<span x-text="fmtMoney(adsBudget.maxMonthlyUsd)"></span></span>
+                                </p>
+                            </div>
+                            <button @click="saveBudgetCaps()" :disabled="savingBudget" class="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-indigo-600 text-white text-xs font-semibold disabled:opacity-60">
+                                <span x-show="!savingBudget">Save caps</span>
+                                <span x-show="savingBudget">Saving…</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Max budget / month (USD)</label>
+                                <input type="number" min="0" step="1" x-model.number="budgetForm.maxMonthlyUsd" placeholder="e.g. 500" class="w-full rounded-lg border dark:border-gray-600 dark:bg-gray-700 px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Max boost / day (USD)</label>
+                                <input type="number" min="0" step="1" x-model.number="budgetForm.maxDailyBoostUsd" placeholder="e.g. 25" class="w-full rounded-lg border dark:border-gray-600 dark:bg-gray-700 px-3 py-2 text-sm">
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-2">Leave blank for no cap. Monthly check uses estimated boost spend (daily × days) for boosts created this month.</p>
                     </div>
                 </div>
             </template>
 
             <!-- Boost tab -->
             <div x-show="selectedClient && tab === 'boost'" x-cloak class="space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                        <button @click="platformFilter = 'all'; loadAds()" class="px-3 py-1.5 text-xs font-semibold rounded-lg" :class="platformFilter === 'all' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'">All</button>
+                        <button @click="platformFilter = 'facebook'; loadAds()" class="px-3 py-1.5 text-xs font-semibold rounded-lg" :class="platformFilter === 'facebook' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'">Facebook</button>
+                        <button @click="platformFilter = 'instagram'; loadAds()" class="px-3 py-1.5 text-xs font-semibold rounded-lg" :class="platformFilter === 'instagram' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500'">Instagram</button>
+                    </div>
+                    <p class="text-xs text-gray-500" x-text="postCountsLabel()"></p>
+                </div>
+
                 <div x-show="loading" class="flex justify-center py-16">
                     <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
 
                 <div x-show="!loading && boostablePosts.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-10 text-center text-sm text-gray-500">
-                    No boostable posts found. Sync published Facebook or Instagram posts from Admin first.
+                    No boostable posts found for this filter. Sync published Facebook or Instagram posts from Admin, and ensure Instagram is linked.
                 </div>
 
                 <div x-show="!loading && boostablePosts.length > 0" class="grid gap-4">
@@ -221,6 +282,7 @@ $admin_url = esc_url(get_permalink(get_page_by_path('admin')));
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Daily budget (USD)</label>
                     <input type="number" min="1" step="1" x-model.number="boostForm.dailyBudget" class="w-full rounded-lg border dark:border-gray-600 dark:bg-gray-700 px-3 py-2 text-sm">
+                    <p x-show="adsBudget.maxDailyBoostUsd != null" class="text-[11px] text-gray-500 mt-1" x-text="'Max $' + adsBudget.maxDailyBoostUsd + '/day for this brand'"></p>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Duration (days)</label>
@@ -264,6 +326,7 @@ function adsApp() {
         isSidebarOpen: true,
         loading: false,
         tab: 'boost',
+        platformFilter: 'all',
         clients: [],
         selectedClient: null,
         selectedClientName: '',
@@ -274,9 +337,14 @@ function adsApp() {
         adAccountId: null,
         adAccountName: '',
         selectedAdAccountId: '',
+        manualAdAccountId: '',
+        manualAdAccountName: '',
         editingAdAccount: false,
         savingAdAccount: false,
+        savingBudget: false,
         adsError: null,
+        adsBudget: { maxMonthlyUsd: null, maxDailyBoostUsd: null, monthSpendUsd: 0 },
+        budgetForm: { maxMonthlyUsd: null, maxDailyBoostUsd: null },
         showBoostModal: false,
         boosting: false,
         boostingPostId: null,
@@ -336,6 +404,7 @@ function adsApp() {
             this.selectedClient = client._id;
             this.selectedClientName = client.brandName || client.name;
             localStorage.setItem('hubSelectedClientId', client._id);
+            this.platformFilter = 'all';
             await this.loadAds();
         },
 
@@ -343,7 +412,8 @@ function adsApp() {
             if (!this.selectedClient) return;
             this.loading = true;
             try {
-                const res = await fetch(`${API_URL}/social-media/ads/${this.selectedClient}`, { headers: this.headers() });
+                const qs = this.platformFilter && this.platformFilter !== 'all' ? `?platform=${this.platformFilter}` : '';
+                const res = await fetch(`${API_URL}/social-media/ads/${this.selectedClient}${qs}`, { headers: this.headers() });
                 const data = await res.json();
                 if (data.success) {
                     this.boostablePosts = data.data.boostablePosts || [];
@@ -354,10 +424,27 @@ function adsApp() {
                     this.adAccountId = data.data.platforms?.facebook?.adAccountId || null;
                     this.adAccountName = data.data.platforms?.facebook?.adAccountName || '';
                     this.selectedAdAccountId = this.adAccountId || '';
+                    this.adsBudget = data.data.adsBudget || { maxMonthlyUsd: null, maxDailyBoostUsd: null, monthSpendUsd: 0 };
+                    this.budgetForm = {
+                        maxMonthlyUsd: this.adsBudget.maxMonthlyUsd,
+                        maxDailyBoostUsd: this.adsBudget.maxDailyBoostUsd
+                    };
+                    if (!this.manualAdAccountId && this.adAccountId) {
+                        this.manualAdAccountId = 'act_' + this.adAccountId;
+                        this.manualAdAccountName = this.adAccountName || '';
+                    }
                 }
             } finally {
                 this.loading = false;
             }
+        },
+
+        postCountsLabel() {
+            const fb = this.boostablePosts.filter(p => p.platform === 'facebook').length;
+            const ig = this.boostablePosts.filter(p => p.platform === 'instagram').length;
+            if (this.platformFilter === 'facebook') return `${fb} Facebook post${fb === 1 ? '' : 's'}`;
+            if (this.platformFilter === 'instagram') return `${ig} Instagram post${ig === 1 ? '' : 's'}`;
+            return `${this.boostablePosts.length} posts · ${fb} FB · ${ig} IG`;
         },
 
         async loadAdAccounts() {
@@ -368,6 +455,9 @@ function adsApp() {
                 if (data.success) {
                     this.adAccounts = data.data || [];
                     this.adsError = null;
+                    if (!this.adAccounts.length) {
+                        this.showToast('No ad accounts returned — paste your act_ ID instead', 'error');
+                    }
                 } else {
                     this.adsError = data.message;
                     this.showToast(data.message, 'error');
@@ -405,10 +495,74 @@ function adsApp() {
             }
         },
 
+        async saveManualAdAccount() {
+            if (!this.selectedClient || !this.manualAdAccountId) return;
+            this.savingAdAccount = true;
+            try {
+                const res = await fetch(`${API_URL}/social-media/ads/${this.selectedClient}/ad-account`, {
+                    method: 'PUT',
+                    headers: this.headers(),
+                    body: JSON.stringify({
+                        adAccountId: this.manualAdAccountId.trim(),
+                        adAccountName: (this.manualAdAccountName || '').trim()
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.adAccountId = data.data.adAccountId;
+                    this.adAccountName = data.data.adAccountName;
+                    this.editingAdAccount = false;
+                    this.showToast('Ad account linked');
+                    await this.loadAds();
+                } else {
+                    this.showToast(data.message || 'Failed to save ad account', 'error');
+                }
+            } finally {
+                this.savingAdAccount = false;
+            }
+        },
+
+        async saveBudgetCaps() {
+            if (!this.selectedClient) return;
+            this.savingBudget = true;
+            try {
+                const res = await fetch(`${API_URL}/social-media/ads/${this.selectedClient}/budget`, {
+                    method: 'PUT',
+                    headers: this.headers(),
+                    body: JSON.stringify({
+                        maxMonthlyUsd: this.budgetForm.maxMonthlyUsd === '' || this.budgetForm.maxMonthlyUsd == null
+                            ? null
+                            : this.budgetForm.maxMonthlyUsd,
+                        maxDailyBoostUsd: this.budgetForm.maxDailyBoostUsd === '' || this.budgetForm.maxDailyBoostUsd == null
+                            ? null
+                            : this.budgetForm.maxDailyBoostUsd
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.adsBudget = { ...this.adsBudget, ...data.data };
+                    this.budgetForm = {
+                        maxMonthlyUsd: data.data.maxMonthlyUsd,
+                        maxDailyBoostUsd: data.data.maxDailyBoostUsd
+                    };
+                    this.showToast('Budget caps saved');
+                } else {
+                    this.showToast(data.message || 'Failed to save budget caps', 'error');
+                }
+            } catch (e) {
+                this.showToast('Failed to save budget caps', 'error');
+            } finally {
+                this.savingBudget = false;
+            }
+        },
+
         openBoostModal(post) {
             if (!this.adAccountId) return;
+            const maxDaily = this.adsBudget.maxDailyBoostUsd;
+            let daily = 10;
+            if (maxDaily != null && maxDaily > 0) daily = Math.min(daily, Number(maxDaily));
             this.boostForm.post = post;
-            this.boostForm.dailyBudget = 10;
+            this.boostForm.dailyBudget = daily;
             this.boostForm.durationDays = 7;
             this.boostForm.objective = 'ENGAGEMENT';
             this.boostForm.countries = 'JM';
@@ -423,6 +577,10 @@ function adsApp() {
 
         async submitBoost() {
             if (!this.selectedClient || !this.boostForm.post) return;
+            if (this.adsBudget.maxDailyBoostUsd != null && this.boostForm.dailyBudget > this.adsBudget.maxDailyBoostUsd) {
+                this.showToast(`Daily budget cannot exceed $${this.adsBudget.maxDailyBoostUsd}`, 'error');
+                return;
+            }
             this.boosting = true;
             this.boostingPostId = this.boostForm.post._id;
             try {
@@ -470,6 +628,12 @@ function adsApp() {
             const n = Number(value) || 0;
             if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
             return n.toString();
+        },
+
+        fmtMoney(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '0';
+            return n % 1 === 0 ? String(n) : n.toFixed(2);
         },
 
         logout() {
