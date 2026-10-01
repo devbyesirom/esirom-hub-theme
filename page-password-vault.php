@@ -108,6 +108,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                 <p class="font-medium">No credentials found</p>
                 <p class="text-sm mt-1" x-show="isAdmin">Import your CSV or add accounts manually.</p>
                 <p class="text-sm mt-1" x-show="isClientView && !isAdmin">No active accounts are linked to your brand yet. Contact your account manager if you need access.</p>
+                <p class="text-sm mt-1" x-show="!isAdmin && !isClientView">No active passwords are available yet. Ask an admin to activate the brand groups.</p>
             </div>
 
             <div class="space-y-8" x-show="!loading && hasAnyGroups" x-cloak>
@@ -139,7 +140,7 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
                                         </div>
                                     </button>
                                     <div x-show="isAdmin" class="flex flex-wrap gap-1 shrink-0">
-                                        <button type="button" @click="bulkGroup(group, { status: 'active' })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg hover:bg-green-700">Activate</button>
+                                        <button type="button" @click="bulkGroup(group, { status: 'active', visibleToBrandReps: true })" class="px-2 py-1 text-[11px] bg-green-600 text-white rounded-lg hover:bg-green-700">Activate</button>
                                         <button type="button" @click="bulkGroup(group, { status: 'archived', visibleToBrandReps: false })" class="px-2 py-1 text-[11px] bg-gray-600 text-white rounded-lg hover:bg-gray-700">Archive</button>
                                         <button type="button" @click="openRenameGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Rename</button>
                                         <button type="button" @click="openMoveGroup(group)" class="px-2 py-1 text-[11px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50">Move to…</button>
@@ -340,8 +341,7 @@ function passwordVaultApp() {
         get isMultimediaBrandRep() { return this.user?.role === 'brand_rep' && this.user?.department === 'multimedia'; },
         get showSocialMediaSection() {
             if (this.isClientView) return true;
-            if (this.user?.role === 'admin') return true;
-            if (this.user?.role === 'brand_rep') return this.user?.department === 'social_media_exec';
+            if (this.user?.role === 'admin' || this.user?.role === 'brand_rep') return true;
             return false;
         },
         get hasAnyGroups() {
@@ -630,35 +630,50 @@ function passwordVaultApp() {
         },
 
         async normalizeGroups(silent = false) {
+            const notes = [];
             try {
                 const res = await fetch(`${API_URL}/credentials/normalize-groups`, { method: 'POST', headers: this.headers(), body: '{}' });
-                if (res.status === 404) return;
-                const data = await res.json();
-                if (data.success && !silent && data.updated > 0) this.notify(data.message, 'success');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) throw new Error(data.message || 'Could not fix groups');
+                notes.push(data.message || `Normalized ${data.updated || 0} groups`);
 
                 const rematch = await fetch(`${API_URL}/credentials/rematch-clients`, {
                     method: 'POST',
                     headers: this.headers(),
                     body: JSON.stringify({ onlyUnlinked: true, reactivateArchivedSocial: true })
                 });
-                if (rematch.ok) {
-                    const rematchData = await rematch.json();
-                    if (rematchData.success && !silent && rematchData.updated > 0) {
-                        this.notify(rematchData.message, 'success');
-                    }
+                const rematchData = await rematch.json().catch(() => ({}));
+                if (!rematch.ok || !rematchData.success) throw new Error(rematchData.message || 'Could not link brands');
+                notes.push(rematchData.message || `Linked ${rematchData.updated || 0} accounts`);
+
+                if (!silent) {
+                    this.notify(notes.join(' '), 'success');
+                    await this.loadGrouped();
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+                if (!silent) this.notify(e.message || 'Fix Groups failed', 'error');
+            }
         },
 
         async bulkGroup(group, payload) {
             const action = payload.status === 'archived' ? 'archive' : 'activate';
-            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} all ${group.total} account${group.total === 1 ? '' : 's'} in "${group.label}"?`)) return;
+            const accountIds = (group.accounts || []).map((account) => account._id).filter(Boolean);
+            if (!accountIds.length) {
+                this.notify('This group has no accounts to update', 'error');
+                return;
+            }
+            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} all ${accountIds.length} account${accountIds.length === 1 ? '' : 's'} in "${group.label}"?`)) return;
             try {
                 const res = await fetch(`${API_URL}/credentials/bulk/status`, {
                     method: 'POST', headers: this.headers(),
-                    body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label, ...payload })
+                    body: JSON.stringify({
+                        groupKey: group.key,
+                        groupName: group.groupName || group.label,
+                        accountIds,
+                        ...payload
+                    })
                 });
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
                 if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); await this.loadGroupNameOptions(); }
                 else this.notify(data.message || 'Update failed', 'error');
             } catch (e) {
