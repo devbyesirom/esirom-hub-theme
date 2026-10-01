@@ -90,11 +90,14 @@ $vault_url = esc_url(get_permalink(get_page_by_path('password-vault')));
             <div class="space-y-3" x-show="!loading && groups.length" x-cloak>
                 <template x-for="group in groups" :key="group.key">
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-                        <button type="button" @click="toggleGroup('vault', group.key)" class="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                            <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="expanded[groupKey('vault', group.key)] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            <span class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></span>
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.accounts.length"></span>
-                        </button>
+                        <div class="flex items-center gap-2 pr-3">
+                            <button type="button" @click="toggleGroup('vault', group.key)" class="flex-1 min-w-0 flex items-center gap-3 px-4 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                                <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="expanded[groupKey('vault', group.key)] ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <span class="font-semibold text-gray-900 dark:text-white truncate" x-text="group.label"></span>
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" x-text="group.accounts.length"></span>
+                            </button>
+                            <button type="button" x-show="isAdmin" @click="deleteGroup(group)" class="shrink-0 px-2.5 py-1 text-[11px] font-semibold text-red-600 border border-red-200 dark:border-red-900/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                        </div>
                         <div x-show="expanded[groupKey('vault', group.key)]" class="border-t border-gray-100 dark:border-gray-700 divide-y dark:divide-gray-700">
                             <template x-for="account in group.accounts" :key="account._id">
                                 <div class="px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -701,11 +704,20 @@ function passwordVaultApp() {
         },
 
         async deleteGroup(group) {
-            if (!confirm(`Permanently delete "${group.label}" and all ${group.total} account${group.total === 1 ? '' : 's'}? This cannot be undone.`)) return;
+            const total = (group.accounts || []).length;
+            if (!confirm(`Delete ${group.label} and all ${total} login${total === 1 ? '' : 's'}? Hidden copies are removed too. This cannot be undone.`)) return;
+            const clientRef = group.clientId || (group.accounts || []).find((account) => account.clientId)?.clientId;
+            const clientId = clientRef?._id || clientRef || null;
             try {
                 const res = await fetch(`${API_URL}/credentials/bulk/delete`, {
                     method: 'POST', headers: this.headers(),
-                    body: JSON.stringify({ groupKey: group.key, groupName: group.groupName || group.label })
+                    body: JSON.stringify({
+                        groupKey: group.key,
+                        groupName: group.groupName || group.label,
+                        label: group.label,
+                        clientId,
+                        accountIds: (group.accounts || []).map((account) => account._id).filter(Boolean)
+                    })
                 });
                 const data = await res.json();
                 if (data.success) { this.notify(data.message, 'success'); await this.loadGrouped(); await this.loadGroupNameOptions(); }
