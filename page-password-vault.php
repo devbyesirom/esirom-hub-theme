@@ -414,17 +414,11 @@ function passwordVaultApp() {
 
         applyClientScope(groups = []) {
             if (!this.isClientView) return groups;
-            const allowed = this.scopedClientIds.length ? this.scopedClientIds : this.userClientIds();
-            if (!allowed.length) return [];
+            // API already scopes via clientId + fuzzy group-name match; avoid dropping unlinked brand rows.
             return groups
                 .map((group) => {
-                    const accounts = (group.accounts || []).filter((account) => {
-                        const accountClientId = account.clientId?._id || account.clientId;
-                        return accountClientId && allowed.includes(String(accountClientId));
-                    });
+                    const accounts = group.accounts || [];
                     if (!accounts.length) return null;
-                    const groupClientId = group.clientId ? String(group.clientId) : (group.key?.startsWith('client:') ? group.key.slice(7) : null);
-                    if (groupClientId && !allowed.includes(groupClientId)) return null;
                     return {
                         ...group,
                         accounts,
@@ -641,6 +635,18 @@ function passwordVaultApp() {
                 if (res.status === 404) return;
                 const data = await res.json();
                 if (data.success && !silent && data.updated > 0) this.notify(data.message, 'success');
+
+                const rematch = await fetch(`${API_URL}/credentials/rematch-clients`, {
+                    method: 'POST',
+                    headers: this.headers(),
+                    body: JSON.stringify({ onlyUnlinked: true, reactivateArchivedSocial: true })
+                });
+                if (rematch.ok) {
+                    const rematchData = await rematch.json();
+                    if (rematchData.success && !silent && rematchData.updated > 0) {
+                        this.notify(rematchData.message, 'success');
+                    }
+                }
             } catch (e) { /* ignore */ }
         },
 
