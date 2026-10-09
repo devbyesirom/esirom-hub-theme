@@ -1042,20 +1042,37 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                         <!-- Website Analytics (GA4) -->
                         <div x-show="gaAnalyticsStatus?.connected" class="mt-8">
-                            <div class="flex items-center justify-between mb-3">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                                 <div>
                                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Website Analytics</h3>
                                     <p class="text-xs text-gray-500 dark:text-gray-400" x-show="websiteAnalytics?.propertyName || gaAnalyticsStatus?.propertyName">
                                         <span x-text="websiteAnalytics?.propertyName || gaAnalyticsStatus?.propertyName"></span> · Google Analytics 4
                                     </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-show="currentPeriodStart && currentPeriodEnd">
+                                        Period: <span x-text="formatDate(currentPeriodStart) + ' – ' + formatDate(currentPeriodEnd)"></span>
+                                    </p>
                                     <p class="text-xs text-amber-600 dark:text-amber-400 mt-1" x-show="websiteAnalyticsBrandId && getClientId() !== websiteAnalyticsBrandId">
                                         Showing stats for <span class="font-semibold" x-text="availableClients.find(c => c._id === websiteAnalyticsBrandId)?.brandName || 'connected brand'"></span>. Select a specific brand above to view another site.
                                     </p>
                                 </div>
-                                <button @click="loadWebsiteAnalytics(true)" :disabled="websiteAnalyticsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">
-                                    <span x-show="!websiteAnalyticsLoading">Refresh</span>
-                                    <span x-show="websiteAnalyticsLoading">Loading…</span>
-                                </button>
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <button @click="downloadWebsiteReport('csv')"
+                                            :disabled="websiteAnalyticsExporting || websiteAnalyticsLoading || !websiteAnalytics?.summary"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/></svg>
+                                        <span x-text="websiteAnalyticsExporting === 'csv' ? 'Downloading…' : 'CSV'"></span>
+                                    </button>
+                                    <button @click="downloadWebsiteReport('pdf')"
+                                            :disabled="websiteAnalyticsExporting || websiteAnalyticsLoading || !websiteAnalytics?.summary"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/></svg>
+                                        <span x-text="websiteAnalyticsExporting === 'pdf' ? 'Downloading…' : 'PDF'"></span>
+                                    </button>
+                                    <button @click="loadWebsiteAnalytics(true)" :disabled="websiteAnalyticsLoading || websiteAnalyticsExporting" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60 px-1">
+                                        <span x-show="!websiteAnalyticsLoading">Refresh</span>
+                                        <span x-show="websiteAnalyticsLoading">Loading…</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <p x-show="websiteAnalyticsError" class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg px-3 py-2 mb-3" x-text="websiteAnalyticsError"></p>
@@ -2463,6 +2480,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 websiteAnalyticsBrandId: '',
                 websiteAnalytics: null,
                 websiteAnalyticsLoading: false,
+                websiteAnalyticsExporting: '',
                 websiteAnalyticsError: '',
                 insightsNarratives: null,
                 insightsNarrativesLoading: false,
@@ -5805,6 +5823,61 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         }
                     } finally {
                         this.websiteAnalyticsLoading = false;
+                    }
+                },
+
+                async downloadWebsiteReport(format = 'pdf') {
+                    const clientId = this.websiteAnalyticsBrandId || await this.findWebsiteAnalyticsClientId();
+                    if (!clientId) {
+                        this.showToast('No brand with website analytics selected.', 'error');
+                        return;
+                    }
+                    if (!this.currentPeriodStart || !this.currentPeriodEnd) {
+                        this.showToast('Select a date range first.', 'error');
+                        return;
+                    }
+                    if (!['csv', 'pdf'].includes(format)) {
+                        this.showToast('Unsupported download format.', 'error');
+                        return;
+                    }
+
+                    this.websiteAnalyticsExporting = format;
+                    try {
+                        const params = new URLSearchParams({
+                            format,
+                            startDate: this.currentPeriodStart.toISOString().slice(0, 10),
+                            endDate: this.currentPeriodEnd.toISOString().slice(0, 10)
+                        });
+                        const response = await fetch(`${API_URL}/google-analytics/export/${clientId}?${params.toString()}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+
+                        if (!response.ok) {
+                            const err = await response.json().catch(() => ({}));
+                            throw new Error(err.message || `Unable to download ${format.toUpperCase()} report`);
+                        }
+
+                        const blob = await response.blob();
+                        const brand = this.availableClients.find((c) => c._id === clientId);
+                        const brandLabel = (brand?.brandName || brand?.name || 'website')
+                            .replace(/[^a-z0-9]+/gi, '_')
+                            .toLowerCase();
+                        const start = this.currentPeriodStart.toISOString().slice(0, 10);
+                        const end = this.currentPeriodEnd.toISOString().slice(0, 10);
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${brandLabel}_website_${start}_${end}.${format}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                        this.showToast(`Website ${format.toUpperCase()} downloaded for selected period.`, 'success');
+                    } catch (error) {
+                        console.error('downloadWebsiteReport:', error);
+                        this.showToast(error.message || 'Unable to download website report.', 'error');
+                    } finally {
+                        this.websiteAnalyticsExporting = '';
                     }
                 },
 
