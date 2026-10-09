@@ -1,5 +1,31 @@
 [
   {
+    "id": 30,
+    "title": "Insights Paid + Organic Totals",
+    "version": "2.3.62",
+    "description": "Insights reach and views use Meta paid+organic combined totals (total_views / account metrics that include ads). When paid and organic can be separated they are summed; otherwise Meta’s combined figure is used.",
+    "date": "2026-10-09",
+    "highlights": [
+      "Instagram prefers total_views / total likes & comments (includes boosts)",
+      "Reach cards labeled Paid + organic",
+      "Safer combine logic to avoid double-counting ads"
+    ],
+    "type": "fix"
+  },
+  {
+    "id": 29,
+    "title": "Insights Meta Alignment",
+    "version": "2.3.61",
+    "description": "Reach, views, impressions, and engagement now prefer Meta account-level insights for the selected period so Hub totals track Professional Dashboard more closely. Guidance added for single-platform comparison.",
+    "date": "2026-10-09",
+    "highlights": [
+      "Prefer Meta account insights over summed post KPIs for reach/views/engagement",
+      "Note explaining All-platforms totals vs Meta single-platform views",
+      "Clearer Reach/Views card labels"
+    ],
+    "type": "fix"
+  },
+  {
     "id": 28,
     "title": "Download Website Analytics Reports",
     "version": "2.3.60",

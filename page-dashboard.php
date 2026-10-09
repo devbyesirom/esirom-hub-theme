@@ -401,6 +401,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     </div>
                                 </div>
                             </div>
+                            <div class="mb-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                                Totals include <strong>paid + organic</strong> when Meta provides them (combined if they cannot be split). To match Meta Professional Dashboard, select <strong>one platform</strong> and the same date range — “All” sums platforms and is not unique across Meta.
+                            </div>
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                     <p class="hub-insights-section-title mb-1">Platforms</p>
@@ -542,7 +545,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <div class="hub-stat-card__icon text-cyan-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
                                 </div>
                                 <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedViews())"></p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Content views · account + posts</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Paid + organic · Meta account views</p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.views?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.views?.change || 0)"></span>
                                 </p>
@@ -553,7 +556,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <div class="hub-stat-card__icon text-teal-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg></div>
                                 </div>
                                 <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedReach())"></p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Organic + paid</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Paid + organic · unique accounts</p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.reach?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                                     <span x-text="formatChange(dashboardData.metrics?.reach?.change || 0)"></span>
                                 </p>
@@ -3654,11 +3657,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             const shares = perf.shares || 0;
                             const saves = perf.saves || 0;
                             const views = perf.views || 0;
-                            const organicReach = perf.organic_reach || 0;
-                            const paidReach = perf.paid_reach || 0;
+                            const organicReach = Number(perf.organic_reach) || 0;
+                            const paidReach = Number(perf.paid_reach) || 0;
                             const engagement = perf.engagement || perf.interactions || (likes + comments + shares + saves);
                             const impressions = perf.impressions || 0;
-                            const reach = perf.reach || organicReach + paidReach || 0;
+                            // Prefer Meta combined reach; otherwise sum paid + organic when split
+                            const reach = Math.max(
+                                Number(perf.reach) || 0,
+                                organicReach + paidReach
+                            );
                             const kpis = {
                                 [`${platform}_reach`]: reach,
                                 [`${platform}_organic_reach`]: organicReach,
@@ -4968,6 +4975,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 mergePostAndAccountTotals(metric, usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI(metric, usePreviousPeriod);
                     const accountTotal = this.getAccountActivityForPlatforms(metric, usePreviousPeriod);
+                    // Prefer Meta account-level totals for period metrics. Summing per-post
+                    // reach/views overcounts unique accounts vs Professional Dashboard.
+                    const preferAccount = ['reach', 'views', 'impressions'].includes(metric);
+                    if (preferAccount && accountTotal > 0) return accountTotal;
                     return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
                 },
 
@@ -5187,13 +5198,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.calculateFilteredKPI('saves', usePreviousPeriod);
                     }
                     const accountTotal = this.getAccountActivityForPlatforms('interactions', usePreviousPeriod);
-                    return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
+                    if (accountTotal > 0) return accountTotal;
+                    return postTotal;
                 },
 
                 getCombinedInteractions(usePreviousPeriod = false) {
                     const postTotal = this.calculateFilteredKPI('interactions', usePreviousPeriod);
                     const accountTotal = this.getAccountActivityForPlatforms('interactions', usePreviousPeriod);
-                    return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
+                    if (accountTotal > 0) return accountTotal;
+                    return postTotal;
                 },
 
                 getCombinedLinkClicks(usePreviousPeriod = false) {
