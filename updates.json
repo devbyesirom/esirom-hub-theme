@@ -1,5 +1,18 @@
 [
   {
+    "id": 28,
+    "title": "Download Website Analytics Reports",
+    "version": "2.3.60",
+    "description": "Clients, brand reps, and admins can download Google website (GA4) reports as CSV or PDF for any selected Insights date range — not just view them.",
+    "date": "2026-10-09",
+    "highlights": [
+      "Download CSV and Download PDF buttons on Website Analytics",
+      "Exports use the currently selected Insights period",
+      "Available to clients, brand reps, and admins"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 27,
     "title": "Insights Layout Fix & Remove Ads",
     "version": "2.3.31",
