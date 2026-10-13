@@ -247,8 +247,7 @@ img, video { max-width: 100%; }
 }
 .sidebar-collapsed { width: 4.75rem; }
 .sidebar-expanded { width: 16rem; }
-.sidebar .nav-text { display: inline; }
-.sidebar-collapsed .nav-text { display: none; }
+.sidebar-collapsed .nav-text { display: none !important; }
 .sidebar-collapsed .hub-nav-group-title { display: none; }
 .sidebar-collapsed .hub-nav-link,
 .sidebar-collapsed .hub-sidebar-brand { justify-content: center; }

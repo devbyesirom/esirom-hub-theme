@@ -90,82 +90,100 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 <body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="workflowApp()" x-init="init()">
     <div class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
-        <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-gray-800 dark:text-white leading-tight">Workflow</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">Agency Hub</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <!-- Admin Role Switcher (mobile) -->
-                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
-                        <button @click="showRoleSwitcher = !showRoleSwitcher" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            <span class="text-sm font-medium" x-text="viewMode === 'admin' ? 'Admin View' : viewMode === 'brand_rep' ? 'Brand Rep View' : 'Client View'"></span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+        <div class="md:hidden hub-mobile-header">
+            <div class="flex items-center justify-between gap-2 w-full">
+                <a href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>" class="hub-sidebar-brand" aria-label="Agency Hub home">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-icon.png" alt="" class="h-8 w-8">
+                    <span class="flex flex-col">
+                        <span class="hub-sidebar-brand__name">Workflow</span>
+                        <span class="hub-sidebar-brand__sub">Agency Hub</span>
+                    </span>
+                </a>
+                <div class="flex items-center gap-1">
+                    <!-- Notifications (mobile) -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm relative" :aria-expanded="open" aria-label="Notifications">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span x-show="unreadNotifications > 0" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center" x-text="unreadNotifications"></span>
                         </button>
-                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
-                            <div class="p-2">
-                                <button @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Admin View</button>
-                                <button @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Brand Rep View</button>
-                                <button @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Client View</button>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] hub-card hub-card--elevated max-h-96 overflow-y-auto z-50">
+                            <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                <span class="text-sm font-semibold text-gray-900 dark:text-white">Notifications</span>
+                                <button type="button" @click="markAllRead()" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Mark all read</button>
+                            </div>
+                            <template x-for="notification in notifications" :key="notification._id">
+                                <div @click="handleNotificationClick(notification); open = false" class="p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" :class="{ 'bg-brand-50 dark:bg-brand-500/10': !notification.isRead }">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="notification.title"></p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="notification.message"></p>
+                                    <p class="text-xs text-gray-400 mt-1" x-text="formatDate(notification.createdAt)"></p>
+                                </div>
+                            </template>
+                            <div x-show="notifications.length === 0" class="p-4 text-center text-sm text-gray-500">No notifications</div>
+                        </div>
+                    </div>
+                    <!-- Admin view switcher (mobile) -->
+                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                        <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="showRoleSwitcher" aria-label="Switch view mode">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" x-cloak class="absolute right-0 mt-2 w-64 hub-card hub-card--elevated z-50 p-2">
+                            <p class="hub-eyebrow px-2 pt-1 pb-2">Viewing as</p>
+                            <button type="button" @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Admin view</button>
+                            <button type="button" @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Brand rep view</button>
+                            <button type="button" @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Client view</button>
+                            <div x-show="viewMode === 'client'" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <label for="wfMobileViewClient" class="hub-label px-2 !mb-1 !text-xs">View as brand</label>
+                                <select id="wfMobileViewClient" x-model="selectedViewClient" @change="handleSelectedViewClientChange()" class="hub-select !py-1.5 text-sm">
+                                    <option value="">All brands</option>
+                                    <template x-for="client in clients" :key="client._id">
+                                        <option :value="client._id" x-text="client.brandName || client.name"></option>
+                                    </template>
+                                </select>
                             </div>
                         </div>
                     </div>
                     <!-- Theme Toggle (mobile) -->
-                    <button @click="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                        </svg>
-                        <svg x-show="theme === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
+                    <button type="button" @click="toggleTheme()" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" aria-label="Toggle dark mode">
+                        <svg x-show="theme === 'light'" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                        <svg x-show="theme === 'dark'" x-cloak class="text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     </button>
+                    <!-- Account (mobile) -->
+                    <div x-data="{ accountOpen: false }" class="relative">
+                        <button type="button" @click="accountOpen = !accountOpen" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="accountOpen" aria-label="Account menu">
+                            <span class="hub-avatar h-7 w-7 text-[11px]" x-text="(user.firstName?.[0] || 'U')"></span>
+                        </button>
+                        <div x-show="accountOpen" @click.away="accountOpen = false" x-cloak class="absolute right-0 mt-2 w-56 hub-card hub-card--elevated py-1 z-50">
+                            <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="user.firstName + ' ' + user.lastName"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate" x-text="user.email"></p>
+                            </div>
+                            <a @click.prevent="showPwModal = true; accountOpen = false" href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Change password</a>
+                            <a @click.prevent="logout()" href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Log out</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Sidebar -->
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
-            <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
-                <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-lg font-bold text-gray-800 dark:text-white leading-tight">Agency Hub</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">by esirom</span>
-                    </div>
-                </a>
-                <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                </button>
-            </div>
-            <nav class="flex-1 px-2 py-4 space-y-2">
-                <!-- CLIENT VIEW NAVIGATION -->
-                <?php esirom_hub_client_sidebar_nav('', 'site', true); ?>
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+            <?php esirom_hub_staff_sidebar_header(true); ?>
+            <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
+                <?php esirom_hub_client_sidebar_nav('content_bank', 'site', true); ?>
                 <?php esirom_hub_staff_sidebar_nav('workflow', 'site', true); ?>
             </nav>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('site', true); ?>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
+        <main class="hub-app-main mt-14 md:mt-0">
             <!-- Top Bar -->
-            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
+            <header class="hub-sticky-header hidden md:flex items-center justify-between px-4 lg:px-6 py-3 min-h-16 gap-4 flex-wrap">
                 <div class="min-w-0">
-                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Workflow</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="currentDate"></p>
+                    <h1 class="hub-page-title">Workflow</h1>
+                    <p class="hub-page-subtitle" x-text="currentDate"></p>
                 </div>
                 <div class="flex items-center gap-2">
                     <!-- Notifications -->

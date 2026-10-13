@@ -26,20 +26,20 @@ show_admin_bar(false);
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <style>
-        /* Admin panel */
-        .admin-card { border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
-        .admin-stat { border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #fff; padding: 0.875rem 1rem; }
-        .admin-stat-value { font-size: 1.25rem; font-weight: 700; color: #111827; line-height: 1.2; }
-        .admin-stat-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin-top: 0.125rem; }
-        .admin-table thead { background: #f9fafb; }
-        .admin-table th { padding: 0.625rem 1rem; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; text-align: left; }
-        .admin-table td { padding: 0.75rem 1rem; font-size: 0.8125rem; color: #374151; }
-        .admin-table tbody tr:hover { background: #f9fafb; }
-        .admin-btn-primary { padding: 0.375rem 0.875rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 600; background: #4f46e5; color: #fff; }
-        .admin-btn-primary:hover { background: #4338ca; }
-        .admin-btn-secondary { padding: 0.375rem 0.875rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 600; border: 1px solid #e5e7eb; color: #374151; background: #fff; }
-        .admin-btn-secondary:hover { background: #f9fafb; }
-        .admin-nav-label { padding: 0.375rem 0.75rem; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; }
+        /* Admin panel (light-only) */
+        .admin-card { border-radius: var(--hub-radius-lg); border: 1px solid var(--hub-border); background: #fff; box-shadow: var(--hub-shadow-sm); overflow: hidden; }
+        .admin-stat { border-radius: var(--hub-radius-lg); border: 1px solid var(--hub-border); background: #fff; padding: 0.875rem 1rem; box-shadow: var(--hub-shadow-sm); }
+        .admin-stat-value { font-size: 1.375rem; font-weight: 700; color: #0f172a; line-height: 1.2; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+        .admin-stat-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-top: 0.125rem; }
+        .admin-table thead { background: #f8fafc; }
+        .admin-table th { padding: 0.625rem 1rem; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; text-align: left; white-space: nowrap; }
+        .admin-table td { padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155; }
+        .admin-table tbody tr:hover { background: #f8fafc; }
+        .admin-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600; background: var(--hub-brand-600); color: #fff; box-shadow: 0 1px 2px rgba(79, 70, 229, 0.25); transition: background-color 0.15s ease; }
+        .admin-btn-primary:hover { background: var(--hub-brand-700); }
+        .admin-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600; border: 1px solid var(--hub-border-strong); color: #334155; background: #fff; box-shadow: var(--hub-shadow-sm); transition: background-color 0.15s ease; }
+        .admin-btn-secondary:hover { background: #f8fafc; }
+        .admin-nav-label { padding: 0.375rem 0.75rem; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
         <?php esirom_hub_layout_styles(); ?>
     </style>
     <?php wp_head(); ?>
@@ -185,7 +185,7 @@ show_admin_bar(false);
                         Add user
                     </button>
                 </div>
-                <div class="admin-card">
+                <div class="admin-card overflow-x-auto">
                     <table class="admin-table min-w-full divide-y divide-gray-100">
                         <thead>
                             <tr>
@@ -229,7 +229,7 @@ show_admin_bar(false);
                         <p class="text-xs text-gray-500 leading-relaxed">Review new registration requests and assign clients before approving.</p>
                     </div>
                 </div>
-                <div class="admin-card">
+                <div class="admin-card overflow-x-auto">
                     <table class="admin-table min-w-full divide-y divide-gray-100">
                         <thead>
                             <tr>

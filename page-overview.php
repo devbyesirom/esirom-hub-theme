@@ -111,148 +111,84 @@ show_admin_bar(false);
 <body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="agencyOverview()" x-init="init()">
     <div class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
-        <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-gray-800 dark:text-white leading-tight">Overview</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">Agency Hub</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <!-- Admin Role Switcher (mobile) -->
+        <div class="md:hidden hub-mobile-header">
+            <div class="flex items-center justify-between gap-2 w-full">
+                <a href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>" class="hub-sidebar-brand" aria-label="Agency Hub home">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-icon.png" alt="" class="h-8 w-8">
+                    <span class="flex flex-col">
+                        <span class="hub-sidebar-brand__name">Agency Overview</span>
+                        <span class="hub-sidebar-brand__sub">Agency Hub</span>
+                    </span>
+                </a>
+                <div class="flex items-center gap-1">
                     <div x-show="user?.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
-                        <button @click="showRoleSwitcher = !showRoleSwitcher" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            <span class="text-sm font-medium" x-text="viewMode === 'admin' ? 'Admin View' : viewMode === 'brand_rep' ? 'Brand Rep View' : 'Client View'"></span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                        <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="showRoleSwitcher" aria-label="Switch view mode">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
-                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
-                            <div class="p-2">
-                                <button @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Admin View</button>
-                                <button @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Brand Rep View</button>
-                                <button @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Client View</button>
-                            </div>
+                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" x-cloak class="absolute right-0 mt-2 w-60 hub-card hub-card--elevated z-50 p-2">
+                            <p class="hub-eyebrow px-2 pt-1 pb-2">Viewing as</p>
+                            <button type="button" @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Admin view</button>
+                            <button type="button" @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Brand rep view</button>
+                            <button type="button" @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Client view</button>
                         </div>
                     </div>
-                    <!-- Theme Toggle (mobile) -->
-                    <button @click="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                        </svg>
-                        <svg x-show="theme === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </button>
+                    <?php $hub_account_theme = true; include get_template_directory() . '/inc/hub-account-menu.php'; ?>
                 </div>
             </div>
         </div>
 
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
-            <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
-                <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-lg font-bold text-gray-800 dark:text-white leading-tight">Agency Hub</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">by esirom</span>
-                    </div>
-                </a>
-                <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                </button>
-            </div>
-            <nav class="flex-1 px-2 py-4 space-y-2">
-                <!-- CLIENT VIEW NAVIGATION -->
-                <!-- Content Bank - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>?tab=contentBank" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    <span class="ml-4 nav-text">Content Bank</span>
-                </a>
-                <!-- Published Posts - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#content-calendar" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>
-                    <span class="ml-4 nav-text">Published Posts</span>
-                </a>
-                <!-- Insights - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#overview" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    <span class="ml-4 nav-text">Insights</span>
-                </a>
-                <!-- Reports - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#reports" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    <span class="ml-4 nav-text">Reports</span>
-                </a>
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#event-coverage" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25" /></svg>
-                    <span class="ml-4 nav-text">Event Coverage</span>
-                </a>
-                <!-- Content Calendar - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('content-calendar')); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    <span class="ml-4 nav-text">Content Calendar</span>
-                </a>
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+            <?php esirom_hub_staff_sidebar_header(false); ?>
+            <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
+                <?php esirom_hub_client_sidebar_nav('', 'site', false); ?>
                 <?php esirom_hub_staff_sidebar_nav('overview', 'site', false); ?>
             </nav>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('site', false); ?>
             </div>
         </aside>
 
-        <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
+        <main class="hub-app-main mt-14 md:mt-0">
             <!-- Header / Command Bar -->
-            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
+            <header class="hub-sticky-header hidden md:flex items-center justify-between px-4 lg:px-6 py-3 min-h-16 gap-4 flex-wrap">
                 <!-- Left: title + period picker -->
                 <div class="flex items-center gap-5 flex-wrap min-w-0">
                     <div class="min-w-0">
-                        <h1 class="text-lg font-bold text-gray-900 dark:text-white">Agency Overview</h1>
-                        <p x-show="periodInfo && periodInfo.label" x-text="periodInfo.label" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"></p>
+                        <h1 class="hub-page-title">Agency Overview</h1>
+                        <p x-show="periodInfo && periodInfo.label" x-text="periodInfo.label" class="hub-page-subtitle"></p>
                     </div>
                     <!-- Period controls -->
                     <div class="flex items-center gap-2 flex-wrap">
-                        <input type="month" id="overview-month" x-model="selectedYearMonth" @change="onMonthRangeChange()" x-show="!rangeAll" x-cloak
-                            class="ov-focus rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-                        <button type="button" @click="setOverviewThisMonth()"
-                                class="ov-focus px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            This month
-                        </button>
-                        <button type="button" @click="setOverviewLastMonth()"
-                                class="ov-focus px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            Last month
-                        </button>
-                        <label class="ov-focus inline-flex items-center gap-2 text-xs font-semibold cursor-pointer select-none rounded-xl border px-3 py-1.5 transition-all"
-                               :class="rangeAll ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
-                            <input type="checkbox" x-model="rangeAll" @change="onAllTimeChange()" class="hidden" />
-                            All time
-                        </label>
+                        <input type="month" id="overview-month" x-model="selectedYearMonth" @change="onMonthRangeChange()" x-show="!rangeAll" x-cloak aria-label="Month"
+                            class="hub-input !w-auto !py-1.5 text-xs" />
+                        <div class="hub-segmented">
+                            <button type="button" @click="setOverviewThisMonth()" class="hub-segmented__item">This month</button>
+                            <button type="button" @click="setOverviewLastMonth()" class="hub-segmented__item">Last month</button>
+                            <label class="hub-segmented__item cursor-pointer select-none" :class="rangeAll ? 'is-active' : ''">
+                                <input type="checkbox" x-model="rangeAll" @change="onAllTimeChange()" class="sr-only" />
+                                All time
+                            </label>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Right: view switcher + theme + user -->
                 <div class="flex items-center gap-2">
-                    <!-- Admin Role Switcher -->
                     <div x-show="user?.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
-                        <button @click="showRoleSwitcher = !showRoleSwitcher"
-                                class="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-semibold transition-colors border border-purple-100 dark:border-purple-800/50">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            <span x-text="viewMode === 'admin' ? 'Admin View' : viewMode === 'brand_rep' ? 'Brand Rep' : 'Client View'"></span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--soft hub-btn--sm" :aria-expanded="showRoleSwitcher">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <span x-text="viewMode === 'admin' ? 'Admin view' : viewMode === 'brand_rep' ? 'Brand rep view' : 'Client view'"></span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-1.5">
-                            <button @click="switchViewMode('admin'); showRoleSwitcher = false"      :class="viewMode === 'admin'     ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors">Admin View</button>
-                            <button @click="switchViewMode('brand_rep'); showRoleSwitcher = false"  :class="viewMode === 'brand_rep' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors">Brand Rep View</button>
-                            <button @click="switchViewMode('client'); showRoleSwitcher = false"     :class="viewMode === 'client'    ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors">Client View</button>
-                            <div x-show="viewMode === 'client'" class="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700 px-1">
-                                <label class="block text-xs text-gray-400 mb-1 px-2">View as brand:</label>
-                                <select x-model="selectedViewClient" @change="localStorage.setItem('selectedViewClient', selectedViewClient); loadData();" class="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none">
+                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" x-cloak class="absolute right-0 mt-2 w-60 hub-card hub-card--elevated z-50 p-2">
+                            <p class="hub-eyebrow px-2 pt-1 pb-2">Viewing as</p>
+                            <button type="button" @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Admin view</button>
+                            <button type="button" @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Brand rep view</button>
+                            <button type="button" @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Client view</button>
+                            <div x-show="viewMode === 'client'" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <label for="overviewViewClient" class="hub-label px-2 !mb-1 !text-xs">View as brand</label>
+                                <select id="overviewViewClient" x-model="selectedViewClient" @change="localStorage.setItem('selectedViewClient', selectedViewClient); loadData();" class="hub-select !py-1.5 text-sm">
+                                    <option value="">All brands</option>
                                     <template x-for="brand in brands" :key="brand._id">
                                         <option :value="brand._id" x-text="brand.brandName || brand.name"></option>
                                     </template>
@@ -260,31 +196,7 @@ show_admin_bar(false);
                             </div>
                         </div>
                     </div>
-
-                    <button @click="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle theme">
-                        <svg x-show="theme === 'light'" class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                        <svg x-show="theme === 'dark'" x-cloak class="h-4 w-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    </button>
-
-                    <div x-data="{ dropdownOpen: false }" class="relative">
-                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <img class="h-7 w-7 rounded-full object-cover" :src="user?.clientId?.logo || 'https://placehold.co/100x100/4a5568/ffffff?text=' + (user?.firstName?.[0] || 'U')" :alt="user?.fullName">
-                            <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="user?.fullName"></span>
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-20">
-                            <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="user?.fullName"></p>
-                                <p class="text-xs text-gray-500 mt-0.5" x-text="user?.email"></p>
-                                <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 capitalize font-medium" x-text="user?.role?.replace('_', ' ')"></p>
-                            </div>
-                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                Change Password
-                            </a>
-                            <a @click.prevent="logout()" href="#" class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
-                        </div>
-                    </div>
+                    <?php $hub_account_theme = true; include get_template_directory() . '/inc/hub-account-menu.php'; ?>
                 </div>
             </header>
 
@@ -298,6 +210,19 @@ show_admin_bar(false);
 
             <!-- Main Content -->
             <div x-show="!loading" x-cloak class="hub-page-content px-4 sm:px-6 lg:px-8 pt-5 pb-8 space-y-5">
+
+                <!-- Period controls (mobile) -->
+                <div class="md:hidden flex items-center gap-2 flex-wrap">
+                    <input type="month" x-model="selectedYearMonth" @change="onMonthRangeChange()" x-show="!rangeAll" x-cloak aria-label="Month" class="hub-input !w-auto !py-1.5 text-xs" />
+                    <div class="hub-segmented">
+                        <button type="button" @click="setOverviewThisMonth()" class="hub-segmented__item">This month</button>
+                        <button type="button" @click="setOverviewLastMonth()" class="hub-segmented__item">Last month</button>
+                        <label class="hub-segmented__item cursor-pointer select-none" :class="rangeAll ? 'is-active' : ''">
+                            <input type="checkbox" x-model="rangeAll" @change="onAllTimeChange()" class="sr-only" />
+                            All time
+                        </label>
+                    </div>
+                </div>
 
                 <!-- ── Summary Stats ── -->
                 <div class="ov-card-appear">
@@ -491,10 +416,10 @@ show_admin_bar(false);
                                             <span class="text-sm font-bold text-gray-700 dark:text-gray-300 tabular-nums" x-text="w.pendingCount"></span>
                                         </div>
                                         <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
-                                            <div class="h-full bg-gray-400"   :style="'width:' + ((w.statusBreakdown?.draft || 0) / w.pendingCount * 100) + '%'"></div>
-                                            <div class="h-full bg-blue-400"   :style="'width:' + ((w.statusBreakdown?.in_progress || 0) / w.pendingCount * 100) + '%'"></div>
-                                            <div class="h-full bg-amber-400"  :style="'width:' + ((w.statusBreakdown?.pending_review || 0) / w.pendingCount * 100) + '%'"></div>
-                                            <div class="h-full bg-purple-400" :style="'width:' + ((w.statusBreakdown?.in_content_bank || 0) / w.pendingCount * 100) + '%'"></div>
+                                            <div class="h-full bg-gray-400"   :style="'width:' + (w.pendingCount ? (w.statusBreakdown?.draft || 0) / w.pendingCount * 100 : 0) + '%'"></div>
+                                            <div class="h-full bg-blue-400"   :style="'width:' + (w.pendingCount ? (w.statusBreakdown?.in_progress || 0) / w.pendingCount * 100 : 0) + '%'"></div>
+                                            <div class="h-full bg-amber-400"  :style="'width:' + (w.pendingCount ? (w.statusBreakdown?.pending_review || 0) / w.pendingCount * 100 : 0) + '%'"></div>
+                                            <div class="h-full bg-purple-400" :style="'width:' + (w.pendingCount ? (w.statusBreakdown?.in_content_bank || 0) / w.pendingCount * 100 : 0) + '%'"></div>
                                             <div class="h-full bg-teal-400"   :style="'width:' + ((w.statusBreakdown?.client_approved || 0) / w.pendingCount * 100) + '%'"></div>
                                         </div>
                                         <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
@@ -694,7 +619,8 @@ show_admin_bar(false);
                 },
 
                 async init() {
-                    await this.checkAuth();
+                    const authed = await this.checkAuth();
+                    if (!authed) return;
                     this.applyTheme();
                     this.setCurrentDate();
                     if (!this.selectedYearMonth) this.selectedYearMonth = this.defaultYearMonth();
@@ -717,9 +643,15 @@ show_admin_bar(false);
                         const res = await fetch(`${API_URL}/auth/me`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
-                        if (!res.ok) throw new Error('Auth failed');
-                        const data = await res.json();
-                        this.user = data.user || {};
+                        if (res.status === 401 || res.status === 403) throw new Error('Auth failed');
+                        if (!res.ok) {
+                            // Server hiccup: keep the cached session rather than signing the user out.
+                            this.user = JSON.parse(localStorage.getItem('user') || '{}') || {};
+                            this.showToast('We could not verify your session. Showing your last known data.', 'error');
+                        } else {
+                            const data = await res.json();
+                            this.user = data.user || {};
+                        }
                         if (this.user && Object.keys(this.user).length) {
                             localStorage.setItem('user', JSON.stringify(this.user));
                         }
@@ -736,11 +668,13 @@ show_admin_bar(false);
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
                         window.location.href = LOGIN_URL;
-                        return;
+                        return false;
                     }
                     if (this.user?.role !== 'admin' && this.user?.role !== 'brand_rep') {
                         window.location.href = DASHBOARD_URL;
+                        return false;
                     }
+                    return true;
                 },
 
                 setCurrentDate() {
@@ -863,6 +797,12 @@ show_admin_bar(false);
                             q.set('range', 'all');
                         } else {
                             q.set('month', this.selectedYearMonth || this.defaultYearMonth());
+                        }
+                        // Scope to one brand when an admin is previewing the client view
+                        if (this.viewMode === 'client' && this.selectedViewClient) {
+                            q.set('clientId', this.selectedViewClient);
+                            q.set('viewAs', 'client');
+                            q.set('viewAsClientId', this.selectedViewClient);
                         }
 
                         // Keep efficiency month aligned with overview month when not in All Time

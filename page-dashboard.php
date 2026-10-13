@@ -382,11 +382,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         </div>
                                         <div class="flex justify-between text-sm">
                                             <span class="text-gray-600 dark:text-gray-400">
-                                                <span class="font-semibold text-gray-900 dark:text-white" x-text="kpi.currentValue"></span>
+                                                <span class="font-semibold text-gray-900 dark:text-white hub-tabular" x-text="formatNumber(kpi.currentValue)"></span>
                                                 <span x-text="kpi.unit === 'percentage' ? '%' : ''"></span>
                                             </span>
-                                            <span class="text-gray-500 dark:text-gray-400">
-                                                Target: <span x-text="kpi.targetValue"></span><span x-text="kpi.unit === 'percentage' ? '%' : ''"></span>
+                                            <span class="text-gray-500 dark:text-gray-400 hub-tabular">
+                                                Target: <span x-text="formatNumber(kpi.targetValue)"></span><span x-text="kpi.unit === 'percentage' ? '%' : ''"></span>
                                             </span>
                                         </div>
                                     </div>
@@ -1442,8 +1442,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                                     <p class="text-sm text-gray-600 dark:text-gray-300 mt-3" x-text="booking.details || 'No extra details provided.'"></p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-2" x-show="booking.estimate && (booking.estimate.amount !== null || booking.estimate.notes)">
-                                        Estimate: <span x-text="booking.estimate.amount != null ? '$' + Number(booking.estimate.amount).toFixed(2) : 'Pending amount'"></span>
-                                        <span x-show="booking.estimate?.notes"> - <span x-text="booking.estimate.notes"></span></span>
+                                        Estimate: <span x-text="booking.estimate?.amount != null ? formatCurrency(booking.estimate.amount) : 'Amount to be confirmed'"></span>
+                                        <span x-show="booking.estimate?.notes"> &middot; <span x-text="booking.estimate?.notes"></span></span>
                                     </p>
 
                                     <div class="mt-3 flex flex-wrap gap-2">
@@ -6178,8 +6178,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return total;
                 },
 
+                formatCurrency(amount, currency) {
+                    const value = Number(amount) || 0;
+                    const code = currency || (typeof HUB_CURRENCY !== 'undefined' ? HUB_CURRENCY : 'USD');
+                    try {
+                        return new Intl.NumberFormat('en-GB', { style: 'currency', currency: code, maximumFractionDigits: 2 }).format(value);
+                    } catch (_err) {
+                        return `${code} ${value.toFixed(2)}`;
+                    }
+                },
+
                 formatNumber(num) {
-                    return new Intl.NumberFormat().format(num);
+                    const value = Number(num);
+                    if (!Number.isFinite(value)) return '—';
+                    return new Intl.NumberFormat('en-GB', { maximumFractionDigits: Number.isInteger(value) ? 0 : 1 }).format(value);
                 },
 
                 formatWatchTime(seconds) {
@@ -6588,7 +6600,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     writeLine('Total impressions', metrics.totalImpressions || 0);
                     writeLine('Total engagement', metrics.totalEngagement || 0);
                     writeLine('Engagement rate', `${Number(metrics.engagementRate || 0).toFixed(2)}%`);
-                    writeLine('Ad spend', `$${Number(metrics.totalAdSpend || 0).toFixed(2)}`);
+                    writeLine('Ad spend', this.formatCurrency(metrics.totalAdSpend || 0));
 
                     const platformBreakdown = metrics.platformBreakdown || {};
                     const platforms = Object.keys(platformBreakdown);
@@ -6742,23 +6754,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
     <?php esirom_hub_mobile_nav('', 'dashboard'); ?>
 
     <!-- PWA Install Prompt -->
-    <div id="pwa-install-prompt" style="display: none;" class="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-4 z-50 border border-gray-200 dark:border-gray-700">
+    <div id="pwa-install-prompt" style="display: none;" class="hub-card hub-card--elevated fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 p-4 z-50" role="dialog" aria-label="Install Agency Hub">
         <div class="flex items-start gap-3">
-            <div class="flex-shrink-0">
-                <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-            </div>
-            <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Install ESIROM Hub</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Install our app for quick access and offline functionality</p>
+            <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-icon.png" alt="" class="h-10 w-10 flex-shrink-0">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Install Agency Hub</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 mb-3">Add the Hub to your home screen for quick access to approvals, insights and reports.</p>
                 <div class="flex gap-2">
-                    <button id="pwa-install-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
-                        Install
-                    </button>
-                    <button id="pwa-dismiss-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">
-                        Not Now
-                    </button>
+                    <button type="button" id="pwa-install-btn" class="hub-btn hub-btn--primary hub-btn--sm">Install</button>
+                    <button type="button" id="pwa-dismiss-btn" class="hub-btn hub-btn--ghost hub-btn--sm">Not now</button>
                 </div>
             </div>
         </div>

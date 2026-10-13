@@ -21,78 +21,71 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         <?php esirom_hub_layout_styles(); ?>
     </style>
 </head>
-<body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0">
-    <div x-data="calendarApp()" x-init="init()">
+<body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="calendarApp()" x-init="init()">
     <div class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
-        <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-gray-800 dark:text-white leading-tight">Content Calendar</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">Agency Hub</span>
-                    </div>
+        <div class="md:hidden hub-mobile-header">
+            <div class="flex items-center justify-between gap-2 w-full">
+                <a href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>" class="hub-sidebar-brand" aria-label="Agency Hub home">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-icon.png" alt="" class="h-8 w-8">
+                    <span class="flex flex-col">
+                        <span class="hub-sidebar-brand__name">Content Calendar</span>
+                        <span class="hub-sidebar-brand__sub" x-text="monthYearLabel"></span>
+                    </span>
+                </a>
+                <div class="flex items-center gap-1">
+                    <template x-if="viewMode !== 'client'">
+                        <div class="relative" x-data="{ open: false }">
+                            <button type="button" @click="open = !open" class="hub-btn hub-btn--soft hub-btn--sm max-w-[8.5rem]" :aria-expanded="open" aria-label="Choose brand">
+                                <span class="truncate" x-text="selectedClientName || 'Brand'"></span>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 hub-card hub-card--elevated z-50 max-h-80 overflow-y-auto py-1">
+                                <template x-for="client in clients" :key="'m-' + client._id">
+                                    <button type="button" @click="selectClient(client); open = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" :class="selectedClient === client._id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200 font-semibold' : 'text-gray-700 dark:text-gray-200'" x-text="client.brandName || client.name"></button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <?php $hub_account_theme = true; include get_template_directory() . '/inc/hub-account-menu.php'; ?>
                 </div>
-                <button @click="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                    <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                    </svg>
-                    <svg x-show="theme === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                </button>
             </div>
         </div>
 
         <!-- Sidebar -->
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
-            <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
-                <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-lg font-bold text-gray-800 dark:text-white leading-tight">Agency Hub</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">by esirom</span>
-                    </div>
-                </a>
-                <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                </button>
-            </div>
-            <nav class="flex-1 px-2 py-4 space-y-2">
-                <!-- CLIENT VIEW NAVIGATION -->
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+            <?php esirom_hub_staff_sidebar_header(true); ?>
+            <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
                 <?php esirom_hub_client_sidebar_nav('content_calendar', 'site', true); ?>
                 <?php esirom_hub_staff_sidebar_nav('content_calendar', 'site', true); ?>
             </nav>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('site', true); ?>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
+        <main class="hub-app-main mt-14 md:mt-0">
             <!-- Top Bar -->
-            <header class="hidden md:flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
+            <header class="hub-sticky-header hidden md:flex items-center justify-between px-4 lg:px-6 py-3 min-h-16 gap-4 flex-wrap">
                 <div class="flex items-center gap-4 flex-wrap min-w-0">
                     <div class="min-w-0">
-                        <h1 class="text-lg font-bold text-gray-900 dark:text-white">Content Calendar</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="monthYearLabel"></p>
+                        <h1 class="hub-page-title">Content Calendar</h1>
+                        <p class="hub-page-subtitle" x-text="monthYearLabel"></p>
                     </div>
                     <!-- Client Selector -->
                     <template x-if="viewMode !== 'client'">
                         <div class="relative" x-data="{ clientDropdownOpen: false }">
-                            <button @click="clientDropdownOpen = !clientDropdownOpen" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-100 dark:border-indigo-800/50">
-                                <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-300" x-text="selectedClientName || 'Select Brand'"></span>
-                                <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <button type="button" @click="clientDropdownOpen = !clientDropdownOpen" class="hub-btn hub-btn--soft hub-btn--sm" :aria-expanded="clientDropdownOpen">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                <span x-text="selectedClientName || 'Select brand'"></span>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
-                            <div x-show="clientDropdownOpen" @click.away="clientDropdownOpen = false" x-cloak class="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
+                            <div x-show="clientDropdownOpen" @click.away="clientDropdownOpen = false" x-cloak class="absolute left-0 mt-2 w-64 hub-card hub-card--elevated z-50 max-h-80 overflow-y-auto py-1">
                                 <template x-for="client in clients" :key="client._id">
-                                    <button @click="selectClient(client); clientDropdownOpen = false" class="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between" :class="{'bg-indigo-50 dark:bg-indigo-900/30': selectedClient === client._id}">
+                                    <button type="button" @click="selectClient(client); clientDropdownOpen = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between" :class="selectedClient === client._id ? 'bg-brand-50 dark:bg-brand-500/10' : ''">
                                         <span class="font-medium text-gray-900 dark:text-white" x-text="client.brandName || client.name"></span>
-                                        <svg x-show="selectedClient === client._id" class="h-5 w-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                        <svg x-show="selectedClient === client._id" class="h-4 w-4 text-brand-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                                     </button>
                                 </template>
                             </div>
@@ -102,55 +95,35 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 <div class="flex items-center gap-2">
                     <!-- Month Navigation -->
                     <div class="flex items-center gap-1">
-                        <button @click="prevMonth()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        <button type="button" @click="prevMonth()" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" aria-label="Previous month">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button @click="nextMonth()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        <button type="button" @click="nextMonth()" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" aria-label="Next month">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
-                        <button @click="goToToday()" class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">Today</button>
+                        <button type="button" @click="goToToday()" class="hub-btn hub-btn--secondary hub-btn--sm">Today</button>
                     </div>
-                    <!-- Theme Toggle -->
-                    <button @click="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <svg x-show="theme === 'light'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                        </svg>
-                        <svg x-show="theme === 'dark'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </button>
-                    <!-- User Dropdown -->
-                    <div x-data="{ dropdownOpen: false }" class="relative">
-                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <div class="w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center text-white font-semibold text-xs" x-text="userName.charAt(0)"></div>
-                            <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="userName"></span>
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak
-                             class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
-                            <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="userName"></p>
-                                <p class="text-xs text-gray-500 mt-0.5" x-text="user?.email || ''"></p>
-                                <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 capitalize font-medium" x-text="userRole?.replace('_', ' ')"></p>
-                            </div>
-                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#"
-                               class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                Change Password
-                            </a>
-                            <a @click.prevent="logout(); dropdownOpen = false" href="#"
-                               class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
-                        </div>
-                    </div>
+                    <?php $hub_account_theme = true; include get_template_directory() . '/inc/hub-account-menu.php'; ?>
                 </div>
             </header>
+
+        <!-- Month navigation (mobile) -->
+        <div class="md:hidden flex items-center justify-between gap-2 px-4 pt-3">
+            <button type="button" @click="prevMonth()" class="hub-btn hub-btn--secondary hub-btn--icon hub-btn--sm" aria-label="Previous month">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button type="button" @click="goToToday()" class="hub-btn hub-btn--secondary hub-btn--sm flex-1 justify-center" x-text="monthYearLabel"></button>
+            <button type="button" @click="nextMonth()" class="hub-btn hub-btn--secondary hub-btn--icon hub-btn--sm" aria-label="Next month">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
 
         <!-- Calendar Grid -->
         <div class="hub-page-content px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
                 <!-- Day Headers -->
                 <div class="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                    <template x-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">
+                    <template x-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day">
                         <div class="py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300" x-text="day"></div>
                     </template>
                 </div>
@@ -314,10 +287,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
     </div>
 
     <?php include get_template_directory() . '/inc/hub-toasts.php'; ?>
-
     <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
     <?php esirom_hub_staff_mobile_nav('content_calendar'); ?>
-</div>
 <script>
     const API_URL = '<?php echo esc_js($api_url); ?>';
     const LOGIN_URL = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
@@ -332,6 +303,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
             clients: [],
             events: [],
+            eventsLoading: false,
+            selectedViewClient: localStorage.getItem('selectedViewClient') || '',
             selectedClient: '',
             selectedClientName: '',
             currentYear: new Date().getFullYear(),
@@ -362,9 +335,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 if (!token) { window.location.href = LOGIN_URL; return; }
                 try {
                     const res = await fetch(`${API_URL}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (!res.ok) { localStorage.removeItem('token'); window.location.href = LOGIN_URL; return; }
+                    if (res.status === 401 || res.status === 403) { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = LOGIN_URL; return; }
+                    if (!res.ok) throw new Error('server');
                     const data = await res.json();
                     this.user = data.user;
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     this.userRole = data.user.role;
                     this.userName = data.user.firstName + ' ' + data.user.lastName;
                     // Ensure true client accounts always use client viewMode
@@ -378,6 +353,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         this.viewMode = 'admin';
                         localStorage.setItem('viewMode', 'admin');
                     }
+                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
                     await this.loadClients();
                     const savedClientId = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                     if (this.clients.length > 0 && this.viewMode !== 'client') {
@@ -386,7 +362,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     } else {
                         await this.loadEvents();
                     }
-                } catch (e) { console.error(e); window.location.href = LOGIN_URL; }
+                } catch (e) {
+                    this.showToast('We could not reach the server. Please check your connection and refresh.', 'error');
+                }
             },
 
             selectClient(client) {
@@ -402,17 +380,22 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 try {
                     const res = await fetch(`${API_URL}/calendar/clients`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (res.ok) { const d = await res.json(); this.clients = d.data || []; }
-                } catch (e) { console.error('Load clients error:', e); }
+                    else this.showToast('Brands could not be loaded.', 'error');
+                } catch (e) { this.showToast('Brands could not be loaded. Check your connection.', 'error'); }
             },
 
             async loadEvents() {
                 const token = localStorage.getItem('token');
                 try {
                     let url = `${API_URL}/calendar/events?year=${this.currentYear}&month=${this.currentMonth}`;
-                    if (this.selectedClient) url += `&clientId=${this.selectedClient}`;
+                    if (this.selectedClient) url += `&clientId=${encodeURIComponent(this.selectedClient)}`;
+                    else if (this.viewMode === 'client' && this.selectedViewClient) url += `&clientId=${encodeURIComponent(this.selectedViewClient)}&viewAs=client&viewAsClientId=${encodeURIComponent(this.selectedViewClient)}`;
+                    this.eventsLoading = true;
                     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (res.ok) { const d = await res.json(); this.events = d.data || []; }
-                } catch (e) { console.error('Load events error:', e); }
+                    else this.showToast('Calendar events could not be loaded.', 'error');
+                } catch (e) { this.showToast('Calendar events could not be loaded. Check your connection.', 'error'); }
+                finally { this.eventsLoading = false; }
             },
 
             get monthYearLabel() {
@@ -442,7 +425,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         } else {
                             const fullDate = new Date(this.currentYear, this.currentMonth - 1, dayCounter);
                             const isToday = fullDate.toDateString() === today.toDateString();
-                            week.push({ date: dayCounter, inMonth: true, fullDate: fullDate.toISOString().split('T')[0], isToday });
+                            week.push({ date: dayCounter, inMonth: true, fullDate: this.toLocalDateKey(fullDate), isToday });
                             dayCounter++;
                         }
                     }
@@ -455,9 +438,18 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             getEventsForDay(dateStr) {
                 if (!dateStr) return [];
                 return this.events.filter(e => {
-                    const eventDate = new Date(e.date).toISOString().split('T')[0];
+                    const raw = String(e.date || '');
+                    // Date-only strings are calendar dates; timestamps are converted to the local day.
+                    const eventDate = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : this.toLocalDateKey(new Date(raw));
                     return eventDate === dateStr;
                 });
+            },
+
+            toLocalDateKey(date) {
+                const d = date instanceof Date ? date : new Date(date);
+                if (Number.isNaN(d.getTime())) return '';
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
             },
 
             prevMonth() {
@@ -506,7 +498,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             formatDate(dateStr) {
                 if (!dateStr) return '';
                 const d = new Date(dateStr + 'T00:00:00');
-                return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                return d.toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             },
 
             async createConcept() {
@@ -561,6 +553,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
             logout() {
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = LOGIN_URL;
             },
 

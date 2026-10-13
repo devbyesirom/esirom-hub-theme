@@ -31,12 +31,20 @@ $hub_admin_url = esc_url(esirom_hub_page_url('admin'));
 $hub_staff_show = esirom_hub_staff_nav_show_attr();
 $hub_client_show = esirom_hub_client_nav_show_attr();
 
-$hub_tab_class = function ($key) use ($hub_mobile_active) {
-    return 'hub-tab' . ($hub_mobile_active === $key ? ' is-active' : '');
+// The Workflow page doubles as the client Content Bank, so both keys light that tab.
+$hub_tab_is_active = function ($key) use ($hub_mobile_active) {
+    if ($key === 'content_bank') {
+        return in_array($hub_mobile_active, array('content_bank', 'workflow'), true);
+    }
+    return $hub_mobile_active === $key;
 };
 
-$hub_current = function ($key) use ($hub_mobile_active) {
-    return $hub_mobile_active === $key ? ' aria-current="page"' : '';
+$hub_tab_class = function ($key) use ($hub_tab_is_active) {
+    return 'hub-tab' . ($hub_tab_is_active($key) ? ' is-active' : '');
+};
+
+$hub_current = function ($key) use ($hub_tab_is_active) {
+    return $hub_tab_is_active($key) ? ' aria-current="page"' : '';
 };
 
 $hub_more_active = in_array($hub_mobile_active, [
