@@ -36,64 +36,59 @@ $hub_group_has_active = function (array $keys) use ($hub_nav_active) {
     return in_array($hub_nav_active, $keys, true);
 };
 
-$hub_item_class = function ($key) use ($hub_nav_active, $hub_is_dashboard) {
-    $base = 'flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm';
-    if ($hub_nav_active !== $key) {
-        return $base . ' text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
-    }
-    if ($hub_is_dashboard && $key === 'published_posts') {
-        return $base . ' bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium';
-    }
-    return $base . ' bg-indigo-500 text-white font-medium';
+$hub_item_class = function ($key) use ($hub_nav_active) {
+    return 'hub-nav-link' . ($hub_nav_active === $key ? ' is-active' : '');
 };
 
 $hub_sub_class = function ($key) use ($hub_item_class) {
-    return $hub_item_class($key) . ' ml-2';
+    return $hub_item_class($key) . ' hub-nav-sub';
+};
+
+$hub_current = function ($key) use ($hub_nav_active) {
+    return $hub_nav_active === $key ? ' aria-current="page"' : '';
 };
 
 $hub_group_header_class = function (array $keys) use ($hub_group_has_active) {
-    $base = 'flex items-center justify-between w-full px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors';
-    if ($hub_group_has_active($keys)) {
-        return $base . ' text-indigo-600 dark:text-indigo-400';
-    }
-    return $base . ' text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300';
+    return 'hub-nav-group-title' . ($hub_group_has_active($keys) ? ' is-active' : '');
 };
 
 $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_active) {
     if ($hub_group_has_active($keys)) {
         return 'true';
     }
-    return "(localStorage.getItem('{$storage_key}') === '1')";
+    return "(localStorage.getItem('{$storage_key}') !== '0')";
+};
+
+// Alpine class binding for in-page (dashboard) views.
+$hub_view_class = function ($view) {
+    return ":class=\"activeView === '{$view}' ? 'is-active' : ''\"";
 };
 ?>
 
-<div <?php echo $hub_staff_show; ?> class="space-y-2">
+<div <?php echo $hub_staff_show; ?> class="space-y-3">
 
     <!-- ── Workflow ─────────────────────────────────────────────────────── -->
     <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_workflow', ['workflow', 'overview', 'password_vault', 'website_projects']); ?> }"
          x-init="$watch('open', v => localStorage.setItem('hubNav_workflow', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['workflow', 'overview', 'password_vault', 'website_projects'])); ?>">
+        <button type="button" @click="open = !open" :aria-expanded="open" class="<?php echo esc_attr($hub_group_header_class(['workflow', 'overview', 'password_vault', 'website_projects'])); ?>">
             <span<?php echo $hub_label_attrs; ?>>Workflow</span>
-            <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <div x-show="open" x-cloak class="mt-0.5 space-y-0.5">
-            <a href="<?php echo $hub_nav_active === 'workflow' && !$hub_is_dashboard ? '#' : $hub_workflow_url; ?>"
-               class="<?php echo esc_attr($hub_sub_class('workflow')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+        <div x-show="open" x-cloak class="mt-1 space-y-0.5">
+            <a href="<?php echo $hub_workflow_url; ?>" class="<?php echo esc_attr($hub_sub_class('workflow')); ?>"<?php echo $hub_current('workflow'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Workflow</span>
             </a>
-            <a href="<?php echo $hub_overview_url; ?>" class="<?php echo esc_attr($hub_sub_class('overview')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            <a href="<?php echo $hub_overview_url; ?>" class="<?php echo esc_attr($hub_sub_class('overview')); ?>"<?php echo $hub_current('overview'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Agency Overview</span>
             </a>
-            <a href="<?php echo ($hub_nav_active === 'password_vault' && !$hub_is_dashboard) ? '#' : $hub_password_vault_url; ?>"
-               class="<?php echo esc_attr($hub_sub_class('password_vault')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            <a href="<?php echo $hub_password_vault_url; ?>" class="<?php echo esc_attr($hub_sub_class('password_vault')); ?>"<?php echo $hub_current('password_vault'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
             </a>
-            <a href="<?php echo ($hub_nav_active === 'website_projects' && !$hub_is_dashboard) ? '#' : $hub_website_projects_url; ?>"
-               class="<?php echo esc_attr($hub_sub_class('website_projects')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
+            <a href="<?php echo $hub_website_projects_url; ?>" class="<?php echo esc_attr($hub_sub_class('website_projects')); ?>"<?php echo $hub_current('website_projects'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Website Projects</span>
             </a>
         </div>
@@ -102,38 +97,35 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
     <!-- ── Insights ─────────────────────────────────────────────────────── -->
     <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_insights', ['insights', 'reports', 'event_coverage']); ?> }"
          x-init="$watch('open', v => localStorage.setItem('hubNav_insights', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['insights', 'reports', 'event_coverage'])); ?>">
+        <button type="button" @click="open = !open" :aria-expanded="open" class="<?php echo esc_attr($hub_group_header_class(['insights', 'reports', 'event_coverage'])); ?>">
             <span<?php echo $hub_label_attrs; ?>>Insights</span>
-            <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <div x-show="open" x-cloak class="mt-0.5 space-y-0.5">
+        <div x-show="open" x-cloak class="mt-1 space-y-0.5">
             <?php if ($hub_is_dashboard) : ?>
-            <a href="#overview" @click="activeView = 'dashboard'"
-               :class="activeView === 'dashboard' ? 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm bg-indigo-500 text-white font-medium' : 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <a href="#overview" @click="activeView = 'dashboard'" class="hub-nav-link hub-nav-sub" <?php echo $hub_view_class('dashboard'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 <span class="nav-text">Insights</span>
             </a>
-            <a href="#reports" @click="activeView = 'reports'"
-               :class="activeView === 'reports' ? 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm bg-indigo-500 text-white font-medium' : 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <a href="#reports" @click="activeView = 'reports'" class="hub-nav-link hub-nav-sub" <?php echo $hub_view_class('reports'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 <span class="nav-text">Reports</span>
             </a>
-            <a href="#event-coverage" @click="activeView = 'eventCoverage'"
-               :class="activeView === 'eventCoverage' ? 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm bg-indigo-500 text-white font-medium' : 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/></svg>
+            <a href="#event-coverage" @click="activeView = 'eventCoverage'" class="hub-nav-link hub-nav-sub" <?php echo $hub_view_class('eventCoverage'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/></svg>
                 <span class="nav-text">Event Coverage</span>
             </a>
             <?php else : ?>
-            <a href="<?php echo $hub_dashboard_url; ?>" class="<?php echo esc_attr($hub_sub_class('insights')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <a href="<?php echo $hub_dashboard_url; ?>#overview" class="<?php echo esc_attr($hub_sub_class('insights')); ?>"<?php echo $hub_current('insights'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Insights</span>
             </a>
-            <a href="<?php echo $hub_dashboard_url; ?>#reports" class="<?php echo esc_attr($hub_sub_class('reports')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <a href="<?php echo $hub_dashboard_url; ?>#reports" class="<?php echo esc_attr($hub_sub_class('reports')); ?>"<?php echo $hub_current('reports'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Reports</span>
             </a>
-            <a href="<?php echo $hub_dashboard_url; ?>#event-coverage" class="<?php echo esc_attr($hub_sub_class('event_coverage')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/></svg>
+            <a href="<?php echo $hub_dashboard_url; ?>#event-coverage" class="<?php echo esc_attr($hub_sub_class('event_coverage')); ?>"<?php echo $hub_current('event_coverage'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Event Coverage</span>
             </a>
             <?php endif; ?>
@@ -143,52 +135,50 @@ $hub_group_init_open = function ($storage_key, array $keys) use ($hub_group_has_
     <!-- ── Social Media ───────────────────────────────────────────────────── -->
     <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_social', ['published_posts', 'content_calendar', 'messages', 'ads']); ?> }"
          x-init="$watch('open', v => localStorage.setItem('hubNav_social', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" class="<?php echo esc_attr($hub_group_header_class(['published_posts', 'content_calendar', 'messages', 'ads'])); ?>">
+        <button type="button" @click="open = !open" :aria-expanded="open" class="<?php echo esc_attr($hub_group_header_class(['published_posts', 'content_calendar', 'messages', 'ads'])); ?>">
             <span<?php echo $hub_label_attrs; ?>>Social Media</span>
-            <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <div x-show="open" x-cloak class="mt-0.5 space-y-0.5">
+        <div x-show="open" x-cloak class="mt-1 space-y-0.5">
             <?php if ($hub_is_dashboard) : ?>
-            <a href="#content-calendar" @click="activeView = 'calendar'"
-               :class="activeView === 'calendar' ? 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium' : 'flex items-center px-3 py-2 ml-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <a href="#content-calendar" @click="activeView = 'calendar'" class="hub-nav-link hub-nav-sub" <?php echo $hub_view_class('calendar'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                 <span class="nav-text">Published Posts</span>
             </a>
             <?php else : ?>
-            <a href="<?php echo $hub_dashboard_url; ?>#content-calendar" class="<?php echo esc_attr($hub_sub_class('published_posts')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <a href="<?php echo $hub_dashboard_url; ?>#content-calendar" class="<?php echo esc_attr($hub_sub_class('published_posts')); ?>"<?php echo $hub_current('published_posts'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Published Posts</span>
             </a>
             <?php endif; ?>
-            <a href="<?php echo ($hub_nav_active === 'content_calendar' && !$hub_is_dashboard) ? '#' : $hub_calendar_url; ?>"
-               class="<?php echo esc_attr($hub_sub_class('content_calendar')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+            <a href="<?php echo $hub_calendar_url; ?>" class="<?php echo esc_attr($hub_sub_class('content_calendar')); ?>"<?php echo $hub_current('content_calendar'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Content Calendar</span>
             </a>
-            <a href="<?php echo ($hub_nav_active === 'messages' && !$hub_is_dashboard) ? '#' : $hub_messages_url; ?>"
-               class="<?php echo esc_attr($hub_sub_class('messages')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+            <a href="<?php echo $hub_messages_url; ?>" class="<?php echo esc_attr($hub_sub_class('messages')); ?>"<?php echo $hub_current('messages'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Messages</span>
             </a>
-            <a href="<?php echo ($hub_nav_active === 'ads' && !$hub_is_dashboard) ? '#' : $hub_ads_url; ?>"
-               class="<?php echo esc_attr($hub_sub_class('ads')); ?>">
-                <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L15 6.75m-3-3v11.25m9-5.25H9"/></svg>
+            <a href="<?php echo $hub_ads_url; ?>" class="<?php echo esc_attr($hub_sub_class('ads')); ?>"<?php echo $hub_current('ads'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L15 6.75m-3-3v11.25m9-5.25H9"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Ads</span>
             </a>
         </div>
     </div>
 
-    <div class="border-t border-gray-100 dark:border-gray-700/60 my-1"></div>
+    <div class="hub-divider my-1"></div>
 
     <!-- ── Standalone items ───────────────────────────────────────────────── -->
-    <a href="<?php echo $hub_progress_url; ?>" class="<?php echo esc_attr($hub_item_class('progress')); ?>">
-        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-        <span class="nav-text"<?php echo $hub_label_attrs; ?>>My Progress</span>
-    </a>
+    <div class="space-y-0.5">
+        <a href="<?php echo $hub_progress_url; ?>" class="<?php echo esc_attr($hub_item_class('progress')); ?>"<?php echo $hub_current('progress'); ?>>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="nav-text"<?php echo $hub_label_attrs; ?>>My Progress</span>
+        </a>
 
-    <a href="<?php echo $hub_inventory_url; ?>" class="<?php echo esc_attr($hub_item_class('inventory')); ?>">
-        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625-10.928a1.125 1.125 0 00-1.124-.99h-4.5a1.125 1.125 0 00-1.124.99L12.25 7.5M3.75 7.5h16.5M4.5 7.5v10.125c0 .621.504 1.125 1.125 1.125h13.5c.621 0 1.125-.504 1.125-1.125V7.5M9.75 11.25h4.5"/></svg>
-        <span class="nav-text"<?php echo $hub_label_attrs; ?>>Inventory</span>
-    </a>
+        <a href="<?php echo $hub_inventory_url; ?>" class="<?php echo esc_attr($hub_item_class('inventory')); ?>"<?php echo $hub_current('inventory'); ?>>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+            <span class="nav-text"<?php echo $hub_label_attrs; ?>>Inventory</span>
+        </a>
+    </div>
 
 </div>

@@ -36,48 +36,10 @@ show_admin_bar(false);
 <html <?php language_attributes(); ?> class="h-full">
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agency Overview | <?php bloginfo('name'); ?></title>
-    
-    <link rel="icon" type="image/png" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <?php esirom_hub_head_assets(array('pwa' => true)); ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        const theme = localStorage.getItem('theme') || 'light';
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
-    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .sidebar {
-            transition: width 0.3s ease;
-        }
-        .sidebar-collapsed {
-            width: 5rem;
-        }
-        .sidebar-expanded {
-            width: 16rem;
-        }
-        .sidebar .nav-text {
-            display: inline;
-        }
-        .sidebar-collapsed .nav-text {
-            display: none;
-        }
-        .sidebar-collapsed .justify-between {
-           justify-content: center;
-        }
         .ov-focus {
             -webkit-tap-highlight-color: transparent;
         }
@@ -85,12 +47,6 @@ show_admin_bar(false);
             outline: 2px solid rgba(99, 102, 241, 0.5);
             outline-offset: 2px;
         }
-        [x-cloak] { 
-            display: none !important; 
-        }
-        #wpadminbar { display: none !important; }
-        html { margin-top: 0 !important; }
-        body { margin-top: 0 !important; }
         <?php esirom_hub_layout_styles(); ?>
 
         /* ── Same modern design system as Workflow ── */
@@ -216,31 +172,31 @@ show_admin_bar(false);
             <nav class="flex-1 px-2 py-4 space-y-2">
                 <!-- CLIENT VIEW NAVIGATION -->
                 <!-- Content Bank - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>?tab=contentBank" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                     <span class="ml-4 nav-text">Content Bank</span>
                 </a>
                 <!-- Published Posts - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#content-calendar" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#content-calendar" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>
                     <span class="ml-4 nav-text">Published Posts</span>
                 </a>
                 <!-- Insights - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#overview" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#overview" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <span class="ml-4 nav-text">Insights</span>
                 </a>
                 <!-- Reports - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#reports" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#reports" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     <span class="ml-4 nav-text">Reports</span>
                 </a>
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>#event-coverage" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>#event-coverage" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25" /></svg>
                     <span class="ml-4 nav-text">Event Coverage</span>
                 </a>
                 <!-- Content Calendar - Client View Only -->
-                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(get_permalink(get_page_by_path('content-calendar'))); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                <a <?php echo esirom_hub_client_nav_show_attr(); ?> href="<?php echo esc_url(esirom_hub_page_url('content-calendar')); ?>" class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     <span class="ml-4 nav-text">Content Calendar</span>
                 </a>
@@ -416,7 +372,7 @@ show_admin_bar(false);
                             <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Website Development</span>
                             <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700 min-w-[2rem]"></div>
                         </div>
-                        <a href="<?php echo esc_url(get_permalink(get_page_by_path('website-projects'))); ?>"
+                        <a href="<?php echo esc_url(esirom_hub_page_url('website-projects')); ?>"
                            class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Open Website Projects →</a>
                     </div>
                     <div class="grid grid-cols-3 gap-3 mb-4">
@@ -682,9 +638,9 @@ show_admin_bar(false);
 
     <script>
         const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : <?php echo wp_json_encode(get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api')); ?>;
-        const DASHBOARD_URL = '<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>';
-        const LOGIN_URL = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
-        const WORKFLOW_URL = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>';
+        const DASHBOARD_URL = '<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>';
+        const LOGIN_URL = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
+        const WORKFLOW_URL = '<?php echo esc_url(esirom_hub_page_url('workflow')); ?>';
         const OVERVIEW_PAGE_PATH = <?php echo wp_json_encode($esirom_overview_page_path, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
 
         function agencyOverview() {

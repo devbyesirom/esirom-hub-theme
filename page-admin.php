@@ -18,53 +18,14 @@ show_admin_bar(false);
 <html <?php language_attributes(); ?> class="h-full">
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - <?php bloginfo('name'); ?></title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    <link rel="shortcut icon" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    
+    <?php esirom_hub_head_assets(array('pwa' => true, 'tailwind_plugins' => 'forms,typography,aspect-ratio')); ?>
     <script>
-        // Force light mode on admin panel
+        // The admin panel is light-only; its components have no dark variants.
         document.documentElement.classList.remove('dark');
-        
-        // Suppress Tailwind CDN production warning for admin panel
-        // Note: This is an internal admin tool, not a public-facing page
-        window.tailwindCDNWarning = false;
     </script>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
-    <script>
-        // Configure Tailwind to use class-based dark mode (not media query)
-        tailwind.config = {
-            darkMode: 'class',
-            corePlugins: {
-                preflight: true,
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        [x-cloak] { display: none !important; }
-        .sidebar {
-            transition: width 0.3s ease;
-        }
-        .sidebar-collapsed {
-            width: 5rem;
-        }
-        .sidebar-expanded {
-            width: 16rem;
-        }
-        .sidebar .nav-text {
-            display: inline;
-        }
-        .sidebar-collapsed .nav-text {
-            display: none;
-        }
-        .sidebar-collapsed .justify-between {
-           justify-content: center;
-        }
         /* Admin panel */
         .admin-card { border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
         .admin-stat { border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #fff; padding: 0.875rem 1rem; }
@@ -1837,7 +1798,7 @@ show_admin_bar(false);
                     const userStr = localStorage.getItem('user');
                     
                     if (!token || !userStr) {
-                        window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
+                        window.location.href = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
                         return;
                     }
 
@@ -1846,7 +1807,7 @@ show_admin_bar(false);
                     // Check if admin
                     if (this.user.role !== 'admin') {
                         this.showToast('Access denied. Admin only.', 'error', 3000);
-                        window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>';
+                        window.location.href = '<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>';
                         return;
                     }
                 },
@@ -3692,7 +3653,7 @@ show_admin_bar(false);
                 logout() {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
+                    window.location.href = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
                 },
 
                 // Import Functions

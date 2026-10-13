@@ -142,35 +142,28 @@ function esirom_hub_layout_styles() {
 }
 
 /**
- * Enqueue scripts and styles
+ * Default backend API URL (used wherever the option is not set).
  */
-function esirom_hub_scripts() {
-    if (
-        is_page_template('page-login.php') ||
-        is_page_template('page-dashboard.php') ||
-        is_page_template('page-admin.php') ||
-        is_page_template('page-password-vault.php')
-    ) {
-        wp_enqueue_style(
-            'esirom-hub-theme',
-            get_stylesheet_uri(),
-            array(),
-            wp_get_theme()->get('Version')
-        );
-        wp_enqueue_style('tailwindcss', 'https://cdn.tailwindcss.com', array(), null);
-        wp_enqueue_style(
-            'google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-            array(),
-            null
-        );
-    }
+function esirom_hub_default_api_url() {
+    return 'https://esirom-hub-backend-production.up.railway.app/api';
 }
-add_action('wp_enqueue_scripts', 'esirom_hub_scripts');
 
-function esirom_hub_api_url_script() {
-    $hub_templates = array(
+/**
+ * Resolved backend API URL.
+ */
+function esirom_hub_api_url() {
+    $url = get_option('esirom_api_url', esirom_hub_default_api_url());
+    return $url ? rtrim($url, '/') : esirom_hub_default_api_url();
+}
+
+/**
+ * All page templates that make up the Hub application.
+ */
+function esirom_hub_templates() {
+    return array(
         'page-login.php',
+        'page-register.php',
+        'page-reset-password.php',
         'page-dashboard.php',
         'page-admin.php',
         'page-password-vault.php',
@@ -181,21 +174,50 @@ function esirom_hub_api_url_script() {
         'page-messages.php',
         'page-inventory.php',
         'page-website-projects.php',
-        'page-progress.php'
+        'page-progress.php',
+        'page-privacy.php',
     );
-    $is_hub = false;
-    foreach ($hub_templates as $template) {
+}
+
+/**
+ * Whether the current request renders one of the Hub page templates.
+ */
+function esirom_hub_is_hub_template() {
+    foreach (esirom_hub_templates() as $template) {
         if (is_page_template($template)) {
-            $is_hub = true;
-            break;
+            return true;
         }
     }
-    if ($is_hub) {
-        $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
-        echo '<script>const ESIROM_API_URL = ' . wp_json_encode(esc_url_raw($api_url)) . ';</script>';
-    }
+    return false;
 }
-add_action('wp_head', 'esirom_hub_api_url_script');
+
+/**
+ * Shared <head> assets (fonts, Tailwind + brand config, design system CSS,
+ * dark-mode bootstrap, API URL global). Every Hub template calls this.
+ *
+ * @param array $args { pwa: bool, tailwind_plugins: string, description: string }
+ */
+function esirom_hub_head_assets($args = array()) {
+    $hub_head = is_array($args) ? $args : array();
+    include get_template_directory() . '/inc/hub-head.php';
+}
+
+/**
+ * Hub templates render their own <head>; nothing extra is enqueued for them.
+ * (The design system stylesheet is linked directly by esirom_hub_head_assets().)
+ */
+function esirom_hub_scripts() {
+    if (esirom_hub_is_hub_template()) {
+        return;
+    }
+    wp_enqueue_style(
+        'esirom-hub-theme',
+        get_stylesheet_uri(),
+        array(),
+        wp_get_theme()->get('Version')
+    );
+}
+add_action('wp_enqueue_scripts', 'esirom_hub_scripts');
 
 /**
  * Handle media upload via AJAX
@@ -238,11 +260,12 @@ function esirom_hub_settings_page_html() {
 
     // Save settings
     if (isset($_POST['esirom_hub_settings_nonce']) && wp_verify_nonce($_POST['esirom_hub_settings_nonce'], 'esirom_hub_settings')) {
-        update_option('esirom_api_url', sanitize_text_field($_POST['esirom_api_url']));
-        echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
+        $new_url = isset($_POST['esirom_api_url']) ? esc_url_raw(trim(wp_unslash($_POST['esirom_api_url']))) : '';
+        update_option('esirom_api_url', $new_url ? rtrim($new_url, '/') : esirom_hub_default_api_url());
+        echo '<div class="notice notice-success"><p>Settings saved.</p></div>';
     }
 
-    $api_url = get_option('esirom_api_url', 'http://localhost:5000/api');
+    $api_url = esirom_hub_api_url();
     ?>
     <div class="wrap">
         <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -254,13 +277,13 @@ function esirom_hub_settings_page_html() {
                         <label for="esirom_api_url">API URL</label>
                     </th>
                     <td>
-                        <input type="text" 
-                               id="esirom_api_url" 
-                               name="esirom_api_url" 
-                               value="<?php echo esc_attr($api_url); ?>" 
+                        <input type="url"
+                               id="esirom_api_url"
+                               name="esirom_api_url"
+                               value="<?php echo esc_attr($api_url); ?>"
                                class="regular-text"
-                               placeholder="http://localhost:5000/api">
-                        <p class="description">Enter the URL of your Esirom Hub API backend.</p>
+                               placeholder="<?php echo esc_attr(esirom_hub_default_api_url()); ?>">
+                        <p class="description">Base URL of the Esirom Hub API backend (including <code>/api</code>).</p>
                     </td>
                 </tr>
             </table>
@@ -271,11 +294,10 @@ function esirom_hub_settings_page_html() {
         
         <h2>Setup Instructions</h2>
         <ol>
-            <li>Make sure your backend API is running (see backend/README.md)</li>
-            <li>Enter the API URL above (e.g., http://localhost:5000/api or https://api.yourdomain.com/api)</li>
-            <li>Create a new page and assign the "Login" template</li>
-            <li>Create another page and assign the "Dashboard" template</li>
-            <li>Set the login page as your hub entry point</li>
+            <li>Make sure your backend API is running and reachable from the browser.</li>
+            <li>Enter the API URL above (for example <code><?php echo esc_html(esirom_hub_default_api_url()); ?></code>).</li>
+            <li>Create pages with the slugs <code>login</code>, <code>register</code>, <code>reset-password</code>, <code>dashboard</code>, <code>workflow</code>, <code>overview</code>, <code>content-calendar</code>, <code>messages</code>, <code>ads</code>, <code>inventory</code>, <code>progress</code>, <code>password-vault</code>, <code>website-projects</code> and <code>admin</code>, each assigned to the matching Hub template.</li>
+            <li>Set the login page as the static front page so the Hub opens at the site root.</li>
         </ol>
         
         <h2>Quick Links</h2>
@@ -304,7 +326,7 @@ add_action('template_redirect', 'esirom_hub_auth_check');
  * Add custom body classes
  */
 function esirom_hub_body_classes($classes) {
-    if (is_page_template('page-login.php') || is_page_template('page-dashboard.php')) {
+    if (esirom_hub_is_hub_template()) {
         $classes[] = 'esirom-hub-page';
         $classes[] = 'h-full';
     }
@@ -316,25 +338,8 @@ add_filter('body_class', 'esirom_hub_body_classes');
  * Remove admin bar for hub pages
  */
 function esirom_hub_remove_admin_bar() {
-    $hub_templates = array(
-        'page-login.php',
-        'page-dashboard.php',
-        'page-workflow.php',
-        'page-overview.php',
-        'page-content-calendar.php',
-        'page-messages.php',
-        'page-ads.php',
-        'page-inventory.php',
-        'page-progress.php',
-        'page-password-vault.php',
-        'page-website-projects.php',
-        'page-admin.php',
-    );
-    foreach ($hub_templates as $template) {
-        if (is_page_template($template)) {
-            show_admin_bar(false);
-            return;
-        }
+    if (esirom_hub_is_hub_template()) {
+        show_admin_bar(false);
     }
 }
 add_action('template_redirect', 'esirom_hub_remove_admin_bar');

@@ -8,29 +8,24 @@ if (!defined('ABSPATH')) exit;
 show_admin_bar(false);
 
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
-$login_url = esc_url(get_permalink(get_page_by_path('login')));
-$dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
-$admin_url = esc_url(get_permalink(get_page_by_path('admin')));
+$login_url = esc_url(esirom_hub_page_url('login'));
+$dashboard_url = esc_url(esirom_hub_page_url('dashboard'));
+$admin_url = esc_url(esirom_hub_page_url('admin'));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages — Agency Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php esirom_hub_head_assets(array('pwa' => true)); ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         const API_URL = '<?php echo esc_js($api_url); ?>';
         const LOGIN_URL = '<?php echo esc_js($login_url); ?>';
         const DASHBOARD_URL = '<?php echo esc_js($dashboard_url); ?>';
         const ADMIN_URL = '<?php echo esc_js($admin_url); ?>';
-        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
     </script>
     <style>
-        [x-cloak] { display: none !important; }
-        body { font-family: 'Inter', sans-serif; }
         <?php esirom_hub_layout_styles(); ?>
         .msg-thread-active { background: rgb(238 242 255); }
         .dark .msg-thread-active { background: rgb(49 46 129 / 0.25); }

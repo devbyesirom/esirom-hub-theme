@@ -14,48 +14,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 <html <?php language_attributes(); ?> class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Content Calendar - Agency Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
+    <?php esirom_hub_head_assets(array('pwa' => true)); ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        const theme = localStorage.getItem('theme') || 'light';
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        [x-cloak] { display: none !important; }
-
-        .sidebar {
-            transition: width 0.3s ease;
-        }
-        .sidebar-collapsed {
-            width: 5rem;
-        }
-        .sidebar-expanded {
-            width: 16rem;
-        }
-        .sidebar .nav-text {
-            display: inline;
-        }
-        .sidebar-collapsed .nav-text {
-            display: none;
-        }
-        .sidebar-collapsed .justify-between {
-            justify-content: center;
-        }
-
-        #wpadminbar { display: none !important; }
-        html { margin-top: 0 !important; }
-        body { margin-top: 0 !important; }
+        <?php esirom_hub_layout_styles(); ?>
     </style>
 </head>
 <body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0">
@@ -375,7 +338,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 </div>
 <script>
     const API_URL = '<?php echo esc_js($api_url); ?>';
-    const LOGIN_URL = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
+    const LOGIN_URL = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
 
     function calendarApp() {
         return {
@@ -554,7 +517,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
             openEventDetail(event) {
                 if (event.type === 'concept') {
-                    window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?concept=' + event.id;
+                    window.location.href = '<?php echo esc_url(esirom_hub_page_url('workflow')); ?>?concept=' + event.id;
                 }
             },
 

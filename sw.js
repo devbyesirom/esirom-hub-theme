@@ -1,126 +1,112 @@
-const CACHE_NAME = 'esirom-hub-v2';
-const urlsToCache = [
-  '/dashboard/',
-  '/workflow/',
-  '/content-calendar/',
-  '/progress/',
-  '/overview/',
-  '/wp-content/themes/esirom-hub-theme/offline.html',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-  'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js'
-];
+/*
+ * Agency Hub service worker
+ *
+ * Strategy:
+ *  - Navigations (HTML pages): network-first, falling back to the cached copy
+ *    and finally the offline page. This guarantees a new theme deploy is
+ *    picked up on the next load instead of serving stale HTML from cache.
+ *  - Same-origin static assets (theme CSS/JS/images): stale-while-revalidate.
+ *  - API requests and cross-origin requests are never intercepted.
+ *
+ * The cache name is derived from the `v` query parameter the theme appends
+ * when registering (`sw.js?v=<theme version>`), so every release gets a clean
+ * cache and old ones are removed on activate.
+ */
 
-// Install event - cache essential resources
-self.addEventListener('install', event => {
+const SW_VERSION = (() => {
+  try {
+    return new URL(self.location.href).searchParams.get('v') || 'dev';
+  } catch (e) {
+    return 'dev';
+  }
+})();
+const CACHE_NAME = `esirom-hub-${SW_VERSION}`;
+const THEME_PATH = (() => {
+  // .../wp-content/themes/<theme>/sw.js -> .../wp-content/themes/<theme>
+  const path = new URL(self.location.href).pathname;
+  return path.substring(0, path.lastIndexOf('/'));
+})();
+const OFFLINE_URL = `${THEME_PATH}/offline.html`;
+const ICON_URL = `${THEME_PATH}/img/agencyhub-icon.png`;
+
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(err => {
-        console.log('Cache install failed:', err);
-      })
+      .then((cache) => cache.addAll([OFFLINE_URL, ICON_URL]))
+      .catch(() => { /* offline page is best-effort */ })
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then((names) => Promise.all(
+      names.filter((name) => name.startsWith('esirom-hub-') && name !== CACHE_NAME)
+        .map((name) => caches.delete(name))
+    )).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-  
-  // Skip API requests (always fetch fresh)
-  if (event.request.url.includes('/api/')) {
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;          // CDNs, fonts, backend API on another host
+  if (url.pathname.includes('/api/')) return;               // never cache API responses
+  if (url.pathname.startsWith('/wp-admin') || url.pathname.startsWith('/wp-login')) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request));
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(response => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        }).catch(() => {
-          // Network failed, show offline page
-          return caches.match('/wp-content/themes/esirom-hub-theme/offline.html');
-        });
-      })
-  );
-});
-
-// Background sync for offline actions
-self.addEventListener('sync', event => {
-  if (event.tag === 'sync-posts') {
-    event.waitUntil(syncPosts());
+  if (url.pathname.startsWith(THEME_PATH + '/')) {
+    event.respondWith(staleWhileRevalidate(request));
   }
 });
 
-async function syncPosts() {
-  // Get pending posts from IndexedDB and sync when online
-  console.log('Syncing posts...');
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
+  } catch (err) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    const offline = await cache.match(OFFLINE_URL);
+    return offline || new Response('You are offline.', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+  }
 }
 
-// Push notifications
-self.addEventListener('push', event => {
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  const network = fetch(request).then((response) => {
+    if (response && response.ok) {
+      cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
+  }).catch(() => cached);
+  return cached || network;
+}
+
+// Push notifications (only used if the backend sends them)
+self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New update available',
-    icon: '/wp-content/themes/esiromhub/img/agencyhub-icon.png',
-    badge: '/wp-content/themes/esiromhub/img/agencyhub-icon.png',
+    icon: ICON_URL,
+    badge: ICON_URL,
     vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
+    data: { dateOfArrival: Date.now() }
   };
-
-  event.waitUntil(
-    self.registration.showNotification('ESIROM Hub', options)
-  );
+  event.waitUntil(self.registration.showNotification('Agency Hub', options));
 });
 
-// Notification click
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow('/dashboard/')
-  );
+  event.waitUntil(self.clients.openWindow('/dashboard/'));
 });

@@ -22,154 +22,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 <html <?php language_attributes(); ?> class="h-full">
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4F46E5">
-    <meta name="description" content="Social media management platform for agencies and clients">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ESIROM Hub">
     <title><?php wp_title('|', true, 'right'); ?> <?php bloginfo('name'); ?></title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    <link rel="shortcut icon" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="<?php echo get_template_directory_uri(); ?>/manifest.json">
-    
-    <!-- iOS Icons -->
-    <link rel="apple-touch-icon" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <?php esirom_hub_head_assets(array('pwa' => true, 'description' => 'Insights, reports and published posts for your brand on Agency Hub by Esirom.')); ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script>
-        // Set theme immediately to avoid FOUC (Flash of Unstyled Content)
-        const theme = localStorage.getItem('theme') || 'light';
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .sidebar {
-            transition: width 0.3s ease;
-        }
-        .sidebar-collapsed {
-            width: 5rem;
-        }
-        .sidebar-expanded {
-            width: 16rem;
-        }
-        .sidebar .nav-text {
-            display: inline;
-        }
-        .sidebar-collapsed .nav-text {
-            display: none;
-        }
-        .sidebar-collapsed .justify-between {
-           justify-content: center;
-        }
-        [x-cloak] { 
-            display: none !important; 
-        }
-        /* Hide any WordPress admin elements */
-        #wpadminbar { display: none !important; }
-        html { margin-top: 0 !important; }
-        body { margin-top: 0 !important; }
-        /* Hide any stray checkboxes in top-left (aggressive) */
-        body > input[type="checkbox"] { display: none !important; }
-        body > label > input[type="checkbox"] { display: none !important; }
-        body input[type="checkbox"][style*="position: fixed"] { display: none !important; }
-        body input[type="checkbox"][style*="position: absolute"] { display: none !important; }
-        input[type="checkbox"]:not(.w-5):not(.rounded) { display: none !important; }
-        body::before { display: none !important; }
-        /* Target the specific stray checkbox by position */
-        aside + input[type="checkbox"] { display: none !important; }
-        .sidebar + input[type="checkbox"] { display: none !important; }
-        
-        /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
-            /* Touch-friendly buttons */
-            button, a {
-                min-height: 44px;
-                min-width: 44px;
-            }
-            
-            /* Larger text on mobile */
-            .text-sm { font-size: 0.9375rem; }
-            .text-xs { font-size: 0.8125rem; }
-            
-            /* Responsive grid */
-            .grid-cols-2, .grid-cols-3, .grid-cols-4 {
-                grid-template-columns: repeat(1, minmax(0, 1fr));
-            }
-            
-            /* Responsive padding */
-            .p-6 { padding: 1rem; }
-            .p-8 { padding: 1.5rem; }
-            
-            /* Full width modals on mobile */
-            .max-w-2xl, .max-w-3xl, .max-w-4xl, .max-w-5xl {
-                max-width: 100%;
-                margin: 0;
-                border-radius: 0;
-            }
-            
-            /* Scrollable tables */
-            table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-        }
-        
-        /* Tablet breakpoint */
-        @media (min-width: 768px) and (max-width: 1024px) {
-            .grid-cols-4 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
         <?php esirom_hub_layout_styles(); ?>
     </style>
     <?php wp_head(); ?>
     <?php esirom_hub_wp_head_reset(); ?>
-    <script>
-        // Remove any stray checkboxes on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Remove WordPress admin bar
-            const adminBar = document.getElementById('wpadminbar');
-            if (adminBar) adminBar.remove();
-            
-            // Remove any top-level checkboxes
-            const topCheckboxes = document.querySelectorAll('body > input[type="checkbox"]');
-            topCheckboxes.forEach(cb => cb.remove());
-            
-            // Remove any checkboxes before main content
-            const firstDiv = document.querySelector('body > div');
-            if (firstDiv) {
-                const prevElements = [];
-                let prev = firstDiv.previousElementSibling;
-                while (prev) {
-                    prevElements.push(prev);
-                    prev = prev.previousElementSibling;
-                }
-                prevElements.forEach(el => {
-                    if (el.tagName === 'INPUT' || el.querySelector('input[type="checkbox"]')) {
-                        el.remove();
-                    }
-                });
-            }
-        });
-    </script>
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="clientHub">
     <div class="hub-app-shell flex flex-col md:flex-row">
@@ -2377,7 +2238,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <script>
         const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
@@ -6869,7 +6731,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('<?php echo get_template_directory_uri(); ?>/sw.js')
+                navigator.serviceWorker.register(<?php echo wp_json_encode(get_template_directory_uri() . "/sw.js?v=" . rawurlencode(wp_get_theme()->get("Version"))); ?>)
                     .then(registration => {
                         console.log('✅ Service Worker registered:', registration.scope);
                     })

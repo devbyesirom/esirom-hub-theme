@@ -8,30 +8,20 @@ if (!defined('ABSPATH')) exit;
 show_admin_bar(false);
 
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
-$website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects')));
+$website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress — Agency Hub</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php esirom_hub_head_assets(array('pwa' => true)); ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         const API_URL = '<?php echo esc_js($api_url); ?>';
-        const LOGIN_URL = '<?php echo esc_js(get_permalink(get_page_by_path('login'))); ?>';
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
-        };
+        const LOGIN_URL = '<?php echo esc_js(esirom_hub_page_url('login')); ?>';
     </script>
     <style>
-        [x-cloak] { display: none !important; }
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar-collapsed .nav-text { display: none; }
         .ring-score { transition: stroke-dashoffset 0.8s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
@@ -51,7 +41,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
 <div x-show="authChecked && !user" x-cloak class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
     <div class="text-center">
         <p class="text-gray-600 dark:text-gray-400 mb-4">You must be logged in to view this page.</p>
-        <a href="<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Go to Login</a>
+        <a href="<?php echo esc_url(esirom_hub_page_url('login')); ?>" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Go to Login</a>
     </div>
 </div>
 
@@ -669,7 +659,7 @@ function progressApp() {
                     localStorage.setItem('user', JSON.stringify(this.user));
 
                     if (this.user.role === 'client') {
-                        window.location.href = '<?php echo esc_js(get_permalink(get_page_by_path('dashboard'))); ?>';
+                        window.location.href = '<?php echo esc_js(esirom_hub_page_url('dashboard')); ?>';
                         return;
                     }
 

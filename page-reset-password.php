@@ -13,135 +13,90 @@ if (!defined('ABSPATH')) {
 
 // Hide WordPress admin bar on this page
 show_admin_bar(false);
+
+$login_url = esirom_hub_page_url('login');
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?> class="h-full">
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password | <?php bloginfo('name'); ?></title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    <link rel="shortcut icon" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    
-    <script>
-        // Suppress Tailwind CDN production warning
-        window.tailwindCDNWarning = false;
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+    <title>Reset password | <?php bloginfo('name'); ?></title>
+    <?php esirom_hub_head_assets(); ?>
     <?php wp_head(); ?>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-    <div class="min-h-screen flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full">
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <div class="flex justify-center mb-6">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-by-esirom.png" alt="Agency Hub by Esirom" class="h-32 w-auto">
-                </div>
-                <h1 class="text-3xl font-bold text-gray-900">Reset Your Password</h1>
-                <p class="mt-2 text-sm text-gray-600">Enter your new password below</p>
+<body class="min-h-full antialiased text-gray-900 dark:text-gray-100">
+    <div class="hub-auth">
+        <aside class="hub-auth__brand" aria-hidden="true">
+            <div class="hub-auth__logo-card self-start">
+                <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-by-esirom.png" alt="" class="h-14 w-auto">
             </div>
+            <div class="max-w-md">
+                <h2 class="text-3xl xl:text-4xl font-bold leading-tight tracking-tight">Choose a new password.</h2>
+                <p class="mt-4 text-base text-white/80 leading-relaxed">
+                    Pick something memorable that you don't use anywhere else. Once saved, you'll be signed straight back in.
+                </p>
+            </div>
+            <p class="text-xs text-white/60">Reset links expire after a short time. If yours has expired, request a new one from the sign-in page.</p>
+        </aside>
 
-            <!-- Reset Password Form -->
-            <div class="bg-white rounded-2xl shadow-xl p-8">
-                <form id="resetPasswordForm" class="space-y-6">
-                    <!-- Success Message -->
-                    <div id="successMessage" class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg" role="alert">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <p class="text-sm font-medium"></p>
-                        </div>
+        <main class="hub-auth__panel">
+            <div class="hub-auth__card">
+                <div class="lg:hidden mb-8 flex justify-center">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-by-esirom.png" alt="Agency Hub by Esirom" class="h-16 w-auto">
+                </div>
+
+                <div class="mb-6">
+                    <h1 class="hub-auth__title">Reset your password</h1>
+                    <p class="hub-auth__subtitle">Enter and confirm your new password below.</p>
+                </div>
+
+                <form id="resetPasswordForm" class="space-y-4" novalidate>
+                    <div id="successMessage" class="hidden hub-alert hub-alert--success" role="status" aria-live="polite">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="text-sm font-medium"></p>
                     </div>
-
-                    <!-- Error Message -->
-                    <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                    <div id="errorMessage" class="hidden hub-alert hub-alert--error" role="alert" aria-live="assertive">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         <p class="text-sm"></p>
                     </div>
 
-                    <!-- New Password Input -->
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                            New Password
-                        </label>
-                        <input 
-                            id="password" 
-                            name="password" 
-                            type="password" 
-                            required 
-                            minlength="6"
-                            class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="Enter new password (min 6 characters)"
-                        >
+                        <label for="password" class="hub-label">New password</label>
+                        <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password"
+                               class="hub-input" placeholder="At least 6 characters">
+                        <p class="hub-field-hint">Use at least 6 characters. A mix of letters, numbers and symbols is strongest.</p>
                     </div>
 
-                    <!-- Confirm Password Input -->
                     <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
-                            Confirm Password
-                        </label>
-                        <input 
-                            id="confirmPassword" 
-                            name="confirmPassword" 
-                            type="password" 
-                            required 
-                            minlength="6"
-                            class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="Confirm new password"
-                        >
+                        <label for="confirmPassword" class="hub-label">Confirm new password</label>
+                        <input id="confirmPassword" name="confirmPassword" type="password" required minlength="6" autocomplete="new-password"
+                               class="hub-input" placeholder="Repeat your new password">
                     </div>
 
-                    <!-- Submit Button -->
-                    <div>
-                        <button 
-                            type="submit" 
-                            id="submitBtn"
-                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                                <svg class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                            <span id="btnText">Reset Password</span>
-                            <svg id="btnSpinner" class="hidden animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </button>
-                    </div>
+                    <button type="submit" id="submitBtn" class="hub-btn hub-btn--primary hub-btn--lg hub-btn--block">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                        <span id="btnText">Save new password</span>
+                        <svg id="btnSpinner" class="hidden animate-spin !h-4 !w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
                 </form>
 
-                <!-- Back to Login Link -->
-                <div class="mt-6 text-center">
-                    <a href="<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>" class="text-sm text-indigo-600 hover:text-indigo-500 font-medium">
-                        ← Back to Login
-                    </a>
-                </div>
+                <p class="mt-6 text-center">
+                    <a href="<?php echo esc_url($login_url); ?>" class="text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">&larr; Back to sign in</a>
+                </p>
             </div>
-        </div>
+        </main>
     </div>
 
     <script>
-        // Configuration
         const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
-        const LOGIN_URL = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
-        const DASHBOARD_URL = '<?php echo esc_url(get_permalink(get_page_by_path('dashboard'))); ?>';
+        const LOGIN_URL = <?php echo wp_json_encode(esc_url_raw($login_url)); ?>;
 
-        // Get token from URL
         const urlParams = new URLSearchParams(window.location.search);
         const resetToken = urlParams.get('token');
 
-        // Get form elements
         const resetForm = document.getElementById('resetPasswordForm');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -150,13 +105,6 @@ show_admin_bar(false);
         const btnSpinner = document.getElementById('btnSpinner');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
-
-        // Check if token exists
-        if (!resetToken) {
-            errorMessage.querySelector('p').textContent = 'Invalid or missing reset token. Please request a new password reset link.';
-            errorMessage.classList.remove('hidden');
-            submitBtn.disabled = true;
-        }
 
         function showError(message) {
             errorMessage.querySelector('p').textContent = message;
@@ -170,26 +118,38 @@ show_admin_bar(false);
             errorMessage.classList.add('hidden');
         }
 
+        function setBusy(busy, label) {
+            submitBtn.disabled = busy;
+            btnText.textContent = label || 'Save new password';
+            btnSpinner.classList.toggle('hidden', !busy);
+        }
+
+        if (!resetToken) {
+            showError('This reset link is invalid or missing its token. Please request a new password reset link from the sign-in page.');
+            submitBtn.disabled = true;
+            passwordInput.disabled = true;
+            confirmPasswordInput.disabled = true;
+        }
+
         resetForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
 
-            // Validate passwords
             if (password.length < 6) {
-                showError('Password must be at least 6 characters long');
+                showError('Your password must be at least 6 characters long.');
+                passwordInput.focus();
                 return;
             }
 
             if (password !== confirmPassword) {
-                showError('Passwords do not match');
+                showError('The two passwords do not match.');
+                confirmPasswordInput.focus();
                 return;
             }
 
-            submitBtn.disabled = true;
-            btnText.textContent = 'Resetting...';
-            btnSpinner.classList.remove('hidden');
+            setBusy(true, 'Saving…');
             errorMessage.classList.add('hidden');
             successMessage.classList.add('hidden');
 
@@ -197,36 +157,29 @@ show_admin_bar(false);
                 const response = await fetch(`${API_URL}/auth/reset-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        token: resetToken,
-                        password: password 
-                    })
+                    body: JSON.stringify({ token: resetToken, password })
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
 
                 if (response.ok && data.success) {
-                    // Store token and redirect to dashboard
-                    localStorage.setItem('token', data.token);
-                    
-                    showSuccess('Password reset successful! Redirecting to dashboard...');
-                    btnText.textContent = 'Success!';
-                    
-                    setTimeout(() => {
-                        window.location.href = DASHBOARD_URL;
-                    }, 2000);
+                    // Store the fresh session token; the sign-in page verifies it and
+                    // sends the user to the right place for their role.
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('requirePasswordChange');
+                    }
+                    showSuccess('Your password has been reset. Signing you in…');
+                    setBusy(true, 'Done');
+                    setTimeout(() => { window.location.href = LOGIN_URL; }, 1500);
                 } else {
-                    showError(data.message || 'Failed to reset password. The link may have expired.');
-                    submitBtn.disabled = false;
-                    btnText.textContent = 'Reset Password';
-                    btnSpinner.classList.add('hidden');
+                    showError(data.message || 'We could not reset your password. The link may have expired — please request a new one.');
+                    setBusy(false);
                 }
             } catch (error) {
-                console.error('Reset password error:', error);
-                showError('Unable to connect to server. Please try again later.');
-                submitBtn.disabled = false;
-                btnText.textContent = 'Reset Password';
-                btnSpinner.classList.add('hidden');
+                showError('We could not reach the server. Please try again later.');
+                setBusy(false);
             }
         });
     </script>
