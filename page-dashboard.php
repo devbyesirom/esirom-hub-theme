@@ -3122,13 +3122,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         case 'dashboard':
                             return 'Insights';
                         case 'calendar':
-                            return this.viewMode === 'client' ? 'Published Posts' : (this.selectedClient?.brandName || this.selectedClient?.name || 'Dashboard');
+                            return 'Published Posts';
                         case 'reports':
                             return 'Reports';
                         case 'eventCoverage':
                             return 'Event Coverage';
                         default:
-                            return 'Dashboard';
+                            return 'Insights';
                     }
                 },
 
