@@ -50,6 +50,12 @@ $hub_tailwind_src = 'https://cdn.tailwindcss.com' . ($hub_head_plugins !== '' ? 
 <script>
     window.tailwindCDNWarning = false;
     window.ESIROM_API_URL = <?php echo wp_json_encode(esc_url_raw($hub_api_url)); ?>;
+    // Verbose diagnostics are opt-in: run localStorage.setItem('hubDebug', '1') in the console.
+    window.hubDebug = function () {
+        try {
+            if (localStorage.getItem('hubDebug') === '1') { console.log.apply(console, arguments); }
+        } catch (e) { /* storage unavailable */ }
+    };
     (function () {
         try {
             if (localStorage.getItem('theme') === 'dark') {

@@ -101,6 +101,21 @@ function esirom_hub_wp_head_reset() {
 }
 
 /**
+ * Render the shared header account menu (change password / log out).
+ */
+function esirom_hub_account_menu($show_theme_toggle = false) {
+    $hub_account_theme = $show_theme_toggle;
+    include get_template_directory() . '/inc/hub-account-menu.php';
+}
+
+/**
+ * Render the shared toast stack (expects `toasts` on the Alpine component).
+ */
+function esirom_hub_toasts() {
+    include get_template_directory() . '/inc/hub-toasts.php';
+}
+
+/**
  * Render unified mobile bottom navigation (clients + staff, PWA).
  */
 function esirom_hub_mobile_nav($active = '', $context = 'site') {
@@ -223,12 +238,34 @@ add_action('wp_enqueue_scripts', 'esirom_hub_scripts');
  * Handle media upload via AJAX
  */
 function esirom_hub_handle_media_upload() {
-    // Check if user is logged in
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'Unauthorized'], 401);
+    $authorised = false;
+
+    // A WordPress administrator session is enough.
+    if (is_user_logged_in() && current_user_can('manage_options')) {
+        $authorised = true;
     }
-    
-    // Include the upload handler
+
+    // Otherwise verify the Hub JWT against the backend and require the admin role.
+    if (!$authorised && !empty($_POST['auth_token'])) {
+        $token = sanitize_text_field(wp_unslash($_POST['auth_token']));
+        $response = wp_remote_get(esirom_hub_api_url() . '/auth/me', array(
+            'timeout' => 10,
+            'headers' => array('Authorization' => 'Bearer ' . $token),
+        ));
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            $role = isset($body['user']['role']) ? $body['user']['role'] : '';
+            if ($role === 'admin') {
+                $authorised = true;
+            }
+        }
+    }
+
+    if (!$authorised) {
+        wp_send_json_error(array('message' => 'Unauthorised – please sign in to the Hub as an administrator.'), 401);
+    }
+
+    define('ESIROM_HUB_UPLOAD_AUTHORISED', true);
     require_once get_template_directory() . '/upload-media.php';
     wp_die();
 }
@@ -348,12 +385,10 @@ add_action('template_redirect', 'esirom_hub_remove_admin_bar');
  * Add rewrite rules for workflow sub-URLs
  */
 function esirom_hub_workflow_rewrite_rules() {
-    add_rewrite_rule('^workflow/concepts/?$', 'index.php?pagename=workflow', 'top');
-    add_rewrite_rule('^workflow/production/?$', 'index.php?pagename=workflow', 'top');
-    add_rewrite_rule('^workflow/contentbank/?$', 'index.php?pagename=workflow', 'top');
-    add_rewrite_rule('^workflow/tasks/?$', 'index.php?pagename=workflow', 'top');
-    add_rewrite_rule('^workflow/planner/?$', 'index.php?pagename=workflow', 'top');
-    add_rewrite_rule('^workflow/feed/?$', 'index.php?pagename=workflow', 'top');
+    $sections = array('dashboard', 'concepts', 'production', 'contentbank', 'tasks', 'planner', 'feed', 'assets');
+    foreach ($sections as $section) {
+        add_rewrite_rule('^workflow/' . $section . '/?$', 'index.php?pagename=workflow', 'top');
+    }
 }
 add_action('init', 'esirom_hub_workflow_rewrite_rules');
 
@@ -370,10 +405,10 @@ add_action('after_switch_theme', 'esirom_hub_flush_rewrite_rules');
  * Auto-flush rewrite rules if not yet registered (runs once)
  */
 function esirom_hub_maybe_flush_rewrite_rules() {
-    if (get_transient('esirom_hub_rewrite_flushed_v6') !== 'yes') {
+    if (get_transient('esirom_hub_rewrite_flushed_v7') !== 'yes') {
         esirom_hub_workflow_rewrite_rules();
         flush_rewrite_rules();
-        set_transient('esirom_hub_rewrite_flushed_v6', 'yes', 0);
+        set_transient('esirom_hub_rewrite_flushed_v7', 'yes', 0);
     }
 }
 add_action('init', 'esirom_hub_maybe_flush_rewrite_rules', 20);

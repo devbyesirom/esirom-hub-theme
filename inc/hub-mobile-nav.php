@@ -93,8 +93,7 @@ $hub_icon = function ($name) use ($hub_icons) {
     <div class="flex justify-around items-stretch h-16 max-w-lg mx-auto">
 
         <!-- ── Client primary tabs ─────────────────────────────────────── -->
-        <a <?php echo $hub_client_show; ?> href="<?php echo $hub_workflow_content_url; ?>"
-           x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient"
+        <a x-show="(viewMode === 'client' || user?.role === 'client') && (typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient)" href="<?php echo $hub_workflow_content_url; ?>"
            class="<?php echo esc_attr($hub_tab_class('content_bank')); ?>"<?php echo $hub_current('content_bank'); ?>>
             <span class="hub-tab__icon"><?php echo $hub_icon('content'); ?></span>
             <span>Content</span>
@@ -105,13 +104,11 @@ $hub_icon = function ($name) use ($hub_icons) {
             <span class="hub-tab__icon"><?php echo $hub_icon('insights'); ?></span>
             <span>Insights</span>
         </a>
-        <a <?php echo $hub_client_show; ?> href="#reports" @click="activeView = 'reports'; moreOpen = false"
-           x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient" <?php echo $hub_view_tab('reports'); ?>>
+        <a x-show="(viewMode === 'client' || user?.role === 'client') && (typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient)" href="#reports" @click="activeView = 'reports'; moreOpen = false" <?php echo $hub_view_tab('reports'); ?>>
             <span class="hub-tab__icon"><?php echo $hub_icon('reports'); ?></span>
             <span>Reports</span>
         </a>
-        <a <?php echo $hub_client_show; ?> href="#content-calendar" @click="activeView = 'calendar'; moreOpen = false"
-           x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient" <?php echo $hub_view_tab('calendar'); ?>>
+        <a x-show="(viewMode === 'client' || user?.role === 'client') && (typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient)" href="#content-calendar" @click="activeView = 'calendar'; moreOpen = false" <?php echo $hub_view_tab('calendar'); ?>>
             <span class="hub-tab__icon"><?php echo $hub_icon('posts'); ?></span>
             <span>Posts</span>
         </a>
@@ -120,11 +117,11 @@ $hub_icon = function ($name) use ($hub_icons) {
             <span class="hub-tab__icon"><?php echo $hub_icon('insights'); ?></span>
             <span>Insights</span>
         </a>
-        <a <?php echo $hub_client_show; ?> href="<?php echo $hub_dashboard_url; ?>#reports" x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient" class="<?php echo esc_attr($hub_tab_class('reports')); ?>"<?php echo $hub_current('reports'); ?>>
+        <a x-show="(viewMode === 'client' || user?.role === 'client') && (typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient)" href="<?php echo $hub_dashboard_url; ?>#reports" class="<?php echo esc_attr($hub_tab_class('reports')); ?>"<?php echo $hub_current('reports'); ?>>
             <span class="hub-tab__icon"><?php echo $hub_icon('reports'); ?></span>
             <span>Reports</span>
         </a>
-        <a <?php echo $hub_client_show; ?> href="<?php echo $hub_dashboard_url; ?>#content-calendar" x-show="typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient" class="<?php echo esc_attr($hub_tab_class('published_posts')); ?>"<?php echo $hub_current('published_posts'); ?>>
+        <a x-show="(viewMode === 'client' || user?.role === 'client') && (typeof isWebsiteOnlyClient === 'undefined' || !isWebsiteOnlyClient)" href="<?php echo $hub_dashboard_url; ?>#content-calendar" class="<?php echo esc_attr($hub_tab_class('published_posts')); ?>"<?php echo $hub_current('published_posts'); ?>>
             <span class="hub-tab__icon"><?php echo $hub_icon('posts'); ?></span>
             <span>Posts</span>
         </a>

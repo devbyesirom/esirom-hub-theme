@@ -31,52 +31,57 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="adsApp()" x-init="init()">
 
-<div x-show="!authChecked" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
-    <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+<div x-show="!authChecked" class="hub-boot" aria-busy="true">
+    <span class="hub-spinner hub-spinner--lg"></span>
+    <span>Loading…</span>
 </div>
 
-<div x-show="authChecked && !user" x-cloak class="fixed inset-0 flex items-center justify-center">
-    <div class="text-center">
-        <p class="text-gray-500 mb-4">You must be logged in.</p>
-        <a href="<?php echo $login_url; ?>" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Go to Login</a>
+<div x-show="authChecked && !user" x-cloak class="hub-boot">
+    <div class="hub-card hub-card--elevated p-8 text-center max-w-sm w-full mx-4">
+        <p class="hub-empty__title">You need to sign in</p>
+        <p class="hub-empty__text mt-1" x-text="loadError || 'Your session has ended or could not be verified.'"></p>
+        <a href="<?php echo $login_url; ?>" class="hub-btn hub-btn--primary hub-btn--block mt-5">Go to sign in</a>
     </div>
 </div>
 
 <div x-show="authChecked && user" x-cloak class="hub-app-shell flex flex-col md:flex-row">
-    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
-        <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+        <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
             <?php esirom_hub_staff_sidebar_nav('ads', 'site', false); ?>
         </nav>
-        <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
             <?php esirom_hub_staff_sidebar_footer('site', false); ?>
         </div>
     </aside>
 
     <main class="hub-app-main">
-        <header class="hub-sticky-header bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/50 px-4 sm:px-6 py-4 shadow-sm">
+        <header class="hub-sticky-header px-4 sm:px-6 py-3">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div class="min-w-0">
-                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Ads</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Boost synced posts via Meta Marketing API</p>
+                    <h1 class="hub-page-title">Ads</h1>
+                    <p class="hub-page-subtitle">Boost synced posts via Meta Marketing API</p>
                 </div>
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-                        <span x-text="selectedClientName || 'Select Brand'"></span>
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
-                        <template x-for="client in clients" :key="client._id">
-                            <button @click="selectClient(client); open = false" class="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700" :class="selectedClient === client._id ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''">
-                                <span class="font-medium" x-text="client.brandName || client.name"></span>
-                            </button>
-                        </template>
+                <div class="flex items-center gap-2">
+                    <div class="relative" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="hub-btn hub-btn--soft hub-btn--sm" :aria-expanded="open">
+                            <span x-text="selectedClientName || 'Select brand'"></span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 hub-card hub-card--elevated z-50 max-h-80 overflow-y-auto py-1">
+                            <template x-for="client in clients" :key="client._id">
+                                <button type="button" @click="selectClient(client); open = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" :class="selectedClient === client._id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200 font-semibold' : 'text-gray-700 dark:text-gray-200'">
+                                    <span x-text="client.brandName || client.name"></span>
+                                </button>
+                            </template>
+                        </div>
                     </div>
+                    <?php esirom_hub_account_menu(); ?>
                 </div>
             </div>
-            <div class="flex gap-2 mt-3">
-                <button @click="tab = 'boost'" class="px-3 py-1.5 text-xs font-semibold rounded-xl" :class="tab === 'boost' ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Boost Posts</button>
-                <button @click="tab = 'campaigns'" class="px-3 py-1.5 text-xs font-semibold rounded-xl" :class="tab === 'campaigns' ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Campaigns</button>
+            <div class="hub-segmented mt-3" role="tablist">
+                <button type="button" role="tab" @click="tab = 'boost'" :aria-selected="tab === 'boost'" class="hub-segmented__item" :class="tab === 'boost' ? 'is-active' : ''">Boost posts</button>
+                <button type="button" role="tab" @click="tab = 'campaigns'" :aria-selected="tab === 'campaigns'" class="hub-segmented__item" :class="tab === 'campaigns' ? 'is-active' : ''">Campaigns</button>
             </div>
         </header>
 
@@ -316,7 +321,29 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
 function adsApp() {
     return {
         authChecked: false,
+        loadError: '',
         user: null,
+        showPwModal: false, pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
+        async changePassword() {
+            this.pwError = ''; this.pwSuccess = '';
+            if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+            if (this.pwNew.length < 6) { this.pwError = 'Your new password must be at least 6 characters.'; return; }
+            if (this.pwNew !== this.pwConfirm) { this.pwError = 'The new passwords do not match.'; return; }
+            this.pwLoading = true;
+            try {
+                const res = await fetch(`${API_URL}/auth/update-password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                if (data.token) localStorage.setItem('token', data.token);
+                this.pwSuccess = 'Password updated.';
+                this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 1500);
+            } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+        },
         viewMode: localStorage.getItem('viewMode') || 'admin',
         isSidebarOpen: true,
         loading: false,
@@ -358,14 +385,19 @@ function adsApp() {
             if (!token) { this.authChecked = true; return; }
             try {
                 const res = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
-                if (!res.ok) throw new Error('auth');
+                if (res.status === 401 || res.status === 403) throw new Error('auth');
+                if (!res.ok) throw new Error('server');
                 const data = await res.json();
                 this.user = data.user;
+                localStorage.setItem('user', JSON.stringify(data.user));
                 if (this.user.role === 'client') {
                     window.location.href = DASHBOARD_URL;
                     return;
                 }
                 if (this.user.role === 'brand_rep') this.viewMode = 'brand_rep';
+                if (this.user.role === 'admin' && this.viewMode === 'client') this.viewMode = 'admin';
+                localStorage.setItem('viewMode', this.viewMode);
+                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
                 await this.loadClients();
                 const saved = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                 if (saved && this.clients.some(c => c._id === saved)) {
@@ -374,7 +406,17 @@ function adsApp() {
                     await this.selectClient(this.clients[0]);
                 }
             } catch (e) {
-                this.user = null;
+                if (e && e.message === 'auth') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    this.user = null;
+                    this.loadError = 'Your session has expired. Please sign in again.';
+                } else if (e && e.message === 'server') {
+                    this.user = null;
+                    this.loadError = 'We could not verify your session. Please try again in a moment.';
+                } else {
+                    this.showToast('Some data could not be loaded. Please refresh to try again.', 'error');
+                }
             } finally {
                 this.authChecked = true;
             }
@@ -647,6 +689,7 @@ function adsApp() {
 }
 </script>
 
+<?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
 <?php esirom_hub_staff_mobile_nav('ads'); ?>
 </body>
 </html>

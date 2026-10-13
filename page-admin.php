@@ -45,61 +45,103 @@ show_admin_bar(false);
     <?php wp_head(); ?>
     <?php esirom_hub_wp_head_reset(); ?>
 </head>
-<body class="h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white" x-data="adminPanel" x-init="init(); loadData()">
-    <div class="hub-app-shell flex w-full">
+<body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 pb-16 md:pb-0" x-data="adminPanel">
+    <!-- Boot state while the session is verified -->
+    <div x-show="!authChecked" class="hub-boot" aria-busy="true">
+        <span class="hub-spinner hub-spinner--lg"></span>
+        <span>Checking your session…</span>
+    </div>
+
+    <div x-show="authChecked" x-cloak class="hub-app-shell flex flex-col md:flex-row w-full">
+        <!-- Mobile Header -->
+        <div class="md:hidden hub-mobile-header flex-col !items-stretch !pb-0">
+            <div class="flex items-center justify-between gap-2 w-full pb-2">
+                <a href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>" class="hub-sidebar-brand" aria-label="Agency Hub home">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-icon.png" alt="" class="h-8 w-8">
+                    <span class="flex flex-col">
+                        <span class="hub-sidebar-brand__name">Admin Panel</span>
+                        <span class="hub-sidebar-brand__sub">Agency Hub</span>
+                    </span>
+                </a>
+                <div x-data="{ open: false }" class="relative">
+                    <button type="button" @click="open = !open" class="hub-btn hub-btn--ghost !px-1.5" :aria-expanded="open" aria-label="Account menu">
+                        <span class="hub-avatar h-7 w-7" x-text="(user?.firstName?.[0] || 'A')"></span>
+                        <svg class="text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-56 hub-card hub-card--elevated py-1 z-50">
+                        <div class="px-4 py-2.5 border-b border-gray-100">
+                            <p class="text-sm font-semibold text-gray-900 truncate" x-text="user?.fullName"></p>
+                            <p class="text-xs text-gray-500 mt-0.5 truncate" x-text="user?.email"></p>
+                        </div>
+                        <a @click.prevent="showPwModal = true; open = false" href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Change password</a>
+                        <a @click.prevent="logout()" href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Log out</a>
+                    </div>
+                </div>
+            </div>
+            <div class="-mx-4 px-4 overflow-x-auto">
+                <div class="hub-segmented w-max mb-2" role="tablist" aria-label="Admin sections">
+                    <button type="button" role="tab" @click="activeTab = 'users'" :aria-selected="activeTab === 'users'" :class="activeTab === 'users' ? 'is-active' : ''" class="hub-segmented__item">Users</button>
+                    <button type="button" role="tab" @click="activeTab = 'pending'" :aria-selected="activeTab === 'pending'" :class="activeTab === 'pending' ? 'is-active' : ''" class="hub-segmented__item">Pending <span x-show="pendingUsers.length" class="ml-1 hub-badge hub-badge--danger" x-text="pendingUsers.length"></span></button>
+                    <button type="button" role="tab" @click="activeTab = 'clients'" :aria-selected="activeTab === 'clients'" :class="activeTab === 'clients' ? 'is-active' : ''" class="hub-segmented__item">Clients</button>
+                    <button type="button" role="tab" @click="openEmailsTab()" :aria-selected="activeTab === 'emails'" :class="activeTab === 'emails' ? 'is-active' : ''" class="hub-segmented__item">Emails</button>
+                    <button type="button" role="tab" @click="activeTab = 'import'" :aria-selected="activeTab === 'import'" :class="activeTab === 'import' ? 'is-active' : ''" class="hub-segmented__item">Import</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar flex-shrink-0 bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex flex-col">
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex flex-shrink-0 border-r border-gray-200 flex-col">
             <?php esirom_hub_staff_sidebar_header(false); ?>
-            <nav class="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-                <p class="admin-nav-label nav-text mb-1">Administration</p>
-                <a @click.prevent="activeTab = 'users'" href="#" :class="activeTab === 'users' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+            <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Admin sections">
+                <p class="hub-nav-group-title nav-text mb-1"><span>Administration</span></p>
+                <a @click.prevent="activeTab = 'users'" href="#" :class="activeTab === 'users' ? 'is-active' : ''" :aria-current="activeTab === 'users' ? 'page' : null" class="hub-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
                     <span class="nav-text">Users</span>
                 </a>
-                <a @click.prevent="activeTab = 'pending'" href="#" :class="activeTab === 'pending' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm relative">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <a @click.prevent="activeTab = 'pending'" href="#" :class="activeTab === 'pending' ? 'is-active' : ''" :aria-current="activeTab === 'pending' ? 'page' : null" class="hub-nav-link relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span class="nav-text">Pending Users</span>
                     <span x-show="pendingUsers.length > 0" class="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full h-4 min-w-[1rem] px-1 flex items-center justify-center" x-text="pendingUsers.length"></span>
                 </a>
-                <a @click.prevent="activeTab = 'clients'" href="#" :class="activeTab === 'clients' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
+                <a @click.prevent="activeTab = 'clients'" href="#" :class="activeTab === 'clients' ? 'is-active' : ''" :aria-current="activeTab === 'clients' ? 'page' : null" class="hub-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" /></svg>
                     <span class="nav-text">Clients</span>
                 </a>
-                <a @click.prevent="openEmailsTab()" href="#" :class="activeTab === 'emails' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                <a @click.prevent="openEmailsTab()" href="#" :class="activeTab === 'emails' ? 'is-active' : ''" :aria-current="activeTab === 'emails' ? 'page' : null" class="hub-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                     <span class="nav-text">Emails</span>
                 </a>
-                <a @click.prevent="activeTab = 'import'" href="#" :class="activeTab === 'import' ? 'bg-indigo-500 text-white font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-sm">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                <a @click.prevent="activeTab = 'import'" href="#" :class="activeTab === 'import' ? 'is-active' : ''" :aria-current="activeTab === 'import' ? 'page' : null" class="hub-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
                     <span class="nav-text">Data Import</span>
                 </a>
             </nav>
-            <div class="p-2 border-t border-gray-200 dark:border-gray-700/50 space-y-0.5">
-                <a href="<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>" class="flex items-center px-3 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-sm">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
-                    <span class="nav-text">Back to Dashboard</span>
+            <div class="p-3 border-t border-gray-200 space-y-0.5">
+                <a href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>" class="hub-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                    <span class="nav-text">Back to the Hub</span>
                 </a>
-                <a @click.prevent="logout()" href="#" class="flex items-center px-3 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-sm">
-                    <svg class="h-5 w-5 flex-shrink-0 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-                    <span class="nav-text">Logout</span>
+                <a @click.prevent="logout()" href="#" class="hub-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
+                    <span class="nav-text">Log out</span>
                 </a>
             </div>
         </aside>
 
         <!-- Main content -->
-        <main class="hub-app-main flex-1 min-w-0 w-full bg-gray-50 dark:bg-gray-900">
-            <header class="flex items-center justify-between p-4 h-16 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-10 shadow-sm gap-4 flex-wrap">
+        <main class="hub-app-main flex-1 min-w-0 w-full mt-[6.75rem] md:mt-0">
+            <header class="hub-sticky-header hidden md:flex items-center justify-between px-4 lg:px-6 py-3 min-h-16 gap-4 flex-wrap">
                 <div class="min-w-0">
-                    <h1 class="text-lg font-bold text-gray-900 dark:text-white" x-text="pageTitle"></h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="pageSubtitle"></p>
+                    <h1 class="hub-page-title" x-text="pageTitle"></h1>
+                    <p class="hub-page-subtitle" x-text="pageSubtitle"></p>
                 </div>
                 <div class="flex items-center gap-2">
                     <!-- User Dropdown -->
                     <div x-data="{ dropdownOpen: false }" class="relative">
-                        <button @click="dropdownOpen = !dropdownOpen" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <img class="h-7 w-7 rounded-full object-cover" :src="'https://placehold.co/100x100/4a5568/ffffff?text=' + (user?.firstName?.[0] || 'A')" :alt="user?.fullName">
-                            <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="user?.fullName"></span>
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <button type="button" @click="dropdownOpen = !dropdownOpen" class="hub-btn hub-btn--ghost !px-1.5" :aria-expanded="dropdownOpen" aria-label="Account menu">
+                            <span class="hub-avatar h-7 w-7" x-text="(user?.firstName?.[0] || 'A')"></span>
+                            <span class="hidden lg:inline text-sm font-medium text-gray-700" x-text="user?.fullName"></span>
+                            <svg class="text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak
                              class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
@@ -139,7 +181,7 @@ show_admin_bar(false);
                     </div>
                 </div>
                 <div class="flex justify-end">
-                    <button @click="showUserModal = true; editingUser = null" class="admin-btn-primary hover:bg-indigo-700 transition-colors">
+                    <button type="button" @click="openNewUser()" class="admin-btn-primary">
                         Add user
                     </button>
                 </div>
@@ -244,7 +286,7 @@ show_admin_bar(false);
                         <p class="admin-stat-label">Active</p>
                     </div>
                     <div class="admin-stat col-span-2 sm:col-span-1 flex items-center justify-end">
-                        <button @click="showClientModal = true; editingClient = null" class="admin-btn-primary hover:bg-indigo-700 transition-colors">
+                        <button type="button" @click="openNewClient()" class="admin-btn-primary">
                             Add client
                         </button>
                     </div>
@@ -271,7 +313,7 @@ show_admin_bar(false);
                             </div>
                             <div class="mt-auto flex flex-col gap-2">
                                 <button @click="customizeClient(client)" class="w-full admin-btn-primary bg-emerald-600 hover:bg-emerald-700 transition-colors">
-                                    Customize dashboard
+                                    Customise dashboard
                                 </button>
                                 <div class="flex gap-2">
                                     <button @click="editClient(client)" class="flex-1 admin-btn-secondary">Edit</button>
@@ -749,13 +791,22 @@ show_admin_bar(false);
                                 </template>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Export file or folder</label>
-                            <input type="file" @change="handleImportFile($event)" accept=".csv,.json" multiple webkitdirectory directory
-                                   :disabled="!importClientId"
-                                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed">
-                            <p class="text-xs text-gray-500 mt-1">CSV, JSON, or full Instagram/Facebook export folder</p>
-                            <p x-show="!importClientId" class="text-xs text-amber-600 mt-1">Select a brand first</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="importSingleFile" class="block text-xs font-medium text-gray-600 mb-1.5">CSV or JSON file</label>
+                                <input id="importSingleFile" type="file" @change="handleImportFile($event)" accept=".csv,.json,text/csv,application/json"
+                                       :disabled="!importClientId"
+                                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <p class="text-xs text-gray-500 mt-1">One file using the CSV template, or a JSON export.</p>
+                            </div>
+                            <div>
+                                <label for="importExportFolder" class="block text-xs font-medium text-gray-600 mb-1.5">Instagram or Facebook export folder</label>
+                                <input id="importExportFolder" type="file" @change="handleImportFile($event)" multiple webkitdirectory directory
+                                       :disabled="!importClientId"
+                                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <p class="text-xs text-gray-500 mt-1">Select the whole unzipped Meta export folder.</p>
+                            </div>
+                            <p x-show="!importClientId" class="text-xs text-amber-600 sm:col-span-2">Select a brand first</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button @click="processManualImport()" :disabled="!importClientId || !importFile"
@@ -811,7 +862,19 @@ show_admin_bar(false);
                         <div class="flex flex-wrap gap-2">
                             <button @click="processMetaAPIImport()" :disabled="!apiImportClientId || !metaAccessToken"
                                     class="admin-btn-primary disabled:opacity-50 disabled:cursor-not-allowed">Fetch from Meta</button>
-                            <button @click="showMetaAPIGuide = true" class="admin-btn-secondary">Setup guide</button>
+                            <button type="button" @click="showMetaAPIGuide = !showMetaAPIGuide" :aria-expanded="showMetaAPIGuide" class="admin-btn-secondary">Setup guide</button>
+                        </div>
+                        <div x-show="showMetaAPIGuide" x-cloak class="hub-alert hub-alert--info !items-start text-xs">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div class="space-y-1.5">
+                                <p class="font-semibold">Getting a Meta access token</p>
+                                <ol class="list-decimal list-outside ml-4 space-y-1">
+                                    <li>Open <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener" class="underline">Meta's Graph API Explorer</a> and choose the Esirom Hub app.</li>
+                                    <li>Generate a <strong>Page access token</strong> for the brand's Facebook Page with the <code>pages_read_engagement</code>, <code>pages_show_list</code>, <code>instagram_basic</code> and <code>instagram_manage_insights</code> permissions.</li>
+                                    <li>Paste the token above, choose the brand and date range, then click <strong>Fetch from Meta</strong>.</li>
+                                </ol>
+                                <p>For ongoing syncing, connect the brand under <strong>Clients → Customise Dashboard → Social connections</strong> instead; tokens pasted here are not stored.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -870,7 +933,7 @@ show_admin_bar(false);
                     </div>
                 </div>
             </div>
-
+            </div>
         </main>
     </div>
 
@@ -1122,7 +1185,7 @@ show_admin_bar(false);
     <!-- Client Customization Modal -->
     <div x-show="showCustomizeModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showCustomizeModal = false">
         <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white mb-10">
-            <h3 class="text-lg font-bold mb-4">Customize Dashboard - <span x-text="customizingClient?.brandName || customizingClient?.companyName || customizingClient?.name"></span></h3>
+            <h3 class="text-lg font-bold mb-4">Customise Dashboard - <span x-text="customizingClient?.brandName || customizingClient?.companyName || customizingClient?.name"></span></h3>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Left: Dashboard Widgets -->
@@ -1582,7 +1645,7 @@ show_admin_bar(false);
 
             <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
                 <button type="button" @click="showCustomizeModal = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-                <button @click="saveCustomization()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save Customization</button>
+                <button @click="saveCustomization()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save customisation</button>
             </div>
         </div>
     </div>
@@ -1654,6 +1717,8 @@ show_admin_bar(false);
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
         const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
+        const LOGIN_URL = <?php echo wp_json_encode(esc_url_raw(esirom_hub_page_url('login'))); ?>;
+        const WORKFLOW_URL = <?php echo wp_json_encode(esc_url_raw(esirom_hub_page_url('workflow'))); ?>;
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('adminPanel', () => ({
@@ -1773,7 +1838,7 @@ show_admin_bar(false);
                 toasts: [],
                 
                 showToast(message, type = 'info', duration = 3000) {
-                    const id = Date.now();
+                    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
                     this.toasts.push({ id, message, type });
                     setTimeout(() => {
                         this.toasts = this.toasts.filter(t => t.id !== id);
@@ -1792,56 +1857,98 @@ show_admin_bar(false);
                 showMetaAPIGuide: false,
                 importSections: { csv: true, metaApi: false },
 
+                authChecked: false,
+                loadingData: false,
+                loadError: '',
+
                 async init() {
-                    // Check auth
                     const token = localStorage.getItem('token');
                     const userStr = localStorage.getItem('user');
-                    
+
                     if (!token || !userStr) {
-                        window.location.href = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
+                        window.location.href = LOGIN_URL;
                         return;
                     }
 
-                    this.user = JSON.parse(userStr);
+                    try {
+                        this.user = JSON.parse(userStr);
+                    } catch (_err) {
+                        this.user = {};
+                    }
 
-                    // Check if admin
-                    if (this.user.role !== 'admin') {
-                        this.showToast('Access denied. Admin only.', 'error', 3000);
-                        window.location.href = '<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>';
+                    // Verify the session with the backend; only admins may use this panel.
+                    try {
+                        const response = await fetch(`${API_URL}/auth/me`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data?.user) {
+                                this.user = data.user;
+                                localStorage.setItem('user', JSON.stringify(data.user));
+                            }
+                        }
+                    } catch (_err) {
+                        // Offline: fall back to the cached user and carry on.
+                    }
+
+                    if (this.user?.role !== 'admin') {
+                        window.location.href = WORKFLOW_URL;
                         return;
                     }
+
+                    this.authChecked = true;
+                    await this.loadData();
+                },
+
+                // Shared fetch wrapper: adds auth, parses JSON, and signs out on an expired session.
+                async api(path, options = {}) {
+                    const headers = Object.assign(
+                        { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        options.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {},
+                        options.headers || {}
+                    );
+                    const response = await fetch(`${API_URL}${path}`, Object.assign({}, options, { headers }));
+                    if (response.status === 401) {
+                        this.logout();
+                        throw new Error('Your session has expired. Please sign in again.');
+                    }
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.success === false) {
+                        const detail = Array.isArray(data.errors) && data.errors.length ? data.errors.map(e => e.msg).join(' ') : '';
+                        throw new Error(data.message || detail || `Request failed (${response.status})`);
+                    }
+                    return data;
                 },
 
                 async loadData() {
-                    await Promise.all([
+                    this.loadingData = true;
+                    this.loadError = '';
+                    const results = await Promise.allSettled([
                         this.loadUsers(),
                         this.loadPendingUsers(),
                         this.loadClients()
                     ]);
+                    const failed = results.filter(r => r.status === 'rejected');
+                    if (failed.length) {
+                        this.loadError = failed[0].reason?.message || 'Some data could not be loaded.';
+                        this.showToast(this.loadError, 'error', 6000);
+                    }
+                    this.loadingData = false;
                 },
 
                 async loadUsers() {
-                    try {
-                        const response = await fetch(`${API_URL}/users`, {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                        });
-                        const data = await response.json();
-                        if (data.success) this.users = data.data;
-                    } catch (error) {
-                        console.error('Error loading users:', error);
-                    }
+                    const data = await this.api('/users');
+                    this.users = data.data || [];
                 },
 
                 async loadPendingUsers() {
-                    try {
-                        const response = await fetch(`${API_URL}/users/pending/list`, {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                        });
-                        const data = await response.json();
-                        if (data.success) this.pendingUsers = data.data;
-                    } catch (error) {
-                        console.error('Error loading pending users:', error);
-                    }
+                    const data = await this.api('/users/pending/list');
+                    this.pendingUsers = data.data || [];
                 },
 
                 approveUser(user) {
@@ -1908,21 +2015,12 @@ show_admin_bar(false);
                 },
 
                 async loadClients() {
-                    try {
-                        const response = await fetch(`${API_URL}/clients?includeInactive=true`, {
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                        });
-                        const data = await response.json();
-                        if (data.success) {
-                            // Backfill brandName in case backend still uses companyName
-                            this.clients = data.data.map(c => ({
-                                ...c,
-                                brandName: c.brandName || c.companyName || c.name || ''
-                            }));
-                        }
-                    } catch (error) {
-                        console.error('Error loading clients:', error);
-                    }
+                    const data = await this.api('/clients?includeInactive=true');
+                    // Backfill brandName in case the backend still uses companyName
+                    this.clients = (data.data || []).map(c => ({
+                        ...c,
+                        brandName: c.brandName || c.companyName || c.name || ''
+                    }));
                 },
 
                 editUser(user) {
@@ -2019,21 +2117,31 @@ show_admin_bar(false);
                     });
                 },
 
-                async deleteUser(id) {
-                    if (!confirm('Are you sure you want to delete this user?')) return;
-                    
-                    try {
-                        const response = await fetch(`${API_URL}/users/${id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                        });
+                openNewUser() {
+                    this.editingUser = null;
+                    this.userForm = { firstName: '', lastName: '', email: '', role: 'client', clientIds: [], assignedClients: [], isActive: true, department: '', multimediaRole: '', isManager: false, newPassword: '' };
+                    this.showUserModal = true;
+                },
 
-                        if (response.ok) {
-                            this.showToast('User deleted!', 'success', 3000);
-                            await this.loadUsers();
-                        }
+                openNewClient() {
+                    this.editingClient = null;
+                    this.clientForm = { name: '', brandName: '', contactEmail: '', contactPhone: '', industry: '', logo: '', serviceType: 'social_media' };
+                    this.showClientModal = true;
+                },
+
+                async deleteUser(id) {
+                    if (id === this.user?._id) {
+                        this.showToast('You cannot delete your own account.', 'warning', 4000);
+                        return;
+                    }
+                    if (!confirm('Delete this user? This cannot be undone.')) return;
+
+                    try {
+                        await this.api(`/users/${id}`, { method: 'DELETE' });
+                        this.showToast('User deleted.', 'success', 3000);
+                        await this.loadUsers();
                     } catch (error) {
-                        console.error('Error deleting user:', error);
+                        this.showToast(`Could not delete user: ${error.message}`, 'error', 6000);
                     }
                 },
 
@@ -2106,20 +2214,14 @@ show_admin_bar(false);
                 },
 
                 async deleteClient(id) {
-                    if (!confirm('Are you sure you want to delete this client?')) return;
-                    
-                    try {
-                        const response = await fetch(`${API_URL}/clients/${id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                        });
+                    if (!confirm('Delete this client? Their users will lose access to the brand. This cannot be undone.')) return;
 
-                        if (response.ok) {
-                            this.showToast('Client deleted!', 'success', 3000);
-                            await this.loadClients();
-                        }
+                    try {
+                        await this.api(`/clients/${id}`, { method: 'DELETE' });
+                        this.showToast('Client deleted.', 'success', 3000);
+                        await this.loadClients();
                     } catch (error) {
-                        console.error('Error deleting client:', error);
+                        this.showToast(`Could not delete client: ${error.message}`, 'error', 6000);
                     }
                 },
 
@@ -2150,8 +2252,9 @@ show_admin_bar(false);
                                 platforms: dashboardConfig.platforms || ['facebook', 'instagram', 'linkedin', 'youtube', 'x'],
                                 kpiGoals: dashboardConfig.kpiGoals || [],
                                 monthlyPostTarget: dashboardConfig.monthlyPostTarget || 20,
-                                clientStartDate: dashboardConfig.clientStartDate || '',
-                                mirrorIGToFB: dashboardConfig.mirrorIGToFB !== undefined ? dashboardConfig.mirrorIGToFB : false
+                                clientStartDate: dashboardConfig.clientStartDate ? String(dashboardConfig.clientStartDate).slice(0, 10) : '',
+                                mirrorIGToFB: dashboardConfig.mirrorIGToFB !== undefined ? dashboardConfig.mirrorIGToFB : false,
+                                postTypeBreakdown: dashboardConfig.postTypeBreakdown || ''
                             };
                         } else {
                             // Fallback to localStorage if API fails
@@ -3516,11 +3619,13 @@ show_admin_bar(false);
                                 'Authorization': `Bearer ${localStorage.getItem('token')}`
                             },
                             body: JSON.stringify({
+                                enabledWidgets: this.customizeForm.widgets,
                                 platforms: this.customizeForm.platforms,
                                 kpiGoals: this.customizeForm.kpiGoals,
-                                monthlyPostTarget: this.customizeForm.monthlyPostTarget,
-                                clientStartDate: this.customizeForm.clientStartDate,
-                                mirrorIGToFB: this.customizeForm.mirrorIGToFB
+                                monthlyPostTarget: Number(this.customizeForm.monthlyPostTarget) || 0,
+                                clientStartDate: this.customizeForm.clientStartDate || null,
+                                mirrorIGToFB: this.customizeForm.mirrorIGToFB,
+                                postTypeBreakdown: this.customizeForm.postTypeBreakdown || ''
                             })
                         });
 
@@ -3531,7 +3636,7 @@ show_admin_bar(false);
                                 JSON.stringify(this.customizeForm)
                             );
                             
-                            this.showToast('Dashboard customization saved to database!', 'success', 4000);
+                            this.showToast('Dashboard customisation saved.', 'success', 4000);
                             this.showCustomizeModal = false;
                             this.customizingClient = null;
                         } else {
@@ -3540,7 +3645,7 @@ show_admin_bar(false);
                         }
                     } catch (error) {
                         console.error('Error saving customization:', error);
-                        this.showToast('Error saving customization. Please try again.', 'error', 4000);
+                        this.showToast('Error saving customisation. Please try again.', 'error', 4000);
                     }
                 },
 
@@ -3653,7 +3758,8 @@ show_admin_bar(false);
                 logout() {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    window.location.href = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
+                    localStorage.removeItem('requirePasswordChange');
+                    window.location.href = LOGIN_URL;
                 },
 
                 // Import Functions
@@ -3702,8 +3808,13 @@ show_admin_bar(false);
                     const isFacebook = fileList.some(f => f.webkitRelativePath.includes("this_profile's_activity_across_facebook"));
                     const isInstagram = fileList.some(f => f.webkitRelativePath.includes('your_instagram_activity'));
                     
+                    if (isFacebook && !isInstagram) {
+                        await this.processFacebookFolderImport();
+                        return;
+                    }
+
                     if (isInstagram) {
-                        this.showToast('Processing Instagram export folder...', 'info', 5000);
+                        this.showToast('Processing Instagram export folder…', 'info', 5000);
                         
                         try {
                             const parser = new InstagramDataParser();
@@ -3748,7 +3859,7 @@ show_admin_bar(false);
                         
                         // Get client name
                         const client = this.clients.find(c => c._id === this.importClientId);
-                        const clientName = client ? client.companyName : this.importClientId;
+                        const clientName = client ? (client.brandName || client.companyName || client.name) : this.importClientId;
                         
                         // Generate posts with estimated KPIs
                         this.importPreview = parser.generatePostsWithKPIs(this.importClientId, clientName);
@@ -4025,148 +4136,104 @@ show_admin_bar(false);
                 },
 
                 async handleMediaUpload(event) {
-                    try {
-                        const files = Array.from(event.target.files);
-                        if (files.length === 0) return;
+                    const input = event.target;
+                    const files = Array.from(input.files || []);
+                    if (files.length === 0) return;
 
-                        const client = this.clients.find(c => c._id === this.importClientId);
-                        if (!client) {
-                            this.showToast('Please select a client first', 'warning', 3000);
-                            return;
-                        }
-
-                    this.mediaUploadProgress = { uploaded: 0, total: files.length };
-
-                    // Group files by folder structure
-                    const filesByFolder = {};
-                    files.forEach(file => {
-                        const pathParts = file.webkitRelativePath.split('/');
-                        // Extract media type and month from path
-                        // e.g., "media/reels/202509/video.mp4"
-                        if (pathParts.length >= 3 && pathParts[0] === 'media') {
-                            const mediaType = pathParts[1]; // reels, stories, profile
-                            const monthFolder = pathParts.length > 3 ? pathParts[2] : '';
-                            const key = `${mediaType}/${monthFolder}`;
-                            
-                            if (!filesByFolder[key]) {
-                                filesByFolder[key] = [];
-                            }
-                            filesByFolder[key].push(file);
-                        }
-                    });
-
-                    // Upload files in batches by folder
-                    for (const [folderKey, folderFiles] of Object.entries(filesByFolder)) {
-                        const [mediaType, monthFolder] = folderKey.split('/');
-                        
-                        // Upload in chunks of 10 files
-                        for (let i = 0; i < folderFiles.length; i += 10) {
-                            const chunk = folderFiles.slice(i, i + 10);
-                            const formData = new FormData();
-                            
-                            chunk.forEach(file => {
-                                formData.append('mediaFiles[]', file);
-                            });
-                            
-                            formData.append('clientName', client.companyName);
-                            formData.append('mediaType', mediaType);
-                            formData.append('monthFolder', monthFolder);
-
-                            try {
-                                // Add auth token to FormData
-                                const token = localStorage.getItem('token');
-                                if (token) {
-                                    formData.append('auth_token', token);
-                                }
-                                
-                                const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=upload_media', {
-                                    method: 'POST',
-                                    body: formData,
-                                    credentials: 'same-origin'
-                                });
-
-                                const result = await response.json();
-                                
-                                if (result.success) {
-                                    this.mediaUploadProgress.uploaded += chunk.length;
-                                } else {
-                                    const errorMessage = result.data?.message || result.message || 'Unknown upload error';
-                                    console.error('Upload error:', errorMessage);
-                                }
-                            } catch (error) {
-                                console.error('Upload failed:', error);
-                            }
-                        }
+                    const client = this.clients.find(c => c._id === this.importClientId);
+                    if (!client) {
+                        this.showToast('Please select a brand first', 'warning', 3000);
+                        return;
                     }
 
-                    this.showToast(`Successfully uploaded ${this.mediaUploadProgress.uploaded} media files!`, 'success');
-                    this.mediaUploadProgress = { uploaded: 0, total: 0 };
+                    // The import parsers link posts to /wp-content/media/<brand-slug>/..., so
+                    // upload into the same brand folder.
+                    const brandName = client.brandName || client.companyName || client.name || '';
+
+                    // Group files by folder structure, e.g. "media/reels/202509/video.mp4"
+                    const filesByFolder = {};
+                    let skipped = 0;
+                    files.forEach(file => {
+                        const pathParts = (file.webkitRelativePath || file.name).split('/');
+                        const mediaIndex = pathParts.indexOf('media');
+                        if (mediaIndex === -1 || pathParts.length < mediaIndex + 3) {
+                            skipped += 1;
+                            return;
+                        }
+                        const mediaType = pathParts[mediaIndex + 1]; // reels, posts, stories, profile
+                        const monthFolder = pathParts.length > mediaIndex + 3 ? pathParts[mediaIndex + 2] : '';
+                        const key = `${mediaType}/${monthFolder}`;
+                        (filesByFolder[key] = filesByFolder[key] || []).push(file);
+                    });
+
+                    const uploadable = files.length - skipped;
+                    if (uploadable === 0) {
+                        this.showToast('No media files found. Select the export\'s "media" folder (for example media/reels/202509).', 'warning', 6000);
+                        input.value = '';
+                        return;
+                    }
+
+                    this.mediaUploadProgress = { uploaded: 0, total: uploadable };
+                    const failures = [];
+                    const token = localStorage.getItem('token');
+
+                    try {
+                        for (const [folderKey, folderFiles] of Object.entries(filesByFolder)) {
+                            const [mediaType, monthFolder] = folderKey.split('/');
+
+                            for (let i = 0; i < folderFiles.length; i += 10) {
+                                const chunk = folderFiles.slice(i, i + 10);
+                                const formData = new FormData();
+                                chunk.forEach(file => formData.append('mediaFiles[]', file));
+                                formData.append('clientName', brandName);
+                                formData.append('mediaType', mediaType);
+                                formData.append('monthFolder', monthFolder);
+                                if (token) formData.append('auth_token', token);
+
+                                try {
+                                    const response = await fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>?action=upload_media', {
+                                        method: 'POST',
+                                        body: formData,
+                                        credentials: 'same-origin'
+                                    });
+                                    const result = await response.json().catch(() => ({}));
+
+                                    if (response.ok && result.success) {
+                                        this.mediaUploadProgress.uploaded += (result.data?.uploaded || []).length;
+                                        (result.data?.errors || []).forEach(msg => failures.push(msg));
+                                    } else {
+                                        const errorMessage = result.data?.message || result.message || `Upload failed (${response.status})`;
+                                        failures.push(`${mediaType}/${monthFolder || ''}: ${errorMessage}`);
+                                        if (response.status === 401) throw new Error(errorMessage);
+                                    }
+                                } catch (error) {
+                                    failures.push(error.message || 'Network error');
+                                    if (/Unauthoris|Unauthoriz/i.test(error.message || '')) throw error;
+                                }
+                            }
+                        }
+
+                        const uploaded = this.mediaUploadProgress.uploaded;
+                        if (uploaded > 0 && failures.length === 0) {
+                            this.showToast(`Uploaded ${uploaded} media file${uploaded === 1 ? '' : 's'}${skipped ? ` (${skipped} skipped outside the media folder)` : ''}.`, 'success', 5000);
+                        } else if (uploaded > 0) {
+                            this.showToast(`Uploaded ${uploaded} of ${uploadable} files. ${failures.length} failed: ${failures[0]}`, 'warning', 8000);
+                        } else {
+                            this.showToast(`Media upload failed: ${failures[0] || 'no files were accepted'}`, 'error', 8000);
+                        }
                     } catch (error) {
-                        console.error('Media upload error:', error);
-                        this.showToast(`Media upload failed: ${error.message}`, 'error', 5000);
+                        this.showToast(`Media upload stopped: ${error.message}`, 'error', 8000);
+                    } finally {
+                        this.mediaUploadProgress = { uploaded: 0, total: 0 };
+                        input.value = '';
                     }
                 }
             }));
         });
     </script>
 
-            </div>
-        </main>
-    </div>
-
-    <!-- Toast Notifications -->
-    <div class="fixed top-20 right-4 md:top-4 z-[9999] space-y-2 w-full max-w-sm pr-4">
-        <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="true" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 transform translate-x-full"
-                 x-transition:enter-end="opacity-100 transform translate-x-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="w-full shadow-lg rounded-lg pointer-events-auto overflow-hidden"
-                 :class="{
-                     'bg-green-50 border border-green-200': toast.type === 'success',
-                     'bg-red-50 border border-red-200': toast.type === 'error',
-                     'bg-blue-50 border border-blue-200': toast.type === 'info',
-                     'bg-yellow-50 border border-yellow-200': toast.type === 'warning'
-                 }">
-                <div class="p-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <!-- Success Icon -->
-                            <svg x-show="toast.type === 'success'" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <!-- Error Icon -->
-                            <svg x-show="toast.type === 'error'" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <!-- Info Icon -->
-                            <svg x-show="toast.type === 'info'" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <!-- Warning Icon -->
-                            <svg x-show="toast.type === 'warning'" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium break-words" 
-                               :class="{
-                                   'text-green-800': toast.type === 'success',
-                                   'text-red-800': toast.type === 'error',
-                                   'text-blue-800': toast.type === 'info',
-                                   'text-yellow-800': toast.type === 'warning'
-                               }"
-                               x-text="toast.message"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
-
+    <?php esirom_hub_mobile_nav('admin', 'site'); ?>
+    <?php include get_template_directory() . '/inc/hub-toasts.php'; ?>
     <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
     <?php wp_footer(); ?>
 </body>

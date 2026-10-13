@@ -35,164 +35,145 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 <body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="clientHub">
     <div class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
-        <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-gray-800 dark:text-white leading-tight">Agency Hub</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">by esirom</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <!-- Admin Role Switcher (only for admins) -->
-                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
-                        <button @click="showRoleSwitcher = !showRoleSwitcher" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            <span class="text-sm font-medium" x-text="viewMode === 'admin' ? 'Admin View' : viewMode === 'brand_rep' ? 'Brand Rep View' : 'Client View'"></span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+        <div class="md:hidden hub-mobile-header">
+            <div class="flex items-center justify-between gap-2 w-full">
+                <a href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>" class="hub-sidebar-brand" aria-label="Agency Hub home">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-icon.png" alt="" class="h-8 w-8">
+                    <span class="flex flex-col">
+                        <span class="hub-sidebar-brand__name" x-text="pageTitle || 'Insights'"></span>
+                        <span class="hub-sidebar-brand__sub">Agency Hub</span>
+                    </span>
+                </a>
+                <div class="flex items-center gap-1">
+                    <!-- Brand selector (staff) -->
+                    <div x-show="(user.role === 'admin' || user.role === 'brand_rep') && viewMode !== 'client'" x-data="{ open: false }" class="relative">
+                        <button type="button" @click="open = !open" class="hub-btn hub-btn--soft hub-btn--sm max-w-[9rem]" :aria-expanded="open" aria-label="Choose brand">
+                            <span class="truncate" x-text="selectedClient?.brandName || selectedClient?.companyName || 'Brand'"></span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
-                            <div class="p-2">
-                                <button @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                                    Admin View
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto hub-card hub-card--elevated py-1 z-50">
+                            <template x-for="client in availableClients" :key="'m-' + client._id">
+                                <button type="button" @click="switchClient(client); open = false" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2" :class="selectedClient?._id === client._id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200 font-semibold' : 'text-gray-700 dark:text-gray-200'">
+                                    <span class="hub-avatar h-7 w-7 text-[11px]"><img x-show="client.logo" :src="client.logo" alt=""><span x-show="!client.logo" x-text="(client.brandName || client.companyName || client.name || 'C').charAt(0)"></span></span>
+                                    <span class="truncate" x-text="client.brandName || client.companyName || client.name"></span>
                                 </button>
-                                <button @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                                    Brand Rep View
-                                </button>
-                                <button @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                                    Client View
-                                </button>
-                                <!-- Client Selector (only when in client view) -->
-                                <div x-show="viewMode === 'client'" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 px-3">View as Client:</label>
-                                    <select x-model="selectedViewClient" @change="handleSelectedViewClientChange()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                        <option value="">All Brands</option>
-                                        <template x-for="client in availableClients" :key="client._id">
-                                            <option :value="client._id" x-text="client.brandName || client.name"></option>
-                                        </template>
-                                    </select>
-                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    <!-- Admin view switcher -->
+                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                        <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="showRoleSwitcher" aria-label="Switch view mode">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                        <div x-show="showRoleSwitcher" @click.away="showRoleSwitcher = false" x-cloak class="absolute right-0 mt-2 w-64 hub-card hub-card--elevated z-50 p-2">
+                            <p class="hub-eyebrow px-2 pt-1 pb-2">Viewing as</p>
+                            <button type="button" @click="switchViewMode('admin'); showRoleSwitcher = false" :class="viewMode === 'admin' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Admin view</button>
+                            <button type="button" @click="switchViewMode('brand_rep'); showRoleSwitcher = false" :class="viewMode === 'brand_rep' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Brand rep view</button>
+                            <button type="button" @click="switchViewMode('client'); showRoleSwitcher = false" :class="viewMode === 'client' ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors">Client view</button>
+                            <div x-show="viewMode === 'client'" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <label for="mobileViewClient" class="hub-label px-2 !mb-1 !text-xs">View as brand</label>
+                                <select id="mobileViewClient" x-model="selectedViewClient" @change="handleSelectedViewClientChange()" class="hub-select !py-1.5 text-sm">
+                                    <option value="">All brands</option>
+                                    <template x-for="client in availableClients" :key="client._id">
+                                        <option :value="client._id" x-text="client.brandName || client.name"></option>
+                                    </template>
+                                </select>
                             </div>
                         </div>
                     </div>
                     <!-- Theme Toggle -->
-                    <button @click="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg x-show="theme === 'light'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                        </svg>
-                        <svg x-show="theme === 'dark'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
+                    <button type="button" @click="toggleTheme()" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" aria-label="Toggle dark mode">
+                        <svg x-show="theme === 'light'" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                        <svg x-show="theme === 'dark'" x-cloak class="text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Desktop Sidebar -->
-        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col">
-            <div class="flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-gray-700/50">
-                <a href="#" class="flex items-center space-x-2" x-show="isSidebarOpen">
-                    <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png" alt="Agency Hub" class="h-8 w-8">
-                    <div class="flex flex-col">
-                        <span class="text-lg font-bold text-gray-800 dark:text-white leading-tight">Agency Hub</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">by esirom</span>
-                    </div>
-                </a>
-                <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                </button>
-            </div>
-            <nav class="flex-1 px-2 py-4 space-y-2">
-                <!-- CLIENT VIEW NAVIGATION -->
+        <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+            <?php esirom_hub_staff_sidebar_header(false); ?>
+            <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
                 <?php esirom_hub_client_sidebar_nav('', 'dashboard', false); ?>
                 <?php esirom_hub_staff_sidebar_nav('', 'dashboard', false); ?>
             </nav>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700/50">
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
                 <?php esirom_hub_staff_sidebar_footer('dashboard', false); ?>
             </div>
         </aside>
 
         <!-- Main content -->
-        <main class="hub-app-main bg-gray-50 dark:bg-gray-900 mt-14 md:mt-0">
-            <header class="hub-sticky-header hidden md:flex items-center justify-between p-4 min-h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/50 shadow-sm gap-4 flex-wrap">
+        <main class="hub-app-main mt-14 md:mt-0">
+            <header class="hub-sticky-header hidden md:flex items-center justify-between px-4 lg:px-6 py-3 min-h-16 gap-4 flex-wrap">
                 <div class="flex items-center gap-4 flex-wrap min-w-0">
                     <div class="min-w-0">
-                        <h1 class="text-lg font-bold text-gray-900 dark:text-white" x-text="pageTitle"></h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="currentDate"></p>
+                        <h1 class="hub-page-title" x-text="pageTitle"></h1>
+                        <p class="hub-page-subtitle" x-text="currentDate"></p>
                     </div>
                     <!-- Client Selector (for admins and brand reps) -->
-                    <div x-show="user.role === 'admin' || user.role === 'brand_rep'" x-data="{ clientDropdownOpen: false, clientDropdownStyle: '' }" class="relative">
-                        <button x-ref="clientDropdownBtn" @click="clientDropdownOpen = !clientDropdownOpen; if (clientDropdownOpen && $refs.clientDropdownBtn) { const r = $refs.clientDropdownBtn.getBoundingClientRect(); clientDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + r.left + 'px;width:' + Math.max(r.width, 256) + 'px'; }" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-100 dark:border-indigo-800/50">
-                            <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-300" x-text="selectedClient?.brandName || selectedClient?.companyName || 'Select Client'"></span>
-                            <svg class="h-4 w-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <div x-show="(user.role === 'admin' || user.role === 'brand_rep') && viewMode !== 'client'" x-data="{ clientDropdownOpen: false, clientDropdownStyle: '' }" class="relative">
+                        <button type="button" x-ref="clientDropdownBtn" @click="clientDropdownOpen = !clientDropdownOpen; if (clientDropdownOpen && $refs.clientDropdownBtn) { const r = $refs.clientDropdownBtn.getBoundingClientRect(); clientDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + r.left + 'px;width:' + Math.max(r.width, 256) + 'px'; }" class="hub-btn hub-btn--soft hub-btn--sm" :aria-expanded="clientDropdownOpen">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            <span x-text="selectedClient?.brandName || selectedClient?.companyName || 'Select brand'"></span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div x-show="clientDropdownOpen" @click.away="clientDropdownOpen = false" x-cloak :style="clientDropdownStyle" class="hub-menu-dropdown py-1">
                             <template x-for="client in availableClients" :key="client._id">
-                                <button @click="switchClient(client); clientDropdownOpen = false" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2">
-                                    <img :src="client.logo || 'https://placehold.co/40x40/4a5568/ffffff?text=' + (client.brandName || client.companyName || client.name || 'C').charAt(0)" class="h-8 w-8 rounded-full" :alt="client.brandName || client.companyName || client.name">
-                                    <div>
-                                        <p class="font-medium text-gray-900 dark:text-white" x-text="client.brandName || client.companyName || client.name"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="client.industry || 'N/A'"></p>
-                                    </div>
+                                <button type="button" @click="switchClient(client); clientDropdownOpen = false" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" :class="selectedClient?._id === client._id ? 'bg-brand-50 dark:bg-brand-500/10' : ''">
+                                    <span class="hub-avatar"><img x-show="client.logo" :src="client.logo" alt=""><span x-show="!client.logo" x-text="(client.brandName || client.companyName || client.name || 'C').charAt(0)"></span></span>
+                                    <span class="min-w-0">
+                                        <span class="block font-medium text-gray-900 dark:text-white truncate" x-text="client.brandName || client.companyName || client.name"></span>
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400 truncate" x-text="client.industry || 'Brand'"></span>
+                                    </span>
                                 </button>
                             </template>
                         </div>
                     </div>
                     <!-- Client multi-brand scope (for client users with multiple brands) -->
                     <div x-show="user.role === 'client' && availableClients.length > 1" class="flex items-center gap-2">
-                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Brand Scope:</span>
-                        <button @click="setClientBrandScope('')"
-                                :class="!selectedViewClient ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-                                class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors">
-                            All Brands
-                        </button>
-                        <div class="relative" x-data="{ open: false, brandDropdownStyle: '' }">
-                            <button x-ref="brandDropdownBtn" @click="open = !open; if (open && $refs.brandDropdownBtn) { const r = $refs.brandDropdownBtn.getBoundingClientRect(); brandDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + r.left + 'px;width:' + Math.max(r.width, 224) + 'px'; }" class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
-                                Choose Brand
-                            </button>
-                            <div x-show="open" @click.away="open = false" x-cloak :style="brandDropdownStyle" class="hub-menu-dropdown py-1">
-                                <template x-for="client in availableClients" :key="`client-scope-${client._id}`">
-                                    <button @click="setClientBrandScope(client._id); open = false"
-                                            :class="selectedViewClient === client._id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-                                            class="w-full text-left px-3 py-2 text-sm">
-                                        <span x-text="client.brandName || client.companyName || client.name"></span>
-                                    </button>
-                                </template>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Brand scope</span>
+                        <div class="hub-segmented">
+                            <button type="button" @click="setClientBrandScope('')" :class="!selectedViewClient ? 'is-active' : ''" class="hub-segmented__item">All brands</button>
+                            <div class="relative" x-data="{ open: false, brandDropdownStyle: '' }">
+                                <button type="button" x-ref="brandDropdownBtn" @click="open = !open; if (open && $refs.brandDropdownBtn) { const r = $refs.brandDropdownBtn.getBoundingClientRect(); brandDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + r.left + 'px;width:' + Math.max(r.width, 224) + 'px'; }" class="hub-segmented__item" :class="selectedViewClient ? 'is-active' : ''" x-text="selectedViewClient ? (availableClients.find(c => c._id === selectedViewClient)?.brandName || 'Brand') : 'Choose brand'"></button>
+                                <div x-show="open" @click.away="open = false" x-cloak :style="brandDropdownStyle" class="hub-menu-dropdown py-1">
+                                    <template x-for="client in availableClients" :key="`client-scope-${client._id}`">
+                                        <button type="button" @click="setClientBrandScope(client._id); open = false"
+                                                :class="selectedViewClient === client._id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-200' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                                                class="w-full text-left px-3 py-2 text-sm">
+                                            <span x-text="client.brandName || client.companyName || client.name"></span>
+                                        </button>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button @click="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle theme">
-                        <svg x-show="theme === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                        <svg x-show="theme === 'dark'" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                <div class="flex items-center gap-1">
+                    <button type="button" @click="toggleTheme()" class="hub-btn hub-btn--ghost hub-btn--icon" aria-label="Toggle dark mode">
+                        <svg x-show="theme === 'light'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        <svg x-show="theme === 'dark'" x-cloak class="text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </button>
                     <div x-data="{ dropdownOpen: false, userDropdownStyle: '' }" class="relative">
-                        <button x-ref="userDropdownBtn" @click="dropdownOpen = !dropdownOpen; if (dropdownOpen && $refs.userDropdownBtn) { const r = $refs.userDropdownBtn.getBoundingClientRect(); userDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + (r.right - 208) + 'px;width:208px'; }" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <img class="h-7 w-7 rounded-full object-cover" :src="user.clientId?.logo || 'https://placehold.co/100x100/4a5568/ffffff?text=' + (user.firstName?.[0] || 'U')" :alt="user.fullName">
-                            <span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="user.clientId?.brandName || user.clientId?.companyName || user.fullName"></span>
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <button type="button" x-ref="userDropdownBtn" @click="dropdownOpen = !dropdownOpen; if (dropdownOpen && $refs.userDropdownBtn) { const r = $refs.userDropdownBtn.getBoundingClientRect(); userDropdownStyle = 'top:' + (r.bottom + 8) + 'px;left:' + (r.right - 224) + 'px;width:224px'; }" class="hub-btn hub-btn--ghost !px-1.5" :aria-expanded="dropdownOpen" aria-label="Account menu">
+                            <span class="hub-avatar h-7 w-7"><img x-show="user.clientId?.logo" :src="user.clientId?.logo" alt=""><span x-show="!user.clientId?.logo" x-text="(user.firstName?.[0] || 'U')"></span></span>
+                            <span class="hidden lg:inline text-sm font-medium text-gray-700 dark:text-gray-300" x-text="user.clientId?.brandName || user.clientId?.companyName || user.fullName"></span>
+                            <svg class="text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak :style="userDropdownStyle" class="hub-menu-dropdown py-1 rounded-2xl">
+                        <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak :style="userDropdownStyle" class="hub-menu-dropdown py-1">
                             <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="user.fullName"></p>
-                                <p class="text-xs text-gray-500 mt-0.5" x-text="user.email"></p>
-                                <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 capitalize font-medium" x-text="user.role?.replace('_', ' ')"></p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="user.fullName"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate" x-text="user.email"></p>
+                                <p class="text-xs text-brand-600 dark:text-brand-300 mt-0.5 capitalize font-medium" x-text="user.role?.replace('_', ' ')"></p>
                             </div>
-                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                Change Password
+                            <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Change password
                             </a>
-                            <a @click.prevent="logout(); dropdownOpen = false" href="#" class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
+                            <a @click.prevent="logout(); dropdownOpen = false" href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
+                                Log out
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -202,15 +183,30 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 <!-- Dashboard View -->
                 <div x-show="activeView === 'dashboard'" x-cloak>
                     <!-- Loading State -->
-                    <div x-show="loading" class="flex items-center justify-center py-12">
-                        <svg class="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                    <div x-show="loading" class="space-y-6" aria-busy="true" aria-live="polite">
+                        <div class="hub-skeleton h-40 rounded-2xl"></div>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="hub-skeleton h-28 rounded-2xl"></div>
+                            <div class="hub-skeleton h-28 rounded-2xl"></div>
+                            <div class="hub-skeleton h-28 rounded-2xl"></div>
+                            <div class="hub-skeleton h-28 rounded-2xl"></div>
+                        </div>
+                        <div class="hub-skeleton h-64 rounded-2xl"></div>
+                        <p class="sr-only">Loading insights…</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div x-show="!loading && dashboardError" x-cloak class="hub-empty">
+                        <div class="hub-empty__icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                        </div>
+                        <p class="hub-empty__title">Insights unavailable</p>
+                        <p class="hub-empty__text" x-text="dashboardError"></p>
+                        <button type="button" @click="reloadClientScopedData()" class="hub-btn hub-btn--secondary hub-btn--sm mt-2">Try again</button>
                     </div>
 
                     <!-- Dashboard Content -->
-                    <div x-show="!loading" class="hub-insights-shell space-y-6">
+                    <div x-show="!loading && !dashboardError" class="hub-insights-shell space-y-6">
                         <!-- Pending Approvals Alert (for clients) -->
                         <div x-show="user.role === 'client' && dashboardData.pendingPosts?.count > 0" class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                             <div class="flex items-center">
@@ -222,7 +218,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         You have <span x-text="dashboardData.pendingPosts?.count || 0"></span> post(s) pending your approval
                                     </p>
                                 </div>
-                                <button @click="activeView = 'calendar'" class="ml-4 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100">
+                                <button @click="goToView('calendar')" class="ml-4 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100">
                                     Review →
                                 </button>
                             </div>
@@ -268,7 +264,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                     <p class="hub-insights-section-title mb-1">Platforms</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Colored = included · Grey strikethrough = excluded</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Coloured = included · Grey strikethrough = excluded</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
                                     <button x-show="clientPlatforms.includes('facebook')" @click="togglePlatformFilter('facebook')" :class="platformFilterClasses('facebook')">Facebook</button>
@@ -278,7 +274,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <button x-show="clientPlatforms.includes('x')" @click="togglePlatformFilter('x')" :class="platformFilterClasses('x')">X</button>
                                     <button x-show="clientPlatforms.includes('tiktok')" @click="togglePlatformFilter('tiktok')" :class="platformFilterClasses('tiktok')">TikTok</button>
                                     <button @click="selectAllPlatforms()" :class="activePlatforms.length === clientPlatforms.length ? 'hub-filter-pill bg-indigo-600 text-white ring-2 ring-indigo-300 ring-offset-1 dark:ring-offset-gray-900' : 'hub-filter-pill bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'">All</button>
-                                    <button @click="showCustomizeWidgets = !showCustomizeWidgets" class="hub-filter-pill bg-gray-900 dark:bg-white text-white dark:text-gray-900">Customize</button>
+                                    <button @click="showCustomizeWidgets = !showCustomizeWidgets" class="hub-filter-pill bg-gray-900 dark:bg-white text-white dark:text-gray-900">Customise</button>
                                 </div>
                             </div>
                             <div x-show="showCustomizeWidgets" x-collapse class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -331,7 +327,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <div class="hub-insights-hero__stat rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
                                     <p class="text-xs uppercase tracking-wide text-indigo-100">Last synced</p>
                                     <p class="mt-1 text-lg font-semibold" x-text="formatAudienceSyncTime()"></p>
-                                    <p class="mt-2 text-xs text-indigo-100">Updates on Sync Posts</p>
+                                    <p class="mt-2 text-xs text-indigo-100">Updates with each sync</p>
                                 </div>
                             </div>
                         </div>
@@ -630,7 +626,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             </template>
                                         </div>
                                         <div x-show="getInstagramOnlineFollowers().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
-                                            <p x-show="!getAudienceActivityErrors().length">Instagram peak hours need a Business/Creator account with 100+ followers and Instagram insights permission. After Sync Posts, click <strong>Refresh</strong>. Meta still withholds this for some accounts.</p>
+                                            <p x-show="!getAudienceActivityErrors().length">Instagram peak hours need a Business or Creator account with 100+ followers and the Instagram insights permission. Tap <strong>Refresh</strong> after the next sync. Meta still withholds this for some accounts.</p>
                                             <template x-for="err in getAudienceActivityErrors().filter(e => /instagram/i.test(e)).slice(0,2)" :key="err">
                                                 <p class="text-amber-700 dark:text-amber-300 mt-2" x-text="err"></p>
                                             </template>
@@ -699,7 +695,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 </div>
                                 <div x-show="!hasMetaAccountActivity()" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-gray-600 dark:bg-gray-900/40">
                                     <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Account activity not loaded yet</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Connect Facebook/Instagram and click <strong>Refresh audience</strong> or run <strong>Sync Posts</strong> to pull Meta account metrics.</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Connect Facebook or Instagram for this brand, then tap <strong>Refresh audience</strong> to pull Meta account metrics.</p>
                                     <template x-if="getAudienceActivityErrors().length">
                                         <div class="mt-3 text-left text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
                                             <p class="font-semibold mb-1">Meta API notes</p>
@@ -900,7 +896,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         </a>
                                     </template>
                                 </div>
-                                <p x-show="!(getSortedTopContent().length)" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No content data yet — run Sync Posts to pull metrics.</p>
+                                <p x-show="!(getSortedTopContent().length)" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No content data for this period yet. Metrics appear here once posts have been synced.</p>
                             </div>
                         </div>
 
@@ -1085,7 +1081,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 <!-- Reports View -->
                 <div x-show="activeView === 'reports'" x-cloak>
-                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                    <div class="bg-white dark:bg-gray-800/50 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                         <div class="flex items-center justify-between gap-3 mb-4">
                             <div>
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Reports</h2>
@@ -1194,11 +1190,21 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <div x-show="!reports.length" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                            No reports found for this client yet.
+                        <div x-show="reportsLoading" class="space-y-3" aria-busy="true">
+                            <div class="hub-skeleton h-12"></div>
+                            <div class="hub-skeleton h-12"></div>
+                            <div class="hub-skeleton h-12"></div>
                         </div>
 
-                        <ul x-show="reports.length" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <div x-show="!reportsLoading && !reports.length" class="hub-empty">
+                            <div class="hub-empty__icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                            <p class="hub-empty__title">No reports yet</p>
+                            <p class="hub-empty__text" x-text="(user.role === 'admin' || user.role === 'brand_rep') ? 'Generate a report from the builder above or upload a PDF to share it with this brand.' : 'Your monthly reports will appear here as soon as they are published.'"></p>
+                        </div>
+
+                        <ul x-show="!reportsLoading && reports.length" class="divide-y divide-gray-200 dark:divide-gray-700">
                             <template x-for="report in reports" :key="report._id">
                                 <li class="py-3 first:pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div>
@@ -1211,13 +1217,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         <span class="text-xs font-medium px-2 py-0.5 rounded capitalize"
                                             :class="report.status === 'finalized' || report.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'"
                                             x-text="report.status || 'draft'"></span>
-                                        <button @click.prevent="openReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">View</button>
-                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="startReportEdit(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
-                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="deleteReport(report)" class="text-sm text-red-600 dark:text-red-400 hover:underline">Delete</button>
-                                        <button x-show="report.pdfUrl || report.source === 'uploaded'" @click.prevent="downloadReportExport(report, 'pdf')" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">PDF</button>
-                                        <button x-show="report.csvUrl" @click.prevent="downloadReportExport(report, 'csv')" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">CSV</button>
-                                        <button x-show="report.pptUrl" @click.prevent="downloadReportExport(report, 'ppt')" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">PPT</button>
-                                        <button x-show="!report.pdfUrl && report.source !== 'uploaded'" @click.prevent="downloadReport(report)" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Download</button>
+                                        <button @click.prevent="openReport(report)" class="hub-btn hub-btn--soft hub-btn--sm">View</button>
+                                        <button x-show="report.pdfUrl || report.source === 'uploaded'" @click.prevent="downloadReportExport(report, 'pdf')" class="hub-btn hub-btn--secondary hub-btn--sm">PDF</button>
+                                        <button x-show="report.csvUrl" @click.prevent="downloadReportExport(report, 'csv')" class="hub-btn hub-btn--secondary hub-btn--sm">CSV</button>
+                                        <button x-show="report.pptUrl" @click.prevent="downloadReportExport(report, 'ppt')" class="hub-btn hub-btn--secondary hub-btn--sm">PPT</button>
+                                        <button x-show="!report.pdfUrl && report.source !== 'uploaded'" @click.prevent="downloadReport(report)" class="hub-btn hub-btn--secondary hub-btn--sm">Download PDF</button>
+                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="startReportEdit(report)" class="hub-btn hub-btn--ghost hub-btn--sm">Edit</button>
+                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="deleteReport(report)" class="hub-btn hub-btn--ghost hub-btn--sm !text-red-600 dark:!text-red-400" aria-label="Delete report">Delete</button>
                                     </div>
                                 </li>
                             </template>
@@ -1227,7 +1233,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 <!-- Event Coverage View -->
                 <div x-show="activeView === 'eventCoverage'" x-cloak>
-                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                    <div class="bg-white dark:bg-gray-800/50 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                         <div class="flex items-center justify-between gap-3 mb-5">
                             <div>
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Event Coverage</h2>
@@ -1361,17 +1367,26 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="bg-white dark:bg-gray-800/50 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between gap-2 mb-4">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Event Log</h3>
                             <button @click="loadEventCoverageBookings()" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Refresh</button>
                         </div>
 
-                        <div x-show="!eventCoverageBookings.length" class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                            No event coverage bookings yet.
+                        <div x-show="eventCoverageLoading" class="space-y-3" aria-busy="true">
+                            <div class="hub-skeleton h-20"></div>
+                            <div class="hub-skeleton h-20"></div>
                         </div>
 
-                        <div x-show="eventCoverageBookings.length" class="space-y-3">
+                        <div x-show="!eventCoverageLoading && !eventCoverageBookings.length" class="hub-empty">
+                            <div class="hub-empty__icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8.25 6.75h7.5m-7.5 3h4.5m-6 7.5h10.5A2.25 2.25 0 0019.5 15V6A2.25 2.25 0 0017.25 3.75H6.75A2.25 2.25 0 004.5 6v9a2.25 2.25 0 002.25 2.25zm0 0v2.25m10.5-2.25v2.25"/></svg>
+                            </div>
+                            <p class="hub-empty__title">No event coverage bookings yet</p>
+                            <p class="hub-empty__text">Requests you submit with the form above will be listed here with their status.</p>
+                        </div>
+
+                        <div x-show="!eventCoverageLoading && eventCoverageBookings.length" class="space-y-3">
                             <template x-for="booking in eventCoverageBookings" :key="booking._id">
                                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div class="flex flex-wrap items-start justify-between gap-3">
@@ -1382,7 +1397,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             </div>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                                 <svg class="inline w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                <span x-text="new Date(booking.eventDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })"></span>
+                                                <span x-text="new Date(booking.eventDate).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })"></span>
                                                 <span class="mx-1">·</span>
                                                 <svg class="inline w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                                 <span x-text="booking.location"></span>
@@ -1460,7 +1475,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 <!-- Published Posts View -->
                 <div x-show="activeView === 'calendar'" x-cloak>
                     <!-- Posts Header -->
-                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-5 shadow-sm mb-6">
+                    <div class="bg-white dark:bg-gray-800/50 rounded-2xl p-5 shadow-sm mb-6">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Published Posts</h2>
@@ -1589,7 +1604,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     <!-- Posts Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <template x-for="post in filteredPosts" :key="post.id">
-                            <div class="relative bg-white dark:bg-gray-800/50 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer" :class="selectedPosts.includes(post.id) ? 'ring-2 ring-indigo-500' : ''" @click="togglePostSelection(post.id, $event)">
+                            <div class="relative bg-white dark:bg-gray-800/50 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer" :class="selectedPosts.includes(post.id) ? 'ring-2 ring-indigo-500' : ''" @click="togglePostSelection(post.id, $event)">
                                 <!-- Post Thumbnail -->
                                 <div class="relative bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 overflow-hidden group" :class="post.contentType === 'reel' ? 'aspect-[9/16]' : 'aspect-square'" x-data="{ playing: false, currentTime: 0, duration: 0 }">
                                     <!-- Video Player for Reels/Videos -->
@@ -1604,7 +1619,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             @timeupdate="currentTime = $el.currentTime; duration = $el.duration"
                                             @loadedmetadata="duration = $el.duration"
                                             @ended="currentTime = 0"
-                                            @error="console.log('Video load error:', post.finalContent)"
+                                            @error="hubDebug('Video load error:', post.finalContent)"
                                             playsinline
                                             loop
                                             x-ref="videoPlayer"
@@ -1615,7 +1630,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     
                                     <!-- Image for Static Posts -->
                                     <template x-if="post.contentType === 'static' && post.finalContent">
-                                        <img :src="post.finalContent" class="w-full h-full object-cover" alt="Post preview" @error="console.log('Image load error:', post.finalContent)">
+                                        <img :src="post.finalContent" class="w-full h-full object-cover" alt="Post preview" @error="hubDebug('Image load error:', post.finalContent)">
                                     </template>
                                     
                                     <!-- Placeholder if no media loaded yet -->
@@ -1719,7 +1734,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     <div class="flex items-center justify-between mb-2">
                                         <div class="flex flex-col">
                                             <span class="text-xs text-gray-500 dark:text-gray-400" x-text="new Date(post.scheduledDate).toLocaleDateString()"></span>
-                                            <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400" x-text="new Date(post.scheduledDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })"></span>
+                                            <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400" x-text="new Date(post.scheduledDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })"></span>
                                         </div>
                                         <div class="flex flex-col items-end">
                                             <span class="text-xs font-medium text-gray-700 dark:text-gray-300 capitalize" x-text="post.contentType"></span>
@@ -1745,12 +1760,22 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </template>
                     </div>
 
+                    <!-- Loading State -->
+                    <div x-show="postsLoading && filteredPosts.length === 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy="true">
+                        <div class="hub-skeleton h-72 rounded-2xl"></div>
+                        <div class="hub-skeleton h-72 rounded-2xl"></div>
+                        <div class="hub-skeleton h-72 rounded-2xl"></div>
+                        <div class="hub-skeleton h-72 rounded-2xl hidden xl:block"></div>
+                    </div>
+
                     <!-- Empty State -->
-                    <div x-show="filteredPosts.length === 0" class="bg-white dark:bg-gray-800/50 rounded-lg p-12 text-center">
-                        <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5"></path></svg>
-                        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No posts found</h3>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Get started by creating your first post</p>
-                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="showCreatePostModal = true" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Create Post</button>
+                    <div x-show="!postsLoading && filteredPosts.length === 0" class="hub-empty">
+                        <div class="hub-empty__icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <p class="hub-empty__title" x-text="posts.length ? 'No posts match these filters' : 'No published posts yet'"></p>
+                        <p class="hub-empty__text" x-text="posts.length ? 'Try widening the date range or clearing a filter to see more posts.' : 'Published posts appear here automatically once the brand\'s social accounts have been synced.'"></p>
+                        <button x-show="posts.length" type="button" @click="filterPlatform = ''; filterMonth = ''; filterYear = ''; filterStatus = ''; filterContentType = ''; filterCampaign = ''; searchQuery = ''" class="hub-btn hub-btn--secondary hub-btn--sm mt-2">Clear filters</button>
                     </div>
                 </div>
 
@@ -1759,8 +1784,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
     </div>
 
     <!-- Create Post Modal -->
-    <div x-show="showCreatePostModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showCreatePostModal = false">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+    <div x-show="showCreatePostModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="showCreatePostModal = false" @keydown.escape.window="if (showCreatePostModal) { showCreatePostModal = false }">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white" x-text="postForm.id ? 'Edit Post' : 'Create New Post'"></h3>
             <form @submit.prevent="createPost()" class="space-y-4">
                 <div>
@@ -1794,7 +1819,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Content Type</label>
-                    <select x-model="postForm.contentType" required class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <select x-model="postForm.contentType" required class="hub-input">
                         <option value="static">Static Image (1080x1080)</option>
                         <option value="video">Video (1920x1080)</option>
                         <option value="reel">Reel/Story (1080x1920)</option>
@@ -1802,11 +1827,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Scheduled Date</label>
-                    <input type="date" x-model="postForm.scheduledDate" required class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="date" x-model="postForm.scheduledDate" required class="hub-input">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Campaign (Optional)</label>
-                    <select x-model="postForm.campaignId" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <select x-model="postForm.campaignId" class="hub-input">
                         <option value="">No Campaign</option>
                         <template x-for="campaign in campaigns" :key="campaign.id">
                             <option :value="campaign.id" x-text="campaign.name"></option>
@@ -1815,7 +1840,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Caption (Optional)</label>
-                    <textarea x-model="postForm.caption" rows="3" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Write your caption here..."></textarea>
+                    <textarea x-model="postForm.caption" rows="3" class="hub-input" placeholder="Write your caption here..."></textarea>
                 </div>
                 <div>
                     <label class="flex items-center space-x-2 mb-3">
@@ -1825,30 +1850,30 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
                 <div x-show="!postForm.skipConcept">
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Concept Image/Video (Optional)</label>
-                    <input type="file" @change="handleFileUpload($event, 'concept')" accept="image/*,video/*" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="file" @change="handleFileUpload($event, 'concept')" accept="image/*,video/*" class="hub-input">
                     <img x-show="postForm.conceptImage" :src="postForm.conceptImage" class="mt-2 max-h-40 rounded">
                 </div>
                 <div x-show="postForm.skipConcept">
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Final Content *</label>
-                    <input type="file" @change="handleFileUpload($event, 'final')" accept="image/*,video/*" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="file" @change="handleFileUpload($event, 'final')" accept="image/*,video/*" class="hub-input">
                     <img x-show="postForm.finalContent" :src="postForm.finalContent" class="mt-2 max-h-40 rounded">
                 </div>
                 <div x-show="postForm.contentType === 'video' || postForm.contentType === 'reel'">
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">YouTube URL (Optional - for video content)</label>
-                    <input type="url" x-model="postForm.youtubeUrl" placeholder="https://youtube.com/watch?v=..." class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="url" x-model="postForm.youtubeUrl" placeholder="https://youtube.com/watch?v=..." class="hub-input">
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">If video is on YouTube, you can link it here instead of uploading</p>
                 </div>
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
-                    <button type="button" @click="showCreatePostModal = false; resetPostForm()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" x-text="postForm.id ? 'Update Post' : 'Create Post'"></button>
+                    <button type="button" @click="showCreatePostModal = false; resetPostForm()" class="hub-btn hub-btn--secondary">Cancel</button>
+                    <button type="submit" class="hub-btn hub-btn--primary" x-text="postForm.id ? 'Update Post' : 'Create Post'"></button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Report Detail Modal -->
-    <div x-show="showReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="closeReportModal()">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+    <div x-show="showReportModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="closeReportModal()" @keydown.escape.window="if (showReportModal) { closeReportModal() }">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white" x-text="selectedReport?.name || 'Report'"></h3>
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -1925,20 +1950,20 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </template>
 
                 <div class="flex justify-end flex-wrap gap-2 pt-4 border-t dark:border-gray-600">
-                    <button type="button" @click="closeReportModal()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
-                    <button type="button" @click="saveReportEdits()" x-show="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="savingReportEdit">Save</button>
-                    <button type="button" x-show="selectedReport?.pdfUrl || selectedReport?.source === 'uploaded'" @click="downloadReportExport(selectedReport, 'pdf')" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">PDF</button>
-                    <button type="button" x-show="selectedReport?.csvUrl" @click="downloadReportExport(selectedReport, 'csv')" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">CSV</button>
-                    <button type="button" x-show="selectedReport?.pptUrl" @click="downloadReportExport(selectedReport, 'ppt')" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">PPT</button>
-                    <button type="button" x-show="!selectedReport?.pdfUrl && selectedReport?.source !== 'uploaded'" @click="downloadReport(selectedReport)" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Download</button>
+                    <button type="button" @click="closeReportModal()" class="hub-btn hub-btn--secondary">Close</button>
+                    <button type="button" @click="saveReportEdits()" x-show="reportEditForm && (user.role === 'admin' || user.role === 'brand_rep')" class="hub-btn hub-btn--success disabled:opacity-60 disabled:cursor-not-allowed" :disabled="savingReportEdit">Save</button>
+                    <button type="button" x-show="selectedReport?.pdfUrl || selectedReport?.source === 'uploaded'" @click="downloadReportExport(selectedReport, 'pdf')" class="hub-btn hub-btn--primary">PDF</button>
+                    <button type="button" x-show="selectedReport?.csvUrl" @click="downloadReportExport(selectedReport, 'csv')" class="hub-btn hub-btn--primary">CSV</button>
+                    <button type="button" x-show="selectedReport?.pptUrl" @click="downloadReportExport(selectedReport, 'ppt')" class="hub-btn hub-btn--primary">PPT</button>
+                    <button type="button" x-show="!selectedReport?.pdfUrl && selectedReport?.source !== 'uploaded'" @click="downloadReport(selectedReport)" class="hub-btn hub-btn--primary">Download</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- View Post Modal (for admins/brand reps) -->
-    <div x-show="showViewPostModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showViewPostModal = false">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+    <div x-show="showViewPostModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="showViewPostModal = false" @keydown.escape.window="if (showViewPostModal) { showViewPostModal = false }">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white">View Post</h3>
             <div class="space-y-4">
                 <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
@@ -1978,44 +2003,46 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
-                    <button type="button" @click="showViewPostModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Close</button>
+                    <button type="button" @click="showViewPostModal = false" class="hub-btn hub-btn--secondary">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Review Post Modal (for clients) -->
-    <div x-show="showReviewPostModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showReviewPostModal = false">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+    <div x-show="showReviewPostModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="showReviewPostModal = false" @keydown.escape.window="if (showReviewPostModal) { showReviewPostModal = false }">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white">Review Post</h3>
+            <template x-if="currentPost">
             <div class="space-y-4">
                 <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                     <img x-show="currentPost?.finalContent || currentPost?.conceptImage" :src="currentPost?.finalContent || currentPost?.conceptImage" class="w-full max-h-96 object-contain rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Caption</label>
-                    <textarea x-model="currentPost.caption" rows="3" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                    <textarea x-model="currentPost.caption" rows="3" class="hub-input"></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Feedback (if requesting changes)</label>
-                    <textarea x-model="currentPost.clientFeedback" rows="2" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Provide feedback for changes..."></textarea>
+                    <textarea x-model="currentPost.clientFeedback" rows="2" class="hub-input" placeholder="Provide feedback for changes..."></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Caption Suggestion (optional)</label>
-                    <textarea x-model="currentPost.captionSuggestion" rows="2" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Suggest a different caption..."></textarea>
+                    <textarea x-model="currentPost.captionSuggestion" rows="2" class="hub-input" placeholder="Suggest a different caption..."></textarea>
                 </div>
                 <div class="flex justify-end space-x-2 pt-4 border-t dark:border-gray-600">
-                    <button type="button" @click="showReviewPostModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
-                    <button @click="requestReview()" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Request Changes</button>
-                    <button @click="approvePost()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Approve</button>
+                    <button type="button" @click="showReviewPostModal = false" class="hub-btn hub-btn--secondary">Cancel</button>
+                    <button @click="requestReview()" class="hub-btn hub-btn--warning">Request Changes</button>
+                    <button @click="approvePost()" class="hub-btn hub-btn--success">Approve</button>
                 </div>
             </div>
+            </template>
         </div>
     </div>
 
     <!-- Post KPIs Modal -->
-    <div x-show="showPostKPIsModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showPostKPIsModal = false">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+    <div x-show="showPostKPIsModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="showPostKPIsModal = false" @keydown.escape.window="if (showPostKPIsModal) { showPostKPIsModal = false }">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white">Add Post KPIs - Per Platform</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Enter KPIs for each platform this post was published on</p>
             
@@ -2032,61 +2059,61 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             <!-- Core Metrics -->
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Reach</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_reach']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_reach']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Impressions</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_impressions']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_impressions']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Engagement</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_engagement']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_engagement']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             
                             <!-- Video/Reel Metrics -->
                             <div x-show="currentPost.contentType === 'reel' || currentPost.contentType === 'video'">
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Views</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_views']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_views']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div x-show="currentPost.contentType === 'reel' || currentPost.contentType === 'video'">
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Watch Time (sec)</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_watch_time']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_watch_time']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div x-show="currentPost.contentType === 'reel' || currentPost.contentType === 'video'">
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Skip Rate (%)</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_skip_rate']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_skip_rate']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             
                             <!-- Engagement Actions -->
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Likes</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_likes']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_likes']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Comments</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_comments']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_comments']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Shares</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_shares']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_shares']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Saves</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_saves']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_saves']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Clicks</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_clicks']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_clicks']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             
                             <!-- Audience Breakdown -->
                             <div x-show="currentPost.contentType === 'reel' || currentPost.contentType === 'video'">
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Follower Views</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_views_followers']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_views_followers']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                             <div x-show="currentPost.contentType === 'reel' || currentPost.contentType === 'video'">
                                 <label class="block text-xs font-medium mb-1 dark:text-gray-300">Non-Follower Views</label>
-                                <input type="number" x-model="currentPost.kpis[platform + '_views_non_followers']" class="w-full border rounded px-2 py-1 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="0">
+                                <input type="number" x-model="currentPost.kpis[platform + '_views_non_followers']" class="hub-input !py-1.5" placeholder="0">
                             </div>
                         </div>
                     </div>
@@ -2094,15 +2121,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             </div>
             
             <div class="flex justify-end space-x-2 mt-6 pt-4 border-t dark:border-gray-600">
-                <button type="button" @click="showPostKPIsModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
-                <button @click="savePostKPIs()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save All KPIs</button>
+                <button type="button" @click="showPostKPIsModal = false" class="hub-btn hub-btn--secondary">Cancel</button>
+                <button @click="savePostKPIs()" class="hub-btn hub-btn--primary">Save All KPIs</button>
             </div>
         </div>
     </div>
 
     <!-- KPI Update Modal (for admins/brand reps) -->
-    <div x-show="showKPIUpdateModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showKPIUpdateModal = false">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800 mb-10">
+    <div x-show="showKPIUpdateModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="showKPIUpdateModal = false" @keydown.escape.window="if (showKPIUpdateModal) { showKPIUpdateModal = false }">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-10">
             <h3 class="text-lg font-bold mb-4 dark:text-white">Update KPI Progress</h3>
             <div class="space-y-4 max-h-96 overflow-y-auto">
                 <template x-for="(kpi, index) in dashboardData.kpis" :key="index">
@@ -2130,7 +2157,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         <!-- Manual KPIs (editable) -->
                         <div x-show="!kpi.isAutoTracked" class="mb-2">
                             <label class="text-sm text-gray-700 dark:text-gray-300 mb-1 block">Current Value</label>
-                            <input type="number" x-model="kpi.currentValue" @input="kpi.progress = (kpi.currentValue / kpi.targetValue) * 100" class="w-full border rounded px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                            <input type="number" x-model="kpi.currentValue" @input="kpi.progress = Number(kpi.targetValue) > 0 ? Math.min(100, (Number(kpi.currentValue) / Number(kpi.targetValue)) * 100) : 0" class="w-full border rounded px-3 py-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
                         </div>
                         
                         <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -2140,18 +2167,18 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </template>
                 <div x-show="!dashboardData.kpis || dashboardData.kpis.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">
-                    No KPIs configured yet. Go to Admin Panel → Clients → Customize Dashboard to add KPIs.
+                    No KPIs have been configured for this brand yet. An administrator can add them under Admin Panel → Clients → Customise Dashboard.
                 </div>
             </div>
             <div class="flex justify-end space-x-2 mt-6 pt-4 border-t dark:border-gray-600">
-                <button type="button" @click="showKPIUpdateModal = false" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
-                <button @click="saveKPIUpdates()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save Updates</button>
+                <button type="button" @click="showKPIUpdateModal = false" class="hub-btn hub-btn--secondary">Cancel</button>
+                <button @click="saveKPIUpdates()" class="hub-btn hub-btn--primary">Save Updates</button>
             </div>
         </div>
     </div>
 
     <!-- Password Change Modal (Required on First Login) -->
-    <div x-show="showPasswordChangeModal" x-cloak class="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div x-show="showPasswordChangeModal" x-cloak class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true">
         <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-lg bg-white dark:bg-gray-800">
             <div class="text-center mb-6">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
@@ -2165,15 +2192,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             <form @submit.prevent="changeRequiredPassword()">
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Current Password</label>
-                    <input type="password" x-model="passwordChangeForm.currentPassword" required class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Enter your temporary password">
+                    <input type="password" x-model="passwordChangeForm.currentPassword" required class="hub-input" placeholder="Enter your temporary password">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">New Password</label>
-                    <input type="password" x-model="passwordChangeForm.newPassword" required minlength="6" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Minimum 6 characters">
+                    <input type="password" x-model="passwordChangeForm.newPassword" required minlength="6" class="hub-input" placeholder="Minimum 6 characters">
                 </div>
                 <div class="mb-6">
                     <label class="block text-sm font-medium mb-1 dark:text-gray-300">Confirm New Password</label>
-                    <input type="password" x-model="passwordChangeForm.confirmPassword" required minlength="6" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Re-enter new password">
+                    <input type="password" x-model="passwordChangeForm.confirmPassword" required minlength="6" class="hub-input" placeholder="Re-enter new password">
                 </div>
                 <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                     Change Password
@@ -2183,7 +2210,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
     </div>
 
     <!-- Upload PDF Report Modal -->
-    <div x-show="showUploadReportModal" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showUploadReportModal = false" @keydown.escape.window="showUploadReportModal = false">
+    <div x-show="showUploadReportModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" @click.self="showUploadReportModal = false" @keydown.escape.window="showUploadReportModal = false">
         <div class="relative top-10 mx-auto p-6 border w-full max-w-xl shadow-lg rounded-lg bg-white dark:bg-gray-800 mb-10">
             <div class="flex items-center justify-between mb-5">
                 <h3 class="text-lg font-bold dark:text-white flex items-center gap-2">
@@ -2257,10 +2284,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 })(),
                 selectedViewClient: localStorage.getItem('selectedViewClient') || null,
                 theme: localStorage.getItem('theme') || 'light',
-                currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                currentDate: new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
                 user: {},
                 dashboardData: {},
+                posts: [],
                 reports: [],
+                reportsLoading: false,
+                postsLoading: false,
+                dashboardError: '',
                 selectedReport: null,
                 showReportModal: false,
                 reportPdfViewerUrl: null,
@@ -2437,9 +2468,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 async init() {
-                    // Remove any stray checkboxes immediately
-                    this.removeStrayCheckboxes();
-                    
                     // Handle URL routing
                     this.handleRouting();
                     window.addEventListener('hashchange', () => this.handleRouting());
@@ -2449,7 +2477,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     const userStr = localStorage.getItem('user');
                     
                     if (!token || !userStr) {
-                        window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
+                        window.location.href = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
                         return;
                     }
 
@@ -2515,16 +2543,23 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             }
                         });
 
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+
                         if (!response.ok) {
-                            throw new Error('Authentication failed');
+                            throw new Error(`Authentication check failed (${response.status})`);
                         }
 
                         const data = await response.json();
-                        this.user = data.user;
-                        localStorage.setItem('user', JSON.stringify(data.user));
+                        if (data && data.user) {
+                            this.user = data.user;
+                            localStorage.setItem('user', JSON.stringify(data.user));
+                        }
                     } catch (error) {
-                        console.error('Auth error:', error);
-                        this.logout();
+                        // Network failure: keep the cached session and let the user carry on.
+                        this.showToast('We could not reach the server. Showing your last known session.', 'error', 5000);
                     }
                 },
 
@@ -2580,6 +2615,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 async loadDashboardData(loadToken = null) {
                     try {
                         this.loading = true;
+                        this.dashboardError = '';
                         const token = loadToken ?? this.clientLoadToken;
 
                         const clientIds = this.getActiveClientIds();
@@ -2663,7 +2699,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                                     if (token !== this.clientLoadToken) return;
                                     
-                                    console.log('Loading dashboard config from database:', dashboardConfig);
+                                    hubDebug('Loading dashboard config from database:', dashboardConfig);
                                     
                                     // Load KPI Goals from database
                                     if (dashboardConfig.kpiGoals && dashboardConfig.kpiGoals.length > 0) {
@@ -2673,21 +2709,21 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                         this.dashboardData.kpis.forEach(kpi => {
                                             if (kpi.isAutoTracked === undefined) {
                                                 kpi.isAutoTracked = ['reach', 'engagement', 'impressions', 'engagement_rate', 'platform_reach', 'platform_engagement'].includes(kpi.kpiType);
-                                                console.log(`Migrated KPI "${kpi.name}" - isAutoTracked: ${kpi.isAutoTracked}`);
+                                                hubDebug(`Migrated KPI "${kpi.name}" - isAutoTracked: ${kpi.isAutoTracked}`);
                                             }
                                         });
                                         
-                                        console.log('KPIs loaded from database:', this.dashboardData.kpis);
-                                        console.log('Number of KPIs:', this.dashboardData.kpis.length);
+                                        hubDebug('KPIs loaded from database:', this.dashboardData.kpis);
+                                        hubDebug('Number of KPIs:', this.dashboardData.kpis.length);
                                     } else {
-                                        console.log('No KPI goals found in database');
+                                        hubDebug('No KPI goals found in database');
                                     }
                                     
                                     // Load platforms from database
                                     if (dashboardConfig.platforms && dashboardConfig.platforms.length > 0) {
                             this.clientPlatforms = dashboardConfig.platforms;
                             this.activePlatforms = [...dashboardConfig.platforms];
-                            console.log('Platforms loaded from database:', this.clientPlatforms);
+                            hubDebug('Platforms loaded from database:', this.clientPlatforms);
                         }
                         
                         // Load monthly post target
@@ -2704,7 +2740,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.mirrorIGToFB = dashboardConfig.mirrorIGToFB;
                         }
                                 } else {
-                                    console.log('Failed to load client config from database, falling back to localStorage');
+                                    hubDebug('Failed to load client config from database, falling back to localStorage');
                                     // Fallback to localStorage
                                     const customization = localStorage.getItem(`client_customize_${clientId}`);
                                     if (customization) {
@@ -2752,9 +2788,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             }, 100);
                         }
                     } catch (error) {
-                        console.error('Error loading dashboard:', error);
+                        if ((loadToken ?? this.clientLoadToken) !== this.clientLoadToken) return;
+                        this.dashboardError = error?.message === 'No client selected'
+                            ? 'Select a brand to see its insights.'
+                            : 'Insights could not be loaded right now. Please try again in a moment.';
                     } finally {
-                        this.loading = false;
+                        if ((loadToken ?? this.clientLoadToken) === this.clientLoadToken) this.loading = false;
                     }
                 },
 
@@ -2771,9 +2810,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         platformBreakdown: {},
                         recentReports: [],
                         upcomingPosts: [],
-                        pendingPosts: [],
+                        pendingPosts: { count: 0 },
                         kpis: [],
-                        insights: [],
+                        insights: null,
                         demographics: null,
                         advertising: null
                     };
@@ -2834,26 +2873,26 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 updateAutoTrackedKPIs() {
-                    console.log('=== updateAutoTrackedKPIs called ===');
-                    console.log('KPIs:', this.dashboardData.kpis);
-                    console.log('Metrics:', this.dashboardData.metrics);
-                    console.log('Platform Breakdown:', this.dashboardData.platformBreakdown);
+                    hubDebug('=== updateAutoTrackedKPIs called ===');
+                    hubDebug('KPIs:', this.dashboardData.kpis);
+                    hubDebug('Metrics:', this.dashboardData.metrics);
+                    hubDebug('Platform Breakdown:', this.dashboardData.platformBreakdown);
                     
                     if (!this.dashboardData.kpis) {
-                        console.log('No KPIs found');
+                        hubDebug('No KPIs found');
                         return;
                     }
                     
                     if (!this.dashboardData.metrics) {
-                        console.log('No metrics found - data may not be loaded yet');
+                        hubDebug('No metrics found - data may not be loaded yet');
                         return;
                     }
                     
                     this.dashboardData.kpis.forEach(kpi => {
-                        console.log(`Processing KPI: ${kpi.name}, Type: ${kpi.kpiType}, Auto-tracked: ${kpi.isAutoTracked}`);
+                        hubDebug(`Processing KPI: ${kpi.name}, Type: ${kpi.kpiType}, Auto-tracked: ${kpi.isAutoTracked}`);
                         
                         if (!kpi.isAutoTracked) {
-                            console.log(`  Skipping ${kpi.name} - not auto-tracked`);
+                            hubDebug(`  Skipping ${kpi.name} - not auto-tracked`);
                             return;
                         }
                         
@@ -2862,30 +2901,30 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         switch(kpi.kpiType) {
                             case 'reach':
                                 currentValue = this.dashboardData.metrics.reach?.current || 0;
-                                console.log(`  Reach metric: ${currentValue}`);
+                                hubDebug(`  Reach metric: ${currentValue}`);
                                 break;
                             case 'engagement':
                                 currentValue = this.dashboardData.metrics.engagement?.current || 0;
-                                console.log(`  Engagement metric: ${currentValue}`);
+                                hubDebug(`  Engagement metric: ${currentValue}`);
                                 break;
                             case 'impressions':
                                 currentValue = this.dashboardData.metrics.impressions?.current || 0;
-                                console.log(`  Impressions metric: ${currentValue}`);
+                                hubDebug(`  Impressions metric: ${currentValue}`);
                                 break;
                             case 'engagement_rate':
                                 currentValue = this.dashboardData.metrics.engagementRate?.current || 0;
-                                console.log(`  Engagement rate metric: ${currentValue}`);
+                                hubDebug(`  Engagement rate metric: ${currentValue}`);
                                 break;
                             case 'platform_reach':
                                 if (kpi.platform && this.dashboardData.platformBreakdown) {
                                     currentValue = this.dashboardData.platformBreakdown[kpi.platform]?.reach || 0;
-                                    console.log(`  Platform reach for ${kpi.platform}: ${currentValue}`);
+                                    hubDebug(`  Platform reach for ${kpi.platform}: ${currentValue}`);
                                 }
                                 break;
                             case 'platform_engagement':
                                 if (kpi.platform && this.dashboardData.platformBreakdown) {
                                     currentValue = this.dashboardData.platformBreakdown[kpi.platform]?.engagement || 0;
-                                    console.log(`  Platform engagement for ${kpi.platform}: ${currentValue}`);
+                                    hubDebug(`  Platform engagement for ${kpi.platform}: ${currentValue}`);
                                 }
                                 break;
                         }
@@ -2899,7 +2938,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             kpi.progress = 0;
                         }
                         
-                        console.log(`✓ Updated KPI "${kpi.name}": ${currentValue} / ${kpi.targetValue} (${kpi.progress.toFixed(1)}%)`);
+                        hubDebug(`✓ Updated KPI "${kpi.name}": ${currentValue} / ${kpi.targetValue} (${kpi.progress.toFixed(1)}%)`);
                     });
                 },
 
@@ -2910,15 +2949,21 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     // Update auto-tracked KPIs before saving
                     this.updateAutoTrackedKPIs();
                     
-                    // Get current customization
-                    const customization = localStorage.getItem(`client_customize_${clientId}`);
-                    if (customization) {
-                        const customize = JSON.parse(customization);
-                        customize.kpiGoals = this.dashboardData.kpis;
-                        localStorage.setItem(`client_customize_${clientId}`, JSON.stringify(customize));
-                        this.showToast('KPI progress updated successfully!', 'success');
-                        this.showKPIUpdateModal = false;
+                    // Persist alongside any locally stored customisation for this brand
+                    let customize = {};
+                    try {
+                        customize = JSON.parse(localStorage.getItem(`client_customize_${clientId}`) || '{}') || {};
+                    } catch (_err) {
+                        customize = {};
                     }
+                    customize.kpiGoals = this.dashboardData.kpis;
+                    try {
+                        localStorage.setItem(`client_customize_${clientId}`, JSON.stringify(customize));
+                        this.showToast('KPI progress updated.', 'success');
+                    } catch (_err) {
+                        this.showToast('KPI progress updated for this session, but it could not be saved on this device.', 'error', 5000);
+                    }
+                    this.showKPIUpdateModal = false;
                 },
 
                 async changeRequiredPassword() {
@@ -3000,7 +3045,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     localStorage.removeItem('requirePasswordChange');
-                    window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>';
+                    window.location.href = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
                 },
 
                 switchViewMode(mode) {
@@ -3088,6 +3133,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
 
                     const token = loadToken ?? this.clientLoadToken;
+                    this.reportsLoading = true;
                     try {
                         const reportsUrl = clientId
                             ? `${API_URL}/reports?clientId=${encodeURIComponent(clientId)}`
@@ -3105,10 +3151,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.reports = data.data || [];
                         } else {
                             this.reports = [];
+                            this.showToast('Reports could not be loaded right now.', 'error', 5000);
                         }
                     } catch (error) {
-                        console.error('Load reports error:', error);
+                        if (token !== this.clientLoadToken) return;
                         this.reports = [];
+                        this.showToast('Reports could not be loaded. Check your connection and try again.', 'error', 5000);
+                    } finally {
+                        if (token === this.clientLoadToken) this.reportsLoading = false;
                     }
                 },
 
@@ -3133,12 +3183,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.eventCoverageBookings = data.data || [];
                         } else {
                             this.eventCoverageBookings = [];
+                            this.showToast('Event coverage bookings could not be loaded right now.', 'error', 5000);
                         }
                     } catch (error) {
-                        console.error('Load event coverage bookings error:', error);
+                        if (token !== this.clientLoadToken) return;
                         this.eventCoverageBookings = [];
+                        this.showToast('Event coverage bookings could not be loaded. Check your connection and try again.', 'error', 5000);
                     } finally {
-                        this.eventCoverageLoading = false;
+                        if (token === this.clientLoadToken) this.eventCoverageLoading = false;
                     }
                 },
 
@@ -3472,8 +3524,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 async loadPosts(loadToken = null) {
                     const clientId = this.getClientId();
                     const token = loadToken ?? this.clientLoadToken;
-                    console.log(`[loadPosts] clientId=${clientId}, selectedClient=${this.selectedClient?.brandName || this.selectedClient?._id}, viewMode=${this.viewMode}`);
-                    
+                    this.postsLoading = true;
+
                     try {
                         // Load posts from API
                         const postsUrl = clientId
@@ -3492,7 +3544,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         const result = await response.json();
                         const apiPosts = result.data || [];
                         const uniqueClientIds = [...new Set(apiPosts.map(p => p.clientId?._id || p.clientId))];
-                        console.log(`[loadPosts] API returned ${apiPosts.length} posts, uniqueClientIds:`, uniqueClientIds);
+                        hubDebug(`[loadPosts] API returned ${apiPosts.length} posts, uniqueClientIds:`, uniqueClientIds);
 
                         if (token !== this.clientLoadToken) return;
                         
@@ -3500,13 +3552,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         // DEBUG: Log first post's full performance object
                         if (apiPosts.length > 0) {
                             const firstPost = apiPosts[0];
-                            console.log('=== DEBUG: First post performance data ===');
-                            console.log('Post ID:', firstPost._id);
-                            console.log('Platform:', firstPost.platform);
-                            console.log('Status:', firstPost.status);
-                            console.log('Performance object:', JSON.stringify(firstPost.performance, null, 2));
-                            console.log('publishedDate:', firstPost.publishedDate);
-                            console.log('scheduledDate:', firstPost.scheduledDate);
+                            hubDebug('=== DEBUG: First post performance data ===');
+                            hubDebug('Post ID:', firstPost._id);
+                            hubDebug('Platform:', firstPost.platform);
+                            hubDebug('Status:', firstPost.status);
+                            hubDebug('Performance object:', JSON.stringify(firstPost.performance, null, 2));
+                            hubDebug('publishedDate:', firstPost.publishedDate);
+                            hubDebug('scheduledDate:', firstPost.scheduledDate);
                         }
                         
                         const mapped = apiPosts.map(post => {
@@ -3588,10 +3640,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.posts = this.mergeMirroredPlatforms(this.posts);
                         }
                         
-                        console.log(`Loaded ${this.posts.length} posts from API after dedupe`);
+                        hubDebug(`Loaded ${this.posts.length} posts from API after dedupe`);
                         
                         // Debug: Show sample of mapped posts with their kpis
-                        console.log('Mapped posts sample (first 2):', this.posts.slice(0, 2).map(p => ({
+                        hubDebug('Mapped posts sample (first 2):', this.posts.slice(0, 2).map(p => ({
                             id: p._id,
                             platform: p.platforms,
                             status: p.status,
@@ -3600,21 +3652,24 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         })));
                         
                     } catch (error) {
-                        console.error('Error loading posts from API:', error);
-                        // Fallback to localStorage if API fails
-                        const stored = localStorage.getItem(`client_posts_${clientId}`);
-                        if (stored) {
-                            try {
-                                if (token !== this.clientLoadToken) return;
-                                this.posts = JSON.parse(stored);
-                            } catch (e) {
-                                if (token !== this.clientLoadToken) return;
-                                this.posts = [];
-                            }
-                        } else {
-                            if (token !== this.clientLoadToken) return;
-                            this.posts = [];
+                        if (token !== this.clientLoadToken) return;
+                        // Fall back to the last copy saved on this device, and say so.
+                        let stored = null;
+                        try {
+                            stored = JSON.parse(localStorage.getItem(`client_posts_${clientId}`) || 'null');
+                        } catch (_err) {
+                            stored = null;
                         }
+                        this.posts = Array.isArray(stored) ? stored : [];
+                        this.showToast(
+                            this.posts.length
+                                ? 'Posts could not be refreshed. Showing the last copy saved on this device.'
+                                : 'Posts could not be loaded. Check your connection and try again.',
+                            'error',
+                            5000
+                        );
+                    } finally {
+                        if (token === this.clientLoadToken) this.postsLoading = false;
                     }
                 },
                 
@@ -4188,7 +4243,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                     const uploadClientId = this.getClientId();
                     const uploadToken = this.clientLoadToken;
-                    console.log(`[submitInsightsUpload] uploadClientId=${uploadClientId}, selectedClient=${this.selectedClient?.brandName || this.selectedClient?._id}`);
+                    hubDebug(`[submitInsightsUpload] uploadClientId=${uploadClientId}, selectedClient=${this.selectedClient?.brandName || this.selectedClient?._id}`);
                     if (!uploadClientId) {
                         this.showToast('Please select a client first', 'error');
                         return;
@@ -4321,33 +4376,6 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
                 },
 
-                removeStrayCheckboxes() {
-                    // Aggressive removal of any stray checkboxes
-                    setTimeout(() => {
-                        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                            // Skip checkboxes that are part of the actual UI
-                            if (checkbox.classList.contains('w-5') || 
-                                checkbox.classList.contains('rounded') ||
-                                checkbox.closest('.sidebar') ||
-                                checkbox.closest('aside') ||
-                                checkbox.closest('[x-data]')) {
-                                return;
-                            }
-                            
-                            // Remove any other checkboxes
-                            const rect = checkbox.getBoundingClientRect();
-                            if (rect.top < 150 && rect.left < 150) {
-                                checkbox.remove();
-                            }
-                        });
-                    }, 100);
-                    
-                    // Additional sweep after 500ms
-                    setTimeout(() => {
-                        document.querySelectorAll('body > input[type="checkbox"]').forEach(cb => cb.remove());
-                    }, 500);
-                },
-
                 handleRouting() {
                     // Get hash from URL (e.g., #content-calendar)
                     const hash = window.location.hash.slice(1) || 'overview';
@@ -4363,6 +4391,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         'events': 'eventCoverage'
                     };
                     this.activeView = routeMap[hash] || 'dashboard';
+                },
+
+                goToView(view) {
+                    const hashMap = { dashboard: 'overview', calendar: 'content-calendar', reports: 'reports', eventCoverage: 'event-coverage' };
+                    const hash = hashMap[view] || 'overview';
+                    if (window.location.hash !== '#' + hash) {
+                        window.location.hash = hash;
+                    } else {
+                        this.activeView = view;
+                    }
                 },
 
                 togglePostSelection(postId, event) {
@@ -5207,7 +5245,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 getDemographicsMessage() {
                     const meta = this.audienceInsights?.demographicsMeta;
                     if (meta?.message) return meta.message;
-                    return 'Tap Refresh audience above or run Sync Posts in Admin. Instagram age and location data requires a Business account and typically 100+ followers.';
+                    return 'Tap Refresh audience above to pull the latest Meta data. Instagram age and location data requires a Business account and typically 100+ followers.';
                 },
 
                 getDemographicsSourceLabel() {
@@ -5488,7 +5526,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.currentPeriodEnd = now;
                             this.previousPeriodStart = new Date(currentYear - 1, 0, 1);
                             this.previousPeriodEnd = new Date(currentYear - 1, currentMonth, now.getDate());
-                            this.currentPeriodLabel = `Jan 1, ${currentYear} - ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                            this.currentPeriodLabel = `1 Jan ${currentYear} – ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
                             break;
                             
                         case 'current_month':
@@ -5496,7 +5534,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.currentPeriodEnd = now;
                             this.previousPeriodStart = new Date(currentYear, currentMonth - 1, 1);
                             this.previousPeriodEnd = new Date(currentYear, currentMonth, 0); // Last day of previous month
-                            this.currentPeriodLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                            this.currentPeriodLabel = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
                             break;
                             
                         case 'last_month':
@@ -5506,7 +5544,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.currentPeriodEnd = lastMonthEnd;
                             this.previousPeriodStart = new Date(currentYear, currentMonth - 2, 1);
                             this.previousPeriodEnd = new Date(currentYear, currentMonth - 1, 0);
-                            this.currentPeriodLabel = lastMonthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                            this.currentPeriodLabel = lastMonthStart.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
                             break;
                             
                         case 'last_3_months':
@@ -5515,7 +5553,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             this.previousPeriodStart = new Date(currentYear, currentMonth - 5, 1);
                             this.previousPeriodEnd = new Date(currentYear, currentMonth - 2, 0);
                             const threeMonthsAgo = new Date(currentYear, currentMonth - 2, 1);
-                            this.currentPeriodLabel = `${threeMonthsAgo.toLocaleDateString('en-US', { month: 'short' })} - ${now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+                            this.currentPeriodLabel = `${threeMonthsAgo.toLocaleDateString('en-GB', { month: 'short' })} - ${now.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
                             break;
                             
                         case 'last_year':
@@ -5535,7 +5573,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 this.previousPeriodStart = new Date(selectedYear - 1, 0, 1);
                                 this.previousPeriodEnd = new Date(selectedYear - 1, 11, 31, 23, 59, 59);
                                 this.currentPeriodLabel = selectedYear === currentYear 
-                                    ? `Jan 1, ${selectedYear} - ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                                    ? `1 Jan ${selectedYear} – ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
                                     : `Jan 1 - Dec 31, ${selectedYear}`;
                             }
                             break;
@@ -5562,7 +5600,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.previousPeriodEnd = this.normalizePeriodEnd(new Date(this.currentPeriodStart.getTime() - 1));
                     this.previousPeriodStart = this.normalizePeriodStart(new Date(this.previousPeriodEnd.getTime() - duration));
                     
-                    this.currentPeriodLabel = `${this.currentPeriodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${this.currentPeriodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                    this.currentPeriodLabel = `${this.currentPeriodStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${this.currentPeriodEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
                     
                     this.periodAccountActivity = null;
                     this.previousPeriodAccountActivity = null;
@@ -5666,8 +5704,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.websiteAnalyticsError = '';
                     try {
                         const params = new URLSearchParams({
-                            startDate: this.currentPeriodStart.toISOString().slice(0, 10),
-                            endDate: this.currentPeriodEnd.toISOString().slice(0, 10)
+                            startDate: this.formatDateParam(this.currentPeriodStart),
+                            endDate: this.formatDateParam(this.currentPeriodEnd)
                         });
                         const response = await fetch(`${API_URL}/google-analytics/metrics/${clientId}?${params.toString()}`, {
                             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -5720,8 +5758,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     try {
                         const params = new URLSearchParams({
                             format,
-                            startDate: this.currentPeriodStart.toISOString().slice(0, 10),
-                            endDate: this.currentPeriodEnd.toISOString().slice(0, 10)
+                            startDate: this.formatDateParam(this.currentPeriodStart),
+                            endDate: this.formatDateParam(this.currentPeriodEnd)
                         });
                         const response = await fetch(`${API_URL}/google-analytics/export/${clientId}?${params.toString()}`, {
                             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -5737,8 +5775,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         const brandLabel = (brand?.brandName || brand?.name || 'website')
                             .replace(/[^a-z0-9]+/gi, '_')
                             .toLowerCase();
-                        const start = this.currentPeriodStart.toISOString().slice(0, 10);
-                        const end = this.currentPeriodEnd.toISOString().slice(0, 10);
+                        const start = this.formatDateParam(this.currentPeriodStart);
+                        const end = this.formatDateParam(this.currentPeriodEnd);
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
@@ -5767,8 +5805,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     this.insightsNarrativesError = '';
                     try {
                         const params = new URLSearchParams({
-                            startDate: this.currentPeriodStart.toISOString().slice(0, 10),
-                            endDate: this.currentPeriodEnd.toISOString().slice(0, 10)
+                            startDate: this.formatDateParam(this.currentPeriodStart),
+                            endDate: this.formatDateParam(this.currentPeriodEnd)
                         });
                         if (this.activePlatforms?.length) {
                             params.set('platforms', this.activePlatforms.join(','));
@@ -5887,13 +5925,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         this.userWidgetPreferences.push(widgetId);
                     }
                     // Save to localStorage
-                    localStorage.setItem(`widgetPreferences_${this.selectedClient?._id}`, JSON.stringify(this.userWidgetPreferences));
+                    localStorage.setItem(`widgetPreferences_${this.getClientId() || 'all_clients'}`, JSON.stringify(this.userWidgetPreferences));
                 },
 
                 resetWidgetPreferences() {
                     // Reset to all available widgets
                     this.userWidgetPreferences = this.getAvailableWidgets().map(w => w.id);
-                    localStorage.setItem(`widgetPreferences_${this.selectedClient?._id}`, JSON.stringify(this.userWidgetPreferences));
+                    localStorage.setItem(`widgetPreferences_${this.getClientId() || 'all_clients'}`, JSON.stringify(this.userWidgetPreferences));
                 },
 
                 isWidgetVisible(widgetId) {
@@ -6177,13 +6215,13 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 formatDate(dateStr) {
-                    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                 },
 
                 formatDateRange(range) {
                     if (!range) return '';
-                    const start = new Date(range.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    const end = new Date(range.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const start = new Date(range.start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                    const end = new Date(range.end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                     return `${start} - ${end}`;
                 },
 
@@ -6193,7 +6231,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     if (report?.source === 'uploaded' && monthKey) {
                         const [year, month] = String(monthKey).split('-').map(Number);
                         if (year && month) {
-                            return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                            return new Date(year, month - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
                         }
                     }
                     return this.formatDateRange(report.dateRange);
@@ -6733,10 +6771,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register(<?php echo wp_json_encode(get_template_directory_uri() . "/sw.js?v=" . rawurlencode(wp_get_theme()->get("Version"))); ?>)
                     .then(registration => {
-                        console.log('✅ Service Worker registered:', registration.scope);
+                        hubDebug('✅ Service Worker registered:', registration.scope);
                     })
                     .catch(error => {
-                        console.log('❌ Service Worker registration failed:', error);
+                        hubDebug('❌ Service Worker registration failed:', error);
                     });
             });
         }
@@ -6769,7 +6807,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             
             // Wait for the user to respond
             const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response: ${outcome}`);
+            hubDebug(`User response: ${outcome}`);
             
             // Clear the deferredPrompt
             deferredPrompt = null;
@@ -6783,36 +6821,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
         // Detect if app is installed
         window.addEventListener('appinstalled', () => {
-            console.log('✅ PWA installed successfully');
+            hubDebug('✅ PWA installed successfully');
             installPrompt.style.display = 'none';
         });
 
         // Check if running as PWA
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            console.log('✅ Running as PWA');
+            hubDebug('✅ Running as PWA');
         }
     </script>
 
-    <!-- Toast Notifications -->
-    <div class="fixed top-20 right-4 md:top-4 z-[9999] space-y-2 w-full max-w-sm pr-4">
-        <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="true" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-full" x-transition:enter-end="opacity-100 transform translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="w-full shadow-lg rounded-lg pointer-events-auto overflow-hidden" :class="{'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700': toast.type === 'success', 'bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700': toast.type === 'error', 'bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700': toast.type === 'info', 'bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-700': toast.type === 'warning'}">
-                <div class="p-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg x-show="toast.type === 'success'" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <svg x-show="toast.type === 'error'" class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <svg x-show="toast.type === 'info'" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <svg x-show="toast.type === 'warning'" class="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium" :class="{'text-green-800 dark:text-green-200': toast.type === 'success', 'text-red-800 dark:text-red-200': toast.type === 'error', 'text-blue-800 dark:text-blue-200': toast.type === 'info', 'text-yellow-800 dark:text-yellow-200': toast.type === 'warning'}" x-text="toast.message"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
+    <?php include get_template_directory() . '/inc/hub-toasts.php'; ?>
 
     <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
     <?php wp_footer(); ?>

@@ -87,8 +87,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         }
     </style>
 </head>
-<body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0">
-    <div x-data="workflowApp()" x-init="init()" class="hub-app-shell flex flex-col md:flex-row">
+<body class="hub-has-mobile-nav h-full bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white pb-16 md:pb-0" x-data="workflowApp()" x-init="init()">
+    <div class="hub-app-shell flex flex-col md:flex-row">
         <!-- Mobile Header -->
         <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
             <div class="flex items-center justify-between">
@@ -327,7 +327,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                              x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full">
                             <div class="p-5 border-b dark:border-gray-700 flex items-center justify-between">
                                 <div>
-                                    <h2 class="font-bold text-gray-900 dark:text-white">Customize Dashboard</h2>
+                                    <h2 class="font-bold text-gray-900 dark:text-white">Customise Dashboard</h2>
                                     <p class="text-xs text-gray-500 mt-0.5">Choose which cards to show</p>
                                 </div>
                                 <button @click="showCustomizePanel = false" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
@@ -602,7 +602,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         </button>
                     </div>
                     <div x-show="efficiencyAssigneeFilter" class="mb-4 px-4 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 text-sm text-indigo-700 dark:text-indigo-300">
-                        Showing concepts assigned in <span class="font-semibold" x-text="new Date(efficiencyYear, efficiencyMonth - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })"></span> for this team member.
+                        Showing concepts assigned in <span class="font-semibold" x-text="new Date(efficiencyYear, efficiencyMonth - 1, 1).toLocaleString('en-GB', { month: 'long', year: 'numeric' })"></span> for this team member.
                     </div>
 
                     <!-- Concepts Grid -->
@@ -615,10 +615,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                         <img :src="getLatestDesignImage(concept)" :alt="concept.title" class="w-full h-full object-cover" />
                                     </template>
                                     <template x-if="isVideoConcept(concept) && concept.youtubeLink">
-                                        <img :src="getYoutubeThumbnail(concept.youtubeLink)" :alt="concept.title" class="w-full h-full object-cover" />
-                                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                                            <div class="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
-                                                <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        <div class="absolute inset-0">
+                                            <img :src="getYoutubeThumbnail(concept.youtubeLink)" :alt="concept.title" class="w-full h-full object-cover" />
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                <div class="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
+                                                    <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -953,10 +955,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                         <img :src="getDesignPreview(item)" :alt="item.title" class="w-full h-full object-cover" />
                                     </template>
                                     <template x-if="!getDesignPreview(item) && isVideoConcept(item) && item.youtubeLink">
-                                        <img :src="getYoutubeThumbnail(item.youtubeLink)" :alt="item.title" class="w-full h-full object-cover" />
-                                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                                            <div class="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
-                                                <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        <div class="absolute inset-0">
+                                            <img :src="getYoutubeThumbnail(item.youtubeLink)" :alt="item.title" class="w-full h-full object-cover" />
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                <div class="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
+                                                    <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -1120,7 +1124,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                         <div class="absolute bottom-2 left-2">
                                             <span class="px-2 py-0.5 text-xs rounded-full" 
                                                 :class="plan.myPermission === 'owner' ? 'bg-indigo-500 text-white' : plan.myPermission === 'edit' ? 'bg-green-500 text-white' : plan.myPermission === 'comment' ? 'bg-yellow-500 text-white' : 'bg-gray-500 text-white'"
-                                                x-text="plan.myPermission === 'owner' ? 'Owner' : plan.myPermission.charAt(0).toUpperCase() + plan.myPermission.slice(1)"></span>
+                                                x-text="plan.myPermission === 'owner' ? 'Owner' : plan.myPermission ? plan.myPermission.charAt(0).toUpperCase() + plan.myPermission.slice(1) : 'Viewer'"></span>
                                         </div>
                                     </div>
                                     <!-- Info -->
@@ -1162,7 +1166,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <div x-show="plans.length === 0" class="text-center py-16">
                             <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path></svg>
                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No plans yet</h3>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Create a plan to start organizing your content strategy</p>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Create a plan to start organising your content strategy</p>
                             <button @click="createNewPlan()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Create Your First Plan</button>
                         </div>
                     </div>
@@ -1465,7 +1469,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         </div>
                     </div>
                 </div>
-
+            </div>
         </main>
 
         <!-- Share Plan Modal -->
@@ -1582,7 +1586,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     <button type="button" x-show="conceptMediaType === 'video'" @click="markDescriptionNA()" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" :class="conceptDescriptionNA ? 'bg-gray-200 dark:bg-gray-600' : ''">N/A</button>
                                 </div>
                                 <div class="flex items-center justify-end gap-2 mb-2">
-                                    <label class="text-xs text-gray-500">Text color</label>
+                                    <label class="text-xs text-gray-500">Text colour</label>
                                     <input type="color" x-model="conceptForm.briefDetails.descriptionColor" class="h-7 w-9 p-0 border rounded cursor-pointer bg-transparent">
                                 </div>
                                 <textarea x-model="conceptForm.description" :required="conceptMediaType !== 'video'" :disabled="conceptDescriptionNA" rows="3" :style="`color:${conceptForm.briefDetails.descriptionColor || '#111827'}`" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 disabled:opacity-60 disabled:bg-gray-100 dark:disabled:bg-gray-800" :placeholder="conceptMediaType === 'video' ? 'Optional — use reference link and inspiration images if no written brief' : 'Instructions for the designer to create this content...'"></textarea>
@@ -1590,7 +1594,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <div class="col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Caption <span class="text-xs text-gray-500 font-normal">(Post text for client review)</span></label>
                                 <div class="flex items-center justify-end gap-2 mb-2">
-                                    <label class="text-xs text-gray-500">Text color</label>
+                                    <label class="text-xs text-gray-500">Text colour</label>
                                     <input type="color" x-model="conceptForm.briefDetails.captionColor" class="h-7 w-9 p-0 border rounded cursor-pointer bg-transparent">
                                 </div>
                                 <textarea x-model="conceptForm.caption" rows="3" :style="`color:${conceptForm.briefDetails.captionColor || '#6B7280'}`" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" placeholder="The caption/text that will be posted with this content..."></textarea>
@@ -1679,7 +1683,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     </template>
                                     <div x-show="clients.filter(c => (c.brandName || c.name).toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-500 dark:text-gray-400">No brands found</div>
                                 </div>
-                                <input type="hidden" x-model="conceptForm.clientId" required>
+                                <input type="hidden" x-model="conceptForm.clientId">
                             </div>
                             <!-- Content Type -->
                             <div class="relative" x-data="{ open: false, search: '' }" @click.away="open = false">
@@ -1704,7 +1708,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     </template>
                                     <div x-show="getConceptTypeOptions().filter(t => t.label.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-500 dark:text-gray-400">No types found</div>
                                 </div>
-                                <input type="hidden" x-model="conceptForm.contentType" required>
+                                <input type="hidden" x-model="conceptForm.contentType">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform(s) *</label>
@@ -2107,7 +2111,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             </div>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Paste the YouTube link to the final video or reel. No design file upload needed — the video link is what goes to the content bank for client approval.</p>
                             <div x-show="selectedConcept?.youtubeLink" class="aspect-video rounded-lg overflow-hidden bg-black mb-3">
-                                <iframe :src="getYoutubeEmbedUrl(selectedConcept.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <iframe :src="getYoutubeEmbedUrl(selectedConcept?.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
                             <div x-show="selectedConcept?.youtubeLink" class="flex items-center gap-2 mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                 <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -2140,7 +2144,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <div x-show="isVideoConcept(selectedConcept) && selectedConcept?.status === 'pending_review' && selectedConcept?.youtubeLink" class="border-t dark:border-gray-700 pt-6 mt-6 mb-6">
                             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Submitted Video</h3>
                             <div class="aspect-video rounded-lg overflow-hidden bg-black mb-3">
-                                <iframe :src="getYoutubeEmbedUrl(selectedConcept.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <iframe :src="getYoutubeEmbedUrl(selectedConcept?.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
                             <a :href="selectedConcept?.youtubeLink" target="_blank" rel="noopener noreferrer" class="text-sm text-red-600 dark:text-red-400 hover:underline">Open on YouTube</a>
                         </div>
@@ -2914,13 +2918,15 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <!-- Image/Media Preview -->
                             <div>
                                 <template x-if="isVideoConcept(selectedContentBankItem) && selectedContentBankItem?.youtubeLink">
+                                    <div>
                                     <div class="aspect-video rounded-lg overflow-hidden bg-black">
-                                        <iframe :src="getYoutubeEmbedUrl(selectedContentBankItem.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                        <iframe :src="getYoutubeEmbedUrl(selectedContentBankItem.youtubeLink)" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="YouTube video"></iframe>
                                     </div>
                                     <a :href="selectedContentBankItem.youtubeLink" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 text-sm text-red-600 dark:text-red-400 hover:underline">
                                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                                         Open on YouTube
                                     </a>
+                                    </div>
                                 </template>
                                 <template x-if="getDesignPreviews(selectedContentBankItem).length > 0">
                                     <div class="relative select-none"
@@ -2938,13 +2944,14 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                         </template>
 
                                         <template x-if="getDesignPreviews(selectedContentBankItem).length > 1">
+                                            <div class="absolute inset-0 pointer-events-none [&>*]:pointer-events-auto">
                                             <button type="button"
-                                                    @click.stop="contentBankCarouselPrev()"
+                                                    @click.stop="contentBankCarouselPrev()" aria-label="Previous slide"
                                                     class="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                                             </button>
                                             <button type="button"
-                                                    @click.stop="contentBankCarouselNext()"
+                                                    @click.stop="contentBankCarouselNext()" aria-label="Next slide"
                                                     class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </button>
@@ -2954,8 +2961,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                                     <button type="button"
                                                             @click.stop="contentBankCarouselIndex = dotIndex"
                                                             class="w-2 h-2 rounded-full transition-all"
-                                                            :class="contentBankCarouselIndex === dotIndex ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/80'"></button>
+                                                            :class="contentBankCarouselIndex === dotIndex ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/80'" :aria-label="'Go to slide ' + (dotIndex + 1)"></button>
                                                 </template>
+                                            </div>
                                             </div>
                                         </template>
 
@@ -3187,17 +3195,19 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
         <!-- Fullscreen Image Lightbox -->
         <div x-show="lightboxImage" x-cloak @click="closeLightbox()" @keydown.escape.window="closeLightbox()" @keydown.arrow-left.window="lightboxPrev()" @keydown.arrow-right.window="lightboxNext()" class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 cursor-pointer" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-            <button @click="closeLightbox()" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
+            <button @click="closeLightbox()" aria-label="Close image" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             <template x-if="lightboxGallery.length > 1">
-                <button type="button" @click.stop="lightboxPrev()" class="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors z-10">
+                <div>
+                <button type="button" @click.stop="lightboxPrev()" aria-label="Previous image" class="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <button type="button" @click.stop="lightboxNext()" class="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors z-10">
+                <button type="button" @click.stop="lightboxNext()" aria-label="Next image" class="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
                 <div class="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 text-sm bg-black/50 text-white rounded-full z-10" x-text="(lightboxIndex + 1) + ' / ' + lightboxGallery.length"></div>
+                </div>
             </template>
             <img :src="lightboxImage" @click.stop class="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" alt="Full size reference image" />
         </div>
@@ -3566,7 +3576,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 },
 
                 showToast(message, type = 'info', duration = 3000) {
-                    const id = Date.now();
+                    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
                     this.toasts.push({ id, message, type });
                     setTimeout(() => {
                         this.toasts = this.toasts.filter(t => t.id !== id);
@@ -4012,7 +4022,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 formatDateTime(date) {
                     if (!date) return '';
                     const d = new Date(date);
-                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                     const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                     return `${dateStr} at ${timeStr}`;
                 },
@@ -4060,7 +4070,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     const [y, m, d] = this.conceptForm.dueDate.split('-').map(Number);
                     const due = new Date(y, m - 1, d, 0, 0, 0, 0);
                     if (due < minDue) {
-                        const label = minDue.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                        const label = minDue.toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                         return `Artwork needs at least 3 business days. Earliest due date is ${label}, or set Priority to Urgent.`;
                     }
                     return null;
@@ -4068,8 +4078,13 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 formatMessageWithMentions(message) {
                     if (!message) return '';
-                    // Replace @mentions with styled badges
-                    return message.replace(/@(\w+(?:\s+\w+)?)/g, '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">@$1</span>');
+                    // Escape user-supplied text first (rendered with x-html), then badge @mentions
+                    const escaped = String(message)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;');
+                    return escaped.replace(/@(\w+(?:\s+\w+)?)/g, '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">@$1</span>');
                 },
 
                 getMentionCandidates() {
@@ -4343,6 +4358,18 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 async saveConcept() {
                     const token = localStorage.getItem('token');
+                    if (!this.conceptForm.title?.trim()) {
+                        this.showToast('Please give the concept a title', 'error');
+                        return;
+                    }
+                    if (!this.conceptForm.clientId) {
+                        this.showToast('Please choose a brand for this concept', 'error');
+                        return;
+                    }
+                    if (!this.conceptForm.contentType) {
+                        this.showToast('Please choose a content type', 'error');
+                        return;
+                    }
                     if (this.conceptMediaType === 'video' && !this.conceptForm.description?.trim()) {
                         this.conceptForm.description = 'N/A';
                     }
@@ -5134,7 +5161,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 },
 
                 // Content Bank Functions
-                getDesignAttachments(item) {
+                // Content Bank media (images + video, honours carousel slide order).
+                // Distinct from getDesignAttachments(), which is the concept-detail list.
+                getContentBankMedia(item) {
                     const attachments = item?.attachments || [];
                     if (!Array.isArray(attachments) || attachments.length === 0) return [];
                     return attachments.filter(a => {
@@ -5143,11 +5172,16 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         const isVideo = (a?.mimetype || '').startsWith('video/');
                         const notReference = a?.kind !== 'reference';
                         return (isImage || isVideo) && (isDesignKind || notReference);
-                    }).sort((a, b) => new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0));
+                    }).sort((left, right) => {
+                        const leftOrder = Number.isFinite(left?.sortOrder) ? left.sortOrder : Number.MAX_SAFE_INTEGER;
+                        const rightOrder = Number.isFinite(right?.sortOrder) ? right.sortOrder : Number.MAX_SAFE_INTEGER;
+                        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+                        return new Date(left.uploadedAt || 0) - new Date(right.uploadedAt || 0);
+                    });
                 },
 
                 getDesignPreviews(item) {
-                    return this.getDesignAttachments(item).map(a => a?.url || '').filter(Boolean);
+                    return this.getContentBankMedia(item).map(a => a?.url || '').filter(Boolean);
                 },
 
                 getDesignPreview(item) {
@@ -5703,8 +5737,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 applyTheme() { if (this.theme === 'dark') { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } },
                 toggleTheme() { this.theme = this.theme === 'light' ? 'dark' : 'light'; localStorage.setItem('theme', this.theme); this.applyTheme(); },
-                setCurrentDate() { this.currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
-                formatDate(date) { if (!date) return 'N/A'; return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); },
+                setCurrentDate() { this.currentDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
+                formatDate(date) { if (!date) return 'N/A'; return new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); },
                 formatStatus(status) { if (!status) return ''; return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); },
                 getStatusClass(status) { const c = { draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', assigned: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', in_progress: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300', pending_review: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300', needs_revision: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300', approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', in_content_bank: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300', client_approved: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300', posted: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300', rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300' }; return c[status] || c.draft; },
                 getTaskStatusClass(status) { const c = { pending: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' }; return c[status] || c.pending; },
@@ -6208,40 +6242,24 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
     <?php esirom_hub_mobile_nav('workflow', 'site'); ?>
 
     <!-- Toast Notifications -->
-    <div class="fixed top-20 right-4 md:top-4 z-[9999] space-y-2 w-full max-w-sm pr-4">
+    <div class="hub-toast-stack" role="status" aria-live="polite">
         <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="true" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 transform translate-x-full"
-                 x-transition:enter-end="opacity-100 transform translate-x-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="w-full shadow-lg rounded-lg pointer-events-auto overflow-hidden"
-                 :class="{
-                     'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700': toast.type === 'success',
-                     'bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700': toast.type === 'error',
-                     'bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700': toast.type === 'info',
-                     'bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-700': toast.type === 'warning'
-                 }">
-                <div class="p-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg x-show="toast.type === 'success'" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <svg x-show="toast.type === 'error'" class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <svg x-show="toast.type === 'info'" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <svg x-show="toast.type === 'warning'" class="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium" :class="{'text-green-800 dark:text-green-200': toast.type === 'success', 'text-red-800 dark:text-red-200': toast.type === 'error', 'text-blue-800 dark:text-blue-200': toast.type === 'info', 'text-yellow-800 dark:text-yellow-200': toast.type === 'warning'}" x-text="toast.message"></p>
-                        </div>
-                    </div>
-                </div>
+            <div class="hub-toast" :class="'hub-toast--' + (toast.type || 'info')"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0">
+                <svg x-show="toast.type === 'success'" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <svg x-show="toast.type === 'error'" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <svg x-show="toast.type === 'warning'" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <svg x-show="!toast.type || toast.type === 'info'" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-sm font-medium flex-1" x-text="toast.message"></p>
+                <button type="button" @click="toasts = toasts.filter(t => t.id !== toast.id)" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm -mr-1 -mt-1" aria-label="Dismiss">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
         </template>
-
-        <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
     </div>
+
+    <?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
 </body>
 </html>
-<?php get_footer(); ?>

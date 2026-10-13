@@ -30,8 +30,9 @@ $vault_url = esc_url(esirom_hub_page_url('password-vault'));
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="passwordVaultApp()" x-init="init()">
 
-<div x-show="!authChecked" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
-    <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+<div x-show="!authChecked" class="hub-boot" aria-busy="true">
+    <span class="hub-spinner hub-spinner--lg"></span>
+    <span>Loading…</span>
 </div>
 
 <div x-show="authChecked && !allowed" x-cloak class="fixed inset-0 flex items-center justify-center">
@@ -42,34 +43,35 @@ $vault_url = esc_url(esirom_hub_page_url('password-vault'));
 </div>
 
 <div x-show="authChecked && allowed" x-cloak class="hub-app-shell flex flex-col md:flex-row">
-    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
-        <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+        <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
             <?php esirom_hub_client_sidebar_nav('password_vault', 'site', false); ?>
             <?php esirom_hub_staff_sidebar_nav('password_vault', 'site', false); ?>
         </nav>
-        <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
             <?php esirom_hub_staff_sidebar_footer('site', false); ?>
         </div>
     </aside>
 
     <main class="hub-app-main">
-        <header class="bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 px-4 sm:px-6 py-4 sticky top-0 z-10">
+        <header class="hub-sticky-header px-4 sm:px-6 py-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Password Vault</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Open a brand, then reveal or copy the login.</p>
+                    <h1 class="hub-page-title">Password Vault</h1>
+                    <p class="hub-page-subtitle">Open a brand, then reveal or copy the login.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <label x-show="isAdmin" class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-semibold cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600">
+                    <label x-show="isAdmin" class="hub-btn hub-btn--secondary hub-btn--sm cursor-pointer">
                         Import CSV
                         <input type="file" accept=".csv,text/csv" @change="importCsv($event)" class="hidden">
                     </label>
-                    <button x-show="isStaff" @click="openModal()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700">+ Add Account</button>
+                    <button x-show="isStaff" type="button" @click="openModal()" class="hub-btn hub-btn--primary hub-btn--sm">Add account</button>
+                    <?php esirom_hub_account_menu(); ?>
                 </div>
             </div>
             <div class="mt-3">
-                <input type="search" x-model="search" @input.debounce.300ms="loadGrouped()" placeholder="Search brands, usernames, or platforms…" class="w-full px-3 py-2 border rounded-xl text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                <input type="search" x-model="search" @input.debounce.300ms="loadGrouped()" placeholder="Search brands, usernames, or platforms…" class="hub-input" aria-label="Search the vault">
             </div>
         </header>
 
@@ -181,7 +183,7 @@ $vault_url = esc_url(esirom_hub_page_url('password-vault'));
                     </div>
                     <input type="text" x-model="form.platform" placeholder="Platform" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <input type="text" x-model="form.username" placeholder="Username" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <input type="text" x-model="form.password" placeholder="Password" class="w-full px-3 py-2 border rounded-lg text-sm font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="text" x-model="form.password" :placeholder="form._id ? 'Leave blank to keep the current password' : 'Password'" autocomplete="off" class="w-full px-3 py-2 border rounded-lg text-sm font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <textarea x-model="form.twoFactorNotes" rows="2" placeholder="2FA / recovery codes" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input type="email" x-model="form.recoveryEmail" placeholder="Recovery email" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -232,7 +234,7 @@ $vault_url = esc_url(esirom_hub_page_url('password-vault'));
                 </div>
             </template>
             <datalist id="vault-group-names">
-                <option x-for="name in groupNameOptions" :key="name" :value="name"></option>
+                <template x-for="name in groupNameOptions" :key="name"><option :value="name"></option></template>
             </datalist>
         </div>
         <div class="px-5 py-4 border-t dark:border-gray-700 flex justify-end gap-2">
@@ -248,8 +250,30 @@ $vault_url = esc_url(esirom_hub_page_url('password-vault'));
 function passwordVaultApp() {
     return {
         authChecked: false,
+        loadError: '',
         allowed: false,
         user: null,
+        showPwModal: false, pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
+        async changePassword() {
+            this.pwError = ''; this.pwSuccess = '';
+            if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+            if (this.pwNew.length < 6) { this.pwError = 'Your new password must be at least 6 characters.'; return; }
+            if (this.pwNew !== this.pwConfirm) { this.pwError = 'The new passwords do not match.'; return; }
+            this.pwLoading = true;
+            try {
+                const res = await fetch(`${API_URL}/auth/update-password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                if (data.token) localStorage.setItem('token', data.token);
+                this.pwSuccess = 'Password updated.';
+                this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 1500);
+            } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+        },
         isSidebarOpen: true,
         loading: true,
         vaultSections: [],
@@ -278,7 +302,7 @@ function passwordVaultApp() {
         toast: { show: false, message: '', type: 'success' },
 
         get isAdmin() { return this.user?.role === 'admin' && this.viewMode !== 'client'; },
-        get isStaff() { return this.user?.role === 'admin' || (this.user?.role === 'brand_rep' && this.viewMode !== 'client'); },
+        get isStaff() { return (this.user?.role === 'admin' || this.user?.role === 'brand_rep') && this.viewMode !== 'client'; },
         get isClientView() { return this.user?.role === 'client' || this.viewMode === 'client'; },
         get isMultimediaBrandRep() { return this.user?.role === 'brand_rep' && this.user?.department === 'multimedia'; },
         get showSocialMediaSection() {
@@ -382,23 +406,39 @@ function passwordVaultApp() {
             if (!token) { window.location.href = LOGIN_URL; return; }
             try {
                 const res = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
-                if (!res.ok) throw new Error('auth');
+                if (res.status === 401 || res.status === 403) throw new Error('auth');
+                if (!res.ok) throw new Error('server');
                 const data = await res.json();
                 this.user = data.user;
+                localStorage.setItem('user', JSON.stringify(data.user));
                 this.allowed = ['admin', 'brand_rep', 'client'].includes(this.user?.role);
                 if (this.user?.role === 'client') {
                     this.viewMode = 'client';
                 } else if (this.user?.role === 'brand_rep') {
-                    this.viewMode = 'admin';
+                    this.viewMode = 'brand_rep';
                     this.statusFilter = 'active';
                 } else if (this.user?.role === 'admin') {
                     this.viewMode = localStorage.getItem('viewMode') || 'admin';
                 } else {
                     this.viewMode = 'admin';
                 }
-                if (this.allowed) await this.loadGrouped();
+                localStorage.setItem('viewMode', this.viewMode);
+                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                if (this.allowed) {
+                    try {
+                        await this.loadGrouped();
+                    } catch (e) {
+                        this.notify('The vault could not be loaded. Please refresh to try again.', 'error');
+                    }
+                }
             } catch (e) {
-                window.location.href = LOGIN_URL;
+                if (e && e.message === 'auth') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = LOGIN_URL;
+                    return;
+                }
+                this.notify('We could not verify your session. Please refresh to try again.', 'error');
             } finally {
                 this.authChecked = true;
             }
@@ -819,6 +859,8 @@ function passwordVaultApp() {
             if (!this.form.accountName?.trim()) { this.notify('Account name is required', 'error'); return; }
             const isEdit = Boolean(this.form._id);
             const payload = { ...this.form }; delete payload._id;
+            // Editing with an empty password keeps the stored one instead of wiping it.
+            if (isEdit && !String(payload.password || '').trim()) delete payload.password;
             const res = await fetch(`${API_URL}/credentials${isEdit ? '/' + this.form._id : ''}`, {
                 method: isEdit ? 'PUT' : 'POST', headers: this.headers(), body: JSON.stringify(payload)
             });
@@ -840,8 +882,9 @@ function passwordVaultApp() {
                 method: 'POST', headers: this.headers(),
                 body: JSON.stringify({ recoveryEmail: this.selected.recoveryEmail, recoveryPhone: this.selected.recoveryPhone, twoFactorNotes: this.selected.twoFactorNotes })
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (data.success) { this.selected = data.data; this.notify('Marked as verified', 'success'); await this.loadGrouped(); }
+            else this.notify(data.message || 'Could not mark this account as verified', 'error');
         },
 
         async importCsv(event) {
@@ -880,6 +923,7 @@ function passwordVaultApp() {
 }
 </script>
 
+<?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
 <?php esirom_hub_mobile_nav('password_vault', 'site'); ?>
 </body>
 </html>

@@ -1135,3 +1135,9 @@ img, video { max-width: 100%; }
 @media (pointer: coarse) {
     .hub-btn--icon { min-width: 2.75rem; min-height: 2.75rem; }
 }
+
+.hub-btn--warning {
+    background: #d97706;
+    color: #fff;
+}
+.hub-btn--warning:hover { background: #b45309; }
