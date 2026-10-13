@@ -97,7 +97,7 @@ if (!defined('ABSPATH')) {
             <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">Agency Hub is a social media management platform that allows agencies and brands to:</p>
             <ul class="list-disc list-outside space-y-2 text-gray-700 dark:text-gray-300 leading-relaxed ml-5 mb-4">
                 <li>Connect and manage Facebook and Instagram business accounts</li>
-                <li>View and analyze social media posts and performance metrics</li>
+                <li>View and analyse social media posts and performance metrics</li>
                 <li>Manage workflow and content creation processes</li>
                 <li>Track key performance indicators (KPIs) and analytics</li>
                 <li>Collaborate with team members on content strategy</li>

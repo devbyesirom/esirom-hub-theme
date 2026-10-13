@@ -111,8 +111,8 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
 
             <div x-show="errors && (errors.facebook || errors.instagram)" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-200">
                 <p class="font-semibold mb-1">Some inboxes could not be loaded</p>
-                <p x-show="errors?.facebook" class="text-xs mt-1"><strong>Messenger:</strong> <span x-text="errors.facebook"></span></p>
-                <p x-show="errors?.instagram" class="text-xs mt-1"><strong>Instagram:</strong> <span x-text="errors.instagram"></span></p>
+                <p x-show="errors?.facebook" class="text-xs mt-1"><strong>Messenger:</strong> <span x-text="errors?.facebook"></span></p>
+                <p x-show="errors?.instagram" class="text-xs mt-1"><strong>Instagram:</strong> <span x-text="errors?.instagram"></span></p>
                 <p class="text-xs mt-2 text-amber-700 dark:text-amber-300">Reconnect the brand in <a href="<?php echo esc_url($admin_url); ?>" class="underline font-medium">Admin → Social Media Connections</a> so the Page token includes Messenger and Instagram messaging permissions.</p>
             </div>
 
@@ -258,7 +258,7 @@ function messagesApp() {
         selectedClientName: '',
         threads: [],
         filteredThreads: [],
-        platforms: null,
+        platforms: {},
         errors: null,
         platformFilter: 'all',
         activeThread: null,
@@ -343,7 +343,7 @@ function messagesApp() {
                 const res = await fetch(`${API_URL}/social-media/messages/${this.selectedClient}`, { headers: this.headers() });
                 const data = await res.json();
                 if (data.success) {
-                    this.platforms = data.data.platforms;
+                    this.platforms = data.data.platforms || {};
                     this.threads = data.data.threads || [];
                     this.errors = data.data.errors;
                     this.filterThreads();

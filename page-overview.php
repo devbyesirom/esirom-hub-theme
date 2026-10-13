@@ -332,7 +332,7 @@ show_admin_bar(false);
                                     <div><p class="text-lg font-bold text-blue-600 tabular-nums" x-text="wp.counts?.outstanding ?? 0"></p><p class="text-[10px] text-gray-400">Active</p></div>
                                     <div><p class="text-lg font-bold text-green-600 tabular-nums" x-text="wp.counts?.completed ?? 0"></p><p class="text-[10px] text-gray-400">Done</p></div>
                                 </div>
-                                <p x-show="wp.leadDeveloper" class="text-[10px] text-gray-400 mt-2" x-text="'Lead: ' + wp.leadDeveloper"></p>
+                                <p x-show="wp.leadDeveloper" class="text-[10px] text-gray-500 dark:text-gray-400 mt-2" x-text="'Lead: ' + (typeof wp.leadDeveloper === 'object' ? ((wp.leadDeveloper?.fullName || ((wp.leadDeveloper?.firstName || '') + ' ' + (wp.leadDeveloper?.lastName || '')).trim()) || 'Unassigned') : wp.leadDeveloper)"></p>
                             </div>
                         </template>
                     </div>

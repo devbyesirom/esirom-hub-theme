@@ -2810,7 +2810,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         platformBreakdown: {},
                         recentReports: [],
                         upcomingPosts: [],
-                        pendingPosts: { count: 0 },
+                        pendingPosts: { count: 0, items: [] },
                         kpis: [],
                         insights: null,
                         demographics: null,
@@ -2843,7 +2843,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                         combined.recentReports.push(...(snapshot?.recentReports || []));
                         combined.upcomingPosts.push(...(snapshot?.upcomingPosts || []));
-                        combined.pendingPosts.push(...(snapshot?.pendingPosts || []));
+                        // pendingPosts may be an array of posts or a { count, items } summary
+                        const pending = snapshot?.pendingPosts;
+                        if (Array.isArray(pending)) {
+                            combined.pendingPosts.items.push(...pending);
+                            combined.pendingPosts.count += pending.length;
+                        } else if (pending && typeof pending === 'object') {
+                            combined.pendingPosts.items.push(...(pending.items || []));
+                            combined.pendingPosts.count += Number(pending.count || (pending.items || []).length || 0);
+                        }
                     });
 
                     const engagementCurrent = combined.metrics.engagement.current;
@@ -2866,8 +2874,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         .sort((a, b) => new Date(a.scheduledDate || 0) - new Date(b.scheduledDate || 0))
                         .slice(0, 10);
 
-                    combined.pendingPosts = combined.pendingPosts
-                        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                    combined.pendingPosts.items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
                     return combined;
                 },

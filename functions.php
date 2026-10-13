@@ -14,8 +14,7 @@ if (!defined('ABSPATH')) {
  * Theme Setup
  */
 function esirom_hub_setup() {
-    // Add theme support
-    add_theme_support('title-tag');
+    // Hub templates render their own <title>, so WordPress' title-tag is not used.
     add_theme_support('post-thumbnails');
     
     // Register navigation menus

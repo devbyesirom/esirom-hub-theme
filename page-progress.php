@@ -129,7 +129,8 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
             </div>
 
             <!-- PERSONAL VIEW -->
-            <div x-show="!loading && view === 'personal' && myData && myData.department" class="space-y-6 animate-fade-in">
+            <template x-if="!loading && view === 'personal' && myData && myData.department">
+            <div class="space-y-6 animate-fade-in">
 
                 <!-- Hero score card -->
                 <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
@@ -277,7 +278,7 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 
                             <!-- Pending items for graphic designer -->
                             <div x-show="(goal.id === 'handoffs_completed' || goal.id === 'graphics_completed') && goal.details && goal.details.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Still in progress (<span x-text="goal.details.length"></span>):</p>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Still in progress (<span x-text="(goal.details || []).length"></span>):</p>
                                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
                                     <template x-for="item in (goal.details || [])" :key="item.title">
                                         <div class="flex items-start justify-between gap-2 text-xs">
@@ -291,7 +292,7 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 
                             <!-- Revisions in progress (informational, no penalty) -->
                             <div x-show="goal.revisionItems && goal.revisionItems.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Awaiting revision (<span x-text="goal.revisionItems.length"></span>) — already handed off:</p>
+                                <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Awaiting revision (<span x-text="(goal.revisionItems || []).length"></span>) — already handed off:</p>
                                 <div class="space-y-1 max-h-24 overflow-y-auto">
                                     <template x-for="item in (goal.revisionItems || [])" :key="item.title + '-rev'">
                                         <p class="text-xs text-gray-600 dark:text-gray-400 truncate" x-text="item.title"></p>
@@ -329,9 +330,11 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
                     <p class="text-sm text-gray-500 dark:text-gray-400">No performance goals found for this period.</p>
                 </div>
             </div>
+            </template>
 
             <!-- TEAM VIEW -->
-            <div x-show="!loading && view === 'team'" class="space-y-6 animate-fade-in">
+            <template x-if="!loading && view === 'team'">
+            <div class="space-y-6 animate-fade-in">
 
                 <!-- Admin department filter -->
                 <div x-show="user?.role === 'admin'" class="flex items-center gap-2 flex-wrap">
@@ -345,7 +348,7 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
                 </div>
 
                 <!-- My stats in team context -->
-                <div x-show="teamData && teamData.me && teamData.me.department" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-sm">
+                <div x-show="teamData?.me?.department" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-sm">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">My Performance</span>
                     </div>
@@ -357,11 +360,11 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
                                         :stroke="getScoreStroke(teamData?.me?.score)"
                                         stroke-width="6" stroke-linecap="round"
                                         :stroke-dasharray="163"
-                                        :stroke-dashoffset="teamData?.me?.score !== null ? 163 - (163 * Math.min(teamData.me.score, 100) / 100) : 163"
+                                        :stroke-dashoffset="teamData?.me?.score !== null ? 163 - (163 * Math.min(teamData?.me?.score, 100) / 100) : 163"
                                         class="ring-score"/>
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-sm font-extrabold text-gray-900 dark:text-white" x-text="teamData?.me?.score !== null ? teamData.me.score + '%' : '—'"></span>
+                                <span class="text-sm font-extrabold text-gray-900 dark:text-white" x-text="teamData?.me?.score !== null ? teamData?.me?.score + '%' : '—'"></span>
                             </div>
                         </div>
                         <div>
@@ -384,7 +387,7 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
                              }">
                             <div>
                                 <h3 class="font-semibold text-gray-900 dark:text-white" x-text="dept.departmentLabel"></h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="dept.members.length + ' member' + (dept.members.length !== 1 ? 's' : '')"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="(dept.members || []).length + ' member' + ((dept.members || []).length !== 1 ? 's' : '')"></p>
                             </div>
                             <div class="text-right">
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Team Average</p>
@@ -495,10 +498,11 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
                 </template>
 
                 <!-- Empty team -->
-                <div x-show="!loading && teamData && (!teamData.departments || teamData.departments.length === 0)" class="bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center">
+                <div x-show="!loading && teamData && (!teamData?.departments || teamData?.departments.length === 0)" class="bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center">
                     <p class="text-sm text-gray-500 dark:text-gray-400">No team members with departments assigned. Set departments in the Admin Panel.</p>
                 </div>
             </div>
+            </template>
 
             <!-- Access denied for non-managers in team view -->
             <div x-show="!loading && view === 'team' && !canViewTeam" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-xl p-8 text-center">
