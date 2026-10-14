@@ -294,7 +294,7 @@ function passwordVaultApp() {
         groupModalAccount: null,
         groupModalForm: { newGroupName: '', targetGroupName: '' },
         groupNameOptions: [],
-        viewMode: localStorage.getItem('viewMode') || 'admin',
+        viewMode: window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })()), // provisional until /auth/me answers
         accountModalView: true,
         showPassword: false,
         selected: null,
@@ -410,20 +410,14 @@ function passwordVaultApp() {
                 if (!res.ok) throw new Error('server');
                 const data = await res.json();
                 this.user = data.user;
+                window.HubAuth.setUser(data.user);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 this.allowed = ['admin', 'brand_rep', 'client'].includes(this.user?.role);
-                if (this.user?.role === 'client') {
-                    this.viewMode = 'client';
-                } else if (this.user?.role === 'brand_rep') {
-                    this.viewMode = 'brand_rep';
+                // Derive the view mode from the verified role: only super admins keep a stored preview mode.
+                this.viewMode = window.HubAuth.applyViewMode();
+                if (this.user?.role === 'brand_rep') {
                     this.statusFilter = 'active';
-                } else if (this.user?.role === 'admin') {
-                    this.viewMode = localStorage.getItem('viewMode') || 'admin';
-                } else {
-                    this.viewMode = 'admin';
                 }
-                localStorage.setItem('viewMode', this.viewMode);
-                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
                 if (this.allowed) {
                     try {
                         await this.loadGrouped();

@@ -171,6 +171,44 @@ function esirom_hub_api_url() {
 }
 
 /**
+ * Default super admin accounts that may use the "Viewing as" role switcher.
+ */
+function esirom_hub_default_super_admin_emails() {
+    return array('alex@esirom.com');
+}
+
+/**
+ * Normalise a list of emails (string with newlines/commas or array) to a
+ * de-duplicated, lower-cased array.
+ */
+function esirom_hub_normalise_email_list($raw) {
+    $items = is_array($raw) ? $raw : preg_split('/[\s,;]+/', (string) $raw);
+    $emails = array();
+    foreach ($items as $item) {
+        $email = strtolower(trim((string) $item));
+        if ($email !== '' && is_email($email)) {
+            $emails[$email] = true;
+        }
+    }
+    return array_keys($emails);
+}
+
+/**
+ * Super admin emails allowed to use the "Viewing as" switcher.
+ *
+ * Super admin status is resolved client-side from the user object returned by
+ * the backend (`/auth/me`): the account must have the `admin` role AND either
+ * carry an `isSuperAdmin: true` flag from the backend or match this list.
+ */
+function esirom_hub_super_admin_emails() {
+    $stored = get_option('esirom_super_admin_emails', null);
+    if ($stored === null || $stored === false) {
+        return esirom_hub_default_super_admin_emails();
+    }
+    return esirom_hub_normalise_email_list($stored);
+}
+
+/**
  * All page templates that make up the Hub application.
  */
 function esirom_hub_templates() {
@@ -298,10 +336,13 @@ function esirom_hub_settings_page_html() {
     if (isset($_POST['esirom_hub_settings_nonce']) && wp_verify_nonce($_POST['esirom_hub_settings_nonce'], 'esirom_hub_settings')) {
         $new_url = isset($_POST['esirom_api_url']) ? esc_url_raw(trim(wp_unslash($_POST['esirom_api_url']))) : '';
         update_option('esirom_api_url', $new_url ? rtrim($new_url, '/') : esirom_hub_default_api_url());
+        $new_super_admins = isset($_POST['esirom_super_admin_emails']) ? sanitize_textarea_field(wp_unslash($_POST['esirom_super_admin_emails'])) : '';
+        update_option('esirom_super_admin_emails', implode("\n", esirom_hub_normalise_email_list($new_super_admins)));
         echo '<div class="notice notice-success"><p>Settings saved.</p></div>';
     }
 
     $api_url = esirom_hub_api_url();
+    $super_admin_emails = esirom_hub_super_admin_emails();
     ?>
     <div class="wrap">
         <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -320,6 +361,19 @@ function esirom_hub_settings_page_html() {
                                class="regular-text"
                                placeholder="<?php echo esc_attr(esirom_hub_default_api_url()); ?>">
                         <p class="description">Base URL of the Esirom Hub API backend (including <code>/api</code>).</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="esirom_super_admin_emails">Super admin emails</label>
+                    </th>
+                    <td>
+                        <textarea id="esirom_super_admin_emails"
+                                  name="esirom_super_admin_emails"
+                                  rows="3"
+                                  class="large-text code"
+                                  placeholder="alex@esirom.com"><?php echo esc_textarea(implode("\n", $super_admin_emails)); ?></textarea>
+                        <p class="description">One email per line. Only these accounts (they must also have the <code>admin</code> role in the Hub backend) can use the "Viewing as" switcher to preview the Hub as a brand rep or client. Accounts flagged <code>isSuperAdmin</code> by the backend are allowed too.</p>
                     </td>
                 </tr>
             </table>

@@ -60,8 +60,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </template>
                         </div>
                     </div>
-                    <!-- Admin view switcher -->
-                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                    <!-- "Viewing as" switcher — super admins only -->
+                    <div x-show="isSuperAdmin" x-cloak class="relative" x-data="{ showRoleSwitcher: false }">
                         <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="showRoleSwitcher" aria-label="Switch view mode">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
@@ -2275,13 +2275,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
             Alpine.data('clientHub', () => ({
                 isSidebarOpen: true,
                 activeView: 'dashboard',
+                // Provisional until /auth/me answers; HubAuth re-derives it from the real role in init().
                 viewMode: (() => {
                     try {
                         const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                        if (cachedUser?.role === 'client') return 'client';
+                        return window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), cachedUser);
                     } catch (_err) {}
-                    return localStorage.getItem('viewMode') || 'admin';
+                    return 'admin';
                 })(),
+                get isSuperAdmin() { void this.user?.role; return window.HubAuth.isSuperAdmin(window.HubAuth.getUser() || this.user); }, // reads this.user for reactivity, decides on the verified /auth/me payload
                 selectedViewClient: localStorage.getItem('selectedViewClient') || null,
                 theme: localStorage.getItem('theme') || 'light',
                 currentDate: new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
@@ -2482,9 +2484,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     }
 
                     this.user = JSON.parse(userStr);
-                    if (this.user?.role === 'client') {
-                        this.viewMode = 'client';
-                    }
+                    this.viewMode = window.HubAuth.resolveViewMode(this.viewMode, this.user);
 
                     // Check if password change is required
                     if (localStorage.getItem('requirePasswordChange') === 'true') {
@@ -2495,16 +2495,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     // Verify token and load data
                     await this.verifyAuth();
 
-                    // Normalize viewMode for role
-                    if (this.user?.role === 'client') {
-                        this.viewMode = 'client';
-                    } else if (this.user?.role === 'brand_rep' && this.viewMode === 'admin') {
-                        this.viewMode = 'brand_rep';
-                    } else if (this.user?.role === 'admin' && !['admin', 'brand_rep', 'client'].includes(this.viewMode)) {
-                        this.viewMode = 'admin';
-                    }
-                    localStorage.setItem('viewMode', this.viewMode);
-                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                    // Derive the view mode from the verified role (cached session only if the backend was unreachable):
+                    // only super admins keep a stored preview mode.
+                    this.viewMode = window.HubAuth.applyViewMode(undefined, window.HubAuth.getUser() || this.user);
                     
                     // For clients, default to Published Posts view if no hash specified
                     if (this.user.role === 'client' && !window.location.hash) {
@@ -2555,6 +2548,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         const data = await response.json();
                         if (data && data.user) {
                             this.user = data.user;
+                            window.HubAuth.setUser(data.user);
                             localStorage.setItem('user', JSON.stringify(data.user));
                         }
                     } catch (error) {
@@ -3056,9 +3050,14 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 switchViewMode(mode) {
-                    this.viewMode = mode;
-                    localStorage.setItem('viewMode', mode);
-                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: mode } }));
+                    // Only verified super admins (per /auth/me) may preview another role.
+                    if (!window.HubAuth.isSuperAdmin()) {
+                        this.viewMode = window.HubAuth.applyViewMode(this.viewMode);
+                        this.showToast('Only super admins can switch views.', 'error');
+                        return;
+                    }
+                    mode = window.HubAuth.resolveViewMode(mode);
+                    this.viewMode = window.HubAuth.persistViewMode(mode);
                     
                     // For client view, select first client if not already selected
                     if (mode === 'client' && !this.selectedViewClient && this.availableClients.length > 0) {

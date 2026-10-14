@@ -364,7 +364,7 @@ function inventoryApp() {
         equipmentForm: {},
         bookingForm: {},
         toast: { show: false, message: '', type: 'success' },
-        viewMode: localStorage.getItem('viewMode') || 'admin',
+        viewMode: window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })()), // provisional until /auth/me answers
 
         categories: ['camera','lens','lighting','audio','grip','computer','drone','other'],
         conditions: ['new','good','needs_servicing','old','other'],
@@ -404,15 +404,14 @@ function inventoryApp() {
                 if (!res.ok) throw new Error('server');
                 const data = await res.json();
                 this.user = data.user;
+                window.HubAuth.setUser(data.user);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 if (this.user.role === 'client') {
                     window.location.href = DASHBOARD_URL;
                     return;
                 }
-                if (this.user.role === 'brand_rep') this.viewMode = 'brand_rep';
-                if (this.user.role === 'admin' && this.viewMode === 'client') this.viewMode = 'admin';
-                localStorage.setItem('viewMode', this.viewMode);
-                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                // Staff-only page: derive the view mode from the verified role; a super admin previewing as client falls back to admin.
+                this.viewMode = window.HubAuth.applyViewMode(window.HubAuth.readStoredViewMode() === 'client' ? 'admin' : undefined);
                 const params = new URLSearchParams(window.location.search);
                 const urlTab = params.get('tab');
                 if (urlTab) this.tab = urlTab;

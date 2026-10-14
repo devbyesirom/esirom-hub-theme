@@ -5,6 +5,18 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.64] - 2026-10-14
+
+### Changed
+- The "Viewing as" role switcher (eye icon in the Workflow header, and on Insights and Agency Overview) is only shown to super admins. Super admin = `admin` role from `/auth/me` plus either a backend `isSuperAdmin: true` flag or an email on the new **Hub Settings → Super admin emails** list (default `alex@esirom.com`)
+- New `js/hub-auth.js` (`HubAuth`) is the single place that derives the allowed view mode from the verified role; every page, the shared mobile nav and the client nav bootstrap use it
+- Theme version bumped to 2.3.64
+
+### Fixed
+- Brand reps, clients and regular admins could land in a different view through a stored `viewMode`, and the switcher briefly rendered before Alpine initialised; the view mode is now re-derived from the backend role on every page load, `switchViewMode()` refuses non-super-admins (including console calls), the switcher is `x-cloak`ed, and visibility is decided on the verified `/auth/me` payload rather than the reactive user object
+- Workflow Concepts on phones (375–430px): the search / All Status / All Brands toolbar overflowed sideways and the page scrolled horizontally; filters now stack and the app main area never pans sideways
+- Workflow concept detail on phones: the 192px media thumbnail, status badge and close button pushed past the right edge and the title was squeezed; the detail now opens as a full-height sheet with the title, close button and status first, media scaled to the panel width, a 2-column action grid and shrinkable link inputs
+
 ## [2.3.63] - 2026-10-13
 
 ### Added

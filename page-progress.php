@@ -518,7 +518,7 @@ function progressApp() {
         authChecked: false,
         user: null,
         isSidebarOpen: true,
-        viewMode: localStorage.getItem('viewMode') || 'admin',
+        viewMode: window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })()), // provisional until /auth/me answers
         showPwModal: false,
         pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
         isDark: localStorage.getItem('theme') === 'dark',
@@ -625,12 +625,15 @@ function progressApp() {
                         ...data.user,
                         _id: data.user._id || data.user.id
                     };
+                    window.HubAuth.setUser(this.user);
                     localStorage.setItem('user', JSON.stringify(this.user));
 
                     if (this.user.role === 'client') {
                         window.location.href = '<?php echo esc_js(esirom_hub_page_url('dashboard')); ?>';
                         return;
                     }
+                    // Staff-only page: derive the view mode from the verified role; a super admin previewing as client falls back to admin.
+                    this.viewMode = window.HubAuth.applyViewMode(window.HubAuth.readStoredViewMode() === 'client' ? 'admin' : undefined);
 
                     if (this.user.role === 'admin') {
                         this.view = 'team';

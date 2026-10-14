@@ -89,12 +89,15 @@ $hub_icon = function ($name) use ($hub_icons) {
 
 <nav class="hub-mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40" aria-label="Primary"
      x-data="{
-        viewMode: localStorage.getItem('viewMode') || 'admin',
         user: (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })(),
+        viewMode: 'admin',
         moreOpen: false,
         init() {
+            // Stored preview modes only apply to super admins; everyone else gets their real role.
+            this.viewMode = window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), window.HubAuth.getUser() || this.user);
             window.addEventListener('viewModeChanged', (e) => {
-                this.viewMode = e?.detail?.viewMode || (localStorage.getItem('viewMode') || 'admin');
+                const requested = e?.detail?.viewMode || window.HubAuth.readStoredViewMode();
+                this.viewMode = window.HubAuth.resolveViewMode(requested, window.HubAuth.getUser() || this.user);
             });
         }
      }">

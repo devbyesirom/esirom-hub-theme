@@ -121,7 +121,8 @@ show_admin_bar(false);
                     </span>
                 </a>
                 <div class="flex items-center gap-1">
-                    <div x-show="user?.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                    <!-- "Viewing as" switcher (mobile) — super admins only -->
+                    <div x-show="isSuperAdmin" x-cloak class="relative" x-data="{ showRoleSwitcher: false }">
                         <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="showRoleSwitcher" aria-label="Switch view mode">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
@@ -174,7 +175,8 @@ show_admin_bar(false);
 
                 <!-- Right: view switcher + theme + user -->
                 <div class="flex items-center gap-2">
-                    <div x-show="user?.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                    <!-- "Viewing as" switcher — super admins only -->
+                    <div x-show="isSuperAdmin" x-cloak class="relative" x-data="{ showRoleSwitcher: false }">
                         <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--soft hub-btn--sm" :aria-expanded="showRoleSwitcher">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             <span x-text="viewMode === 'admin' ? 'Admin view' : viewMode === 'brand_rep' ? 'Brand rep view' : 'Client view'"></span>
@@ -573,7 +575,15 @@ show_admin_bar(false);
                 loading: true,
                 user: {},
                 WORKFLOW_URL,
-                viewMode: localStorage.getItem('viewMode') || 'admin',
+                // Provisional until /auth/me answers; HubAuth re-derives it from the real role in init().
+                viewMode: (() => {
+                    try {
+                        const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        return window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), cachedUser);
+                    } catch (_err) {}
+                    return 'admin';
+                })(),
+                get isSuperAdmin() { void this.user?.role; return window.HubAuth.isSuperAdmin(window.HubAuth.getUser() || this.user); }, // reads this.user for reactivity, decides on the verified /auth/me payload
                 showPwModal: false,
                 pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 selectedViewClient: localStorage.getItem('selectedViewClient') || null,
@@ -651,19 +661,14 @@ show_admin_bar(false);
                         } else {
                             const data = await res.json();
                             this.user = data.user || {};
+                            window.HubAuth.setUser(data.user);
                         }
                         if (this.user && Object.keys(this.user).length) {
                             localStorage.setItem('user', JSON.stringify(this.user));
                         }
-                        if (this.user?.role === 'client') {
-                            this.viewMode = 'client';
-                        } else if (this.user?.role === 'brand_rep' && this.viewMode === 'admin') {
-                            this.viewMode = 'brand_rep';
-                        } else if (this.user?.role === 'admin' && !['admin', 'brand_rep', 'client'].includes(this.viewMode)) {
-                            this.viewMode = 'admin';
-                        }
-                        localStorage.setItem('viewMode', this.viewMode);
-                        window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                        // Derive the view mode from the verified role (cached session only if the backend hiccupped):
+                        // only super admins keep a stored preview mode.
+                        this.viewMode = window.HubAuth.applyViewMode(undefined, window.HubAuth.getUser() || this.user);
                     } catch (e) {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
@@ -701,9 +706,14 @@ show_admin_bar(false);
                 },
 
                 switchViewMode(mode) {
-                    this.viewMode = mode;
-                    localStorage.setItem('viewMode', mode);
-                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: mode } }));
+                    // Only verified super admins (per /auth/me) may preview another role.
+                    if (!window.HubAuth.isSuperAdmin()) {
+                        this.viewMode = window.HubAuth.applyViewMode(this.viewMode);
+                        this.showToast('Only super admins can switch views.', 'error');
+                        return;
+                    }
+                    mode = window.HubAuth.resolveViewMode(mode);
+                    this.viewMode = window.HubAuth.persistViewMode(mode);
                     
                     // For client view, select first client if not already selected
                     if (mode === 'client' && !this.selectedViewClient && this.brands.length > 0) {

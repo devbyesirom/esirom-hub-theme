@@ -26,7 +26,8 @@ document.addEventListener('alpine:init', () => {
             } catch (_err) {
                 user = {};
             }
-            const viewMode = localStorage.getItem('viewMode') || 'admin';
+            // Stored preview modes only apply to super admins; everyone else gets their real role.
+            const viewMode = window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), window.HubAuth.getUser() || user);
             if (user.role !== 'client' && viewMode !== 'client') {
                 this.loaded = true;
                 return;
