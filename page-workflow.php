@@ -588,11 +588,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 <!-- Concepts Tab -->
                 <div x-show="activeTab === 'concepts'">
-                    <!-- Header with filters and create button -->
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div class="flex items-center space-x-4">
-                            <input type="text" x-model="conceptSearch" @input.debounce.300ms="loadConcepts()" placeholder="Search concepts..." class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <select x-model="conceptStatusFilter" @change="loadConcepts()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <!-- Header with filters and create button (stacks on phones, inline from sm) -->
+                    <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+                        <div class="grid grid-cols-2 gap-2 min-w-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+                            <input type="text" x-model="conceptSearch" @input.debounce.300ms="loadConcepts()" placeholder="Search concepts..." aria-label="Search concepts" class="col-span-2 w-full min-w-0 sm:w-56 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <select x-model="conceptStatusFilter" @change="loadConcepts()" aria-label="Filter by status" class="w-full min-w-0 sm:w-auto px-3 sm:px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">All Status</option>
                                 <option value="draft">Draft</option>
                                 <option value="assigned">Assigned</option>
@@ -604,17 +604,17 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 <option value="posted">Posted</option>
                                 <option value="overdue">Overdue</option>
                             </select>
-                            <select x-model="conceptClientFilter" @change="loadConcepts()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <select x-model="conceptClientFilter" @change="loadConcepts()" aria-label="Filter by brand" class="w-full min-w-0 sm:w-auto px-3 sm:px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">All Brands</option>
                                 <template x-for="client in clients" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.name"></option>
                                 </template>
                             </select>
-                            <button x-show="efficiencyAssigneeFilter" type="button" @click="clearEfficiencyFilter()" class="px-3 py-2 text-xs rounded-lg border dark:border-gray-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                            <button x-show="efficiencyAssigneeFilter" type="button" @click="clearEfficiencyFilter()" class="col-span-2 sm:col-auto px-3 py-2 text-xs rounded-lg border dark:border-gray-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
                                 Clear Efficiency Filter
                             </button>
                         </div>
-                        <button @click="openConceptModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
+                        <button @click="openConceptModal()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center space-x-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             <span>New Concept</span>
                         </button>
@@ -624,11 +624,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     </div>
 
                     <!-- Concepts Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <template x-for="concept in concepts" :key="concept._id">
-                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-hidden" @click="viewConcept(concept)">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-hidden min-w-0" @click="viewConcept(concept)">
                                 <!-- Design Preview -->
-                                <div class="relative h-80 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                                <div class="relative h-64 sm:h-80 bg-gray-100 dark:bg-gray-700 overflow-hidden">
                                     <template x-if="getLatestDesignImage(concept) && !isVideoConcept(concept)">
                                         <img :src="getLatestDesignImage(concept)" :alt="concept.title" class="w-full h-full object-cover" />
                                     </template>
@@ -1882,46 +1882,48 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             </div>
         </div>
 
-        <!-- View Concept Detail Modal -->
+        <!-- View Concept Detail Modal (full-height sheet on phones, centred dialog from sm) -->
         <div x-show="showConceptDetail" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="flex items-end sm:items-center justify-center min-h-[100dvh] px-0 sm:px-4">
                 <div class="fixed inset-0 bg-black opacity-50" @click="showConceptDetail = false; loadConcepts()"></div>
-                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                    <div class="p-6 border-b dark:border-gray-700">
-                        <div class="flex gap-6 items-start">
+                <div class="relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-lg shadow-xl max-w-4xl w-full max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
+                    <div class="p-4 sm:p-6 border-b dark:border-gray-700">
+                        <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
+                            <!-- Media: full width under the title on phones, 192px thumbnail beside it from sm -->
                             <template x-if="getLatestDesignImage(selectedConcept) && !isVideoConcept(selectedConcept)">
-                                <button @click="lightboxImage = getLatestDesignImage(selectedConcept)" class="shrink-0 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg">
-                                    <img :src="getLatestDesignImage(selectedConcept)" class="w-48 h-48 rounded-lg object-cover border border-gray-200 dark:border-gray-600" alt="Latest design" @error="$event.target.style.display='none'" />
+                                <button @click="lightboxImage = getLatestDesignImage(selectedConcept)" class="order-2 sm:order-1 w-full sm:w-48 shrink-0 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <img :src="getLatestDesignImage(selectedConcept)" class="w-full h-auto max-h-80 object-contain sm:w-48 sm:h-48 sm:object-cover rounded-lg border border-gray-200 dark:border-gray-600" alt="Latest design" @error="$event.target.style.display='none'" />
                                 </button>
                             </template>
                             <template x-if="isVideoConcept(selectedConcept) && selectedConcept?.youtubeLink">
-                                <div class="w-48 h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shrink-0 bg-black">
+                                <div class="order-2 sm:order-1 w-full aspect-video sm:w-48 sm:h-48 sm:aspect-auto rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shrink-0 bg-black">
                                     <img :src="getYoutubeThumbnail(selectedConcept.youtubeLink)" class="w-full h-full object-cover" alt="Video preview" />
                                 </div>
                             </template>
                             <template x-if="!getLatestDesignImage(selectedConcept) && !(isVideoConcept(selectedConcept) && selectedConcept?.youtubeLink)">
-                                <div class="w-48 h-48 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shrink-0 flex items-center justify-center">
+                                <div class="order-2 sm:order-1 w-full h-36 sm:w-48 sm:h-48 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shrink-0 flex items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
                             </template>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-start">
+                            <div class="order-1 sm:order-2 flex-1 min-w-0 w-full">
+                                <div class="flex justify-between items-start gap-3">
                                     <div class="flex-1 min-w-0">
-                                        <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="selectedConcept?.title"></h2>
-                                        <p class="text-sm text-gray-500" x-text="selectedConcept?.clientId?.brandName || selectedConcept?.clientId?.name"></p>
+                                        <h2 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words" x-text="selectedConcept?.title"></h2>
+                                        <p class="text-sm text-gray-500 truncate" x-text="selectedConcept?.clientId?.brandName || selectedConcept?.clientId?.name"></p>
                                     </div>
-                                    <div class="flex items-center space-x-2 shrink-0">
-                                        <span :class="getStatusClass(selectedConcept?.status)" class="px-3 py-1 text-sm rounded-full" x-text="formatStatus(selectedConcept?.status)"></span>
-                                        <button @click="showConceptDetail = false; loadConcepts()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span :class="getStatusClass(selectedConcept?.status)" class="hidden sm:inline-flex px-3 py-1 text-sm rounded-full whitespace-nowrap" x-text="formatStatus(selectedConcept?.status)"></span>
+                                        <button type="button" @click="showConceptDetail = false; loadConcepts()" class="p-2 -mr-2 sm:mr-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Close concept">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>
                                     </div>
                                 </div>
+                                <span :class="getStatusClass(selectedConcept?.status)" class="sm:hidden inline-flex mt-2 px-3 py-1 text-xs rounded-full whitespace-nowrap" x-text="formatStatus(selectedConcept?.status)"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-4 sm:p-6">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Content Type</p>
                                 <p class="font-medium text-gray-900 dark:text-white capitalize" x-text="selectedConcept?.contentType?.replace('_', ' ')"></p>
@@ -2112,7 +2114,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 </div>
                                 <!-- Input for new link -->
                                 <div x-show="!selectedConcept?.driveLink" class="flex gap-2">
-                                    <input type="url" x-model="driveLinkInput" placeholder="https://drive.google.com/drive/folders/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                    <input type="url" x-model="driveLinkInput" placeholder="https://drive.google.com/drive/folders/..." class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                                     <button @click="saveDriveLink(selectedConcept)" :disabled="!driveLinkInput" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors">
                                         Save
                                     </button>
@@ -2140,7 +2142,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube / Video Link <span class="text-red-500">*</span></label>
                                 <p class="text-xs text-red-500 mb-2">Required before submitting for review</p>
                                 <div class="flex gap-2">
-                                    <input type="url" x-model="youtubeLinkInput" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                    <input type="url" x-model="youtubeLinkInput" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                                     <button type="button" @click="saveYoutubeLink(selectedConcept)" :disabled="!youtubeLinkInput" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors">Save</button>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unlisted YouTube links work well for review before posting to IG.</p>
@@ -2152,7 +2154,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     <button type="button" @click="selectedConcept.videoDriveLink = ''; saveVideoDriveLink(selectedConcept)" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
                                 </div>
                                 <div x-show="!selectedConcept?.videoDriveLink" class="flex gap-2">
-                                    <input type="url" x-model="videoDriveLinkInput" placeholder="https://drive.google.com/... (optional raw project files)" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    <input type="url" x-model="videoDriveLinkInput" placeholder="https://drive.google.com/... (optional raw project files)" class="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                                     <button type="button" @click="saveVideoDriveLink(selectedConcept)" :disabled="!videoDriveLinkInput" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm rounded-lg">Save</button>
                                 </div>
                             </div>
@@ -2167,20 +2169,20 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <a :href="selectedConcept?.youtubeLink" target="_blank" rel="noopener noreferrer" class="text-sm text-red-600 dark:text-red-400 hover:underline">Open on YouTube</a>
                         </div>
 
-                        <!-- Status Actions -->
+                        <!-- Status Actions (2-column grid on phones so every button is reachable; inline from sm) -->
                         <div class="border-t dark:border-gray-700 pt-6 mt-6">
                             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Actions</h3>
-                            <div class="flex flex-wrap gap-3">
+                            <div class="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
                                 <template x-if="selectedConcept?.status === 'draft' || selectedConcept?.status === 'assigned'">
-                                    <button @click="updateConceptStatus('in_progress')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Start Working</button>
+                                    <button @click="updateConceptStatus('in_progress')" class="col-span-2 sm:col-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Start Working</button>
                                 </template>
                                 <template x-if="selectedConcept?.status === 'in_progress' || selectedConcept?.status === 'needs_revision' || selectedConcept?.status === 'rejected'">
-                                    <button @click="submitConceptForReview()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Submit for Review</button>
+                                    <button @click="submitConceptForReview()" class="col-span-2 sm:col-auto px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Submit for Review</button>
                                 </template>
                                 <template x-if="selectedConcept?.status === 'pending_review'">
-                                    <div class="flex gap-3">
-                                        <button @click="updateConceptStatus('approved')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve → Content Bank</button>
-                                        <button @click="updateConceptStatus('needs_revision')" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Request Revision</button>
+                                    <div class="contents">
+                                        <button @click="updateConceptStatus('approved')" class="col-span-2 sm:col-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve → Content Bank</button>
+                                        <button @click="updateConceptStatus('needs_revision')" class="col-span-2 sm:col-auto px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Request Revision</button>
                                     </div>
                                 </template>
                                 <button @click="editConcept(selectedConcept)" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">Edit</button>
@@ -3247,7 +3249,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
                         return window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), cachedUser);
                     } catch (_err) {}
-                    return localStorage.getItem('viewMode') || 'admin';
+                    return 'admin';
                 })(),
                 get isSuperAdmin() { void this.user?.role; return window.HubAuth.isSuperAdmin(window.HubAuth.getUser() || this.user); }, // reads this.user for reactivity, decides on the verified /auth/me payload
                 get isSimulatingView() { return window.HubAuth.isSimulating(this.viewMode); },

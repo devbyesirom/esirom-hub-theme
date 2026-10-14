@@ -181,6 +181,8 @@ img, video { max-width: 100%; }
     min-height: 0;
     min-width: 0;
     overflow-y: auto;
+    /* Wide widgets scroll inside their own containers; the page itself never pans sideways on phones. */
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     background: var(--hub-bg);
 }
