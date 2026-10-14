@@ -8,19 +8,17 @@ if (!defined('ABSPATH')) exit;
 show_admin_bar(false);
 
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
-$login_url = esc_url(get_permalink(get_page_by_path('login')));
-$dashboard_url = esc_url(get_permalink(get_page_by_path('dashboard')));
-$website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects')));
-$progress_url = esc_url(get_permalink(get_page_by_path('progress')));
+$login_url = esc_url(esirom_hub_page_url('login'));
+$dashboard_url = esc_url(esirom_hub_page_url('dashboard'));
+$website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
+$progress_url = esc_url(esirom_hub_page_url('progress'));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website Projects — Agency Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php esirom_hub_head_assets(array('pwa' => true)); ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         const API_URL = '<?php echo esc_js($api_url); ?>';
@@ -28,24 +26,23 @@ $progress_url = esc_url(get_permalink(get_page_by_path('progress')));
         const DASHBOARD_URL = '<?php echo esc_js($dashboard_url); ?>';
         const WEBSITE_PROJECTS_URL = '<?php echo esc_js($website_projects_url); ?>';
         const PROGRESS_URL = '<?php echo esc_js($progress_url); ?>';
-        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
     </script>
     <style>
-        [x-cloak] { display: none !important; }
-        body { font-family: 'Inter', sans-serif; }
         <?php esirom_hub_layout_styles(); ?>
     </style>
 </head>
 <body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="websiteProjectsApp()" x-init="init()">
 
-<div x-show="!authChecked" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
-    <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+<div x-show="!authChecked" class="hub-boot" aria-busy="true">
+    <span class="hub-spinner hub-spinner--lg"></span>
+    <span>Loading…</span>
 </div>
 
-<div x-show="authChecked && !user" x-cloak class="fixed inset-0 flex items-center justify-center">
-    <div class="text-center">
-        <p class="text-gray-500 mb-4">You must be logged in.</p>
-        <a href="<?php echo $login_url; ?>" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Go to Login</a>
+<div x-show="authChecked && !user" x-cloak class="hub-boot">
+    <div class="hub-card hub-card--elevated p-8 text-center max-w-sm w-full mx-4">
+        <p class="hub-empty__title">You need to sign in</p>
+        <p class="hub-empty__text mt-1" x-text="loadError || 'Your session has ended or could not be verified.'"></p>
+        <a href="<?php echo $login_url; ?>" class="hub-btn hub-btn--primary hub-btn--block mt-5">Go to sign in</a>
     </div>
 </div>
 
@@ -53,32 +50,32 @@ $progress_url = esc_url(get_permalink(get_page_by_path('progress')));
 
     <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(true); ?>
-        <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+        <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
             <?php $hub_nav_active = 'website_projects'; $hub_nav_context = 'site'; $hub_nav_alpine_labels = true; esirom_hub_staff_sidebar_nav('website_projects', 'site', true); ?>
             <?php $hub_client_nav_active = 'website_projects'; $hub_client_nav_context = 'site'; esirom_hub_client_sidebar_nav('website_projects', 'site', true); ?>
         </nav>
-        <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
             <?php esirom_hub_staff_sidebar_footer('site', true); ?>
         </div>
     </aside>
 
     <main class="hub-app-main flex-1 min-w-0">
-        <header class="bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 px-4 sm:px-6 py-4 sticky top-0 z-10">
+        <header class="hub-sticky-header px-4 sm:px-6 py-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Website Projects</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="isClient ? 'Submit bugs, requests, and content updates for your website' : (user?.department === 'web_developer' ? 'Manage websites — tracked in My Progress' : 'Report bugs, suggest features, or request updates for client & internal sites')"></p>
+                    <h1 class="hub-page-title">Website Projects</h1>
+                    <p class="hub-page-subtitle" x-text="isClient ? 'Submit bugs, requests, and content updates for your website' : (user?.department === 'web_developer' ? 'Manage websites — tracked in My Progress' : 'Report bugs, suggest features, or request updates for client & internal sites')"></p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <a x-show="canManageTasks" href="<?php echo esc_url($progress_url); ?>" class="px-3 py-1.5 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30">My Progress →</a>
-                    <button x-show="canManageProjects" @click="openProjectModal()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700">+ New Project</button>
-                    <button @click="openTaskModal()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700" x-text="isClient ? '+ New Request' : '+ New Task'"></button>
+                    <a x-show="canManageTasks" href="<?php echo esc_url($progress_url); ?>" class="hub-btn hub-btn--ghost hub-btn--sm">My Progress →</a>
+                    <button x-show="canManageProjects" type="button" @click="openProjectModal()" class="hub-btn hub-btn--secondary hub-btn--sm">New project</button>
+                    <button type="button" @click="openTaskModal()" class="hub-btn hub-btn--primary hub-btn--sm" x-text="isClient ? 'New request' : 'New task'"></button>
+                    <?php esirom_hub_account_menu(); ?>
                 </div>
             </div>
-            <div class="flex gap-1 mt-3 flex-wrap">
+            <div class="hub-segmented flex-wrap mt-3" role="tablist">
                 <template x-for="t in visibleTabs" :key="t.id">
-                    <button @click="tab = t.id; loadTab()" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition-all"
-                            :class="tab === t.id ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                    <button @click="tab = t.id; loadTab()" class="hub-segmented__item" :class="tab === t.id ? 'is-active' : ''" role="tab" :aria-selected="tab === t.id"
                             x-text="t.label"></button>
                 </template>
             </div>
@@ -255,6 +252,7 @@ $progress_url = esc_url(get_permalink(get_page_by_path('progress')));
     </main>
 </div>
 
+<?php include get_template_directory() . '/inc/change-password-modal.php'; ?>
 <?php esirom_hub_mobile_nav('website_projects', 'site'); ?>
 
 <!-- Project Modal -->
@@ -474,7 +472,29 @@ $progress_url = esc_url(get_permalink(get_page_by_path('progress')));
 function websiteProjectsApp() {
     return {
         authChecked: false,
+        loadError: '',
         user: null,
+        showPwModal: false, pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
+        async changePassword() {
+            this.pwError = ''; this.pwSuccess = '';
+            if (!this.pwCurrent || !this.pwNew || !this.pwConfirm) { this.pwError = 'All fields are required.'; return; }
+            if (this.pwNew.length < 6) { this.pwError = 'Your new password must be at least 6 characters.'; return; }
+            if (this.pwNew !== this.pwConfirm) { this.pwError = 'The new passwords do not match.'; return; }
+            this.pwLoading = true;
+            try {
+                const res = await fetch(`${API_URL}/auth/update-password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: this.pwCurrent, newPassword: this.pwNew })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Failed to update password');
+                if (data.token) localStorage.setItem('token', data.token);
+                this.pwSuccess = 'Password updated.';
+                this.pwCurrent = ''; this.pwNew = ''; this.pwConfirm = '';
+                setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 1500);
+            } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
+        },
         viewMode: localStorage.getItem('viewMode') || 'admin',
         isSidebarOpen: true,
         loading: true,
@@ -591,16 +611,33 @@ function websiteProjectsApp() {
             if (!token) { this.authChecked = true; return; }
             try {
                 const res = await fetch(`${API_URL}/auth/me`, { headers: this.headers() });
-                const data = await res.json();
-                if (!data.success) { localStorage.removeItem('token'); this.authChecked = true; return; }
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    this.loadError = 'Your session has expired. Please sign in again.';
+                    return;
+                }
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success || !data.user) {
+                    this.loadError = 'We could not verify your session. Please try again in a moment.';
+                    return;
+                }
                 this.user = data.user;
-                this.viewMode = localStorage.getItem('viewMode') || (this.user.role === 'client' ? 'client' : 'admin');
-                await this.loadAll();
-                const params = new URLSearchParams(window.location.search);
-                const taskId = params.get('task');
-                if (taskId) await this.openTaskDetail(taskId);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                this.viewMode = this.user.role === 'client' ? 'client' : (localStorage.getItem('viewMode') || 'admin');
+                if (this.user.role === 'brand_rep' && this.viewMode === 'admin') this.viewMode = 'brand_rep';
+                localStorage.setItem('viewMode', this.viewMode);
+                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                try {
+                    await this.loadAll();
+                    const params = new URLSearchParams(window.location.search);
+                    const taskId = params.get('task');
+                    if (taskId) await this.openTaskDetail(taskId);
+                } catch (e) {
+                    this.showToast('Some data could not be loaded. Please refresh to try again.', 'error');
+                }
             } catch (e) {
-                console.error(e);
+                this.loadError = 'We could not reach the server. Please check your connection and try again.';
             } finally {
                 this.authChecked = true;
             }

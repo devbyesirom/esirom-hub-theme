@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$hub_api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
+$hub_api_url = esirom_hub_api_url();
 ?>
 <script>
 document.addEventListener('alpine:init', () => {

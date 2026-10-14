@@ -8,30 +8,20 @@ if (!defined('ABSPATH')) exit;
 show_admin_bar(false);
 
 $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
-$website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects')));
+$website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress — Agency Hub</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php esirom_hub_head_assets(array('pwa' => true)); ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         const API_URL = '<?php echo esc_js($api_url); ?>';
-        const LOGIN_URL = '<?php echo esc_js(get_permalink(get_page_by_path('login'))); ?>';
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
-        };
+        const LOGIN_URL = '<?php echo esc_js(esirom_hub_page_url('login')); ?>';
     </script>
     <style>
-        [x-cloak] { display: none !important; }
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar-collapsed .nav-text { display: none; }
         .ring-score { transition: stroke-dashoffset 0.8s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
@@ -41,59 +31,31 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
 <body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="progressApp()" x-init="init()">
 
 <!-- Auth guard -->
-<div x-show="!authChecked" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
-    <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-sm text-gray-500">Loading...</p>
-    </div>
+<div x-show="!authChecked" class="hub-boot" aria-busy="true">
+    <span class="hub-spinner hub-spinner--lg"></span>
+    <span>Loading…</span>
 </div>
 
-<div x-show="authChecked && !user" x-cloak class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
-    <div class="text-center">
-        <p class="text-gray-600 dark:text-gray-400 mb-4">You must be logged in to view this page.</p>
-        <a href="<?php echo esc_url(get_permalink(get_page_by_path('login'))); ?>" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Go to Login</a>
+<div x-show="authChecked && !user" x-cloak class="hub-boot">
+    <div class="hub-card hub-card--elevated p-8 text-center max-w-sm w-full mx-4">
+        <p class="hub-empty__title">You need to sign in</p>
+        <p class="hub-empty__text mt-1">Your session has ended or could not be verified.</p>
+        <a href="<?php echo esc_url(esirom_hub_page_url('login')); ?>" class="hub-btn hub-btn--primary hub-btn--block mt-5">Go to sign in</a>
     </div>
 </div>
 
 <div x-show="authChecked && user" x-cloak class="hub-app-shell flex flex-col md:flex-row">
 
     <!-- Sidebar -->
-    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex bg-white dark:bg-gray-900/70 dark:backdrop-blur-sm border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
+    <aside :class="isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'" class="hub-app-sidebar sidebar hidden md:flex border-r border-gray-200 dark:border-gray-700/50 flex-col flex-shrink-0">
         <?php esirom_hub_staff_sidebar_header(false); ?>
 
-        <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+        <nav class="flex-1 px-3 py-4 space-y-3 overflow-y-auto" aria-label="Sections">
             <?php esirom_hub_staff_sidebar_nav('progress', 'site', false); ?>
         </nav>
 
-        <div class="p-2 border-t border-gray-200 dark:border-gray-700/50">
-            <?php esirom_hub_staff_sidebar_footer('site', false, false); ?>
-            <!-- User dropdown -->
-            <div x-data="{ dropdownOpen: false }" class="relative mt-1">
-                <button @click="dropdownOpen = !dropdownOpen"
-                        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left">
-                    <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                         x-text="((user?.firstName || '?')[0] + (user?.lastName || '')[0]).toUpperCase()"></div>
-                    <div class="flex-1 min-w-0 nav-text">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate"
-                           x-text="(user?.firstName || '') + ' ' + (user?.lastName || '')"></p>
-                        <p class="text-xs text-gray-500 capitalize"
-                           x-text="user?.role?.replace('_', ' ') || ''"></p>
-                    </div>
-                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 nav-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-cloak
-                     class="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
-                    <a @click.prevent="showPwModal = true; dropdownOpen = false" href="#"
-                       class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        Change Password
-                    </a>
-                    <a @click.prevent="logout(); dropdownOpen = false" href="#"
-                       class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-2xl transition-colors">Logout</a>
-                </div>
-            </div>
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
+            <?php esirom_hub_staff_sidebar_footer('site', false); ?>
         </div>
     </aside>
 
@@ -101,53 +63,44 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
     <main class="hub-app-main">
 
         <!-- Top bar -->
-        <header class="bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10 shadow-sm">
+        <header class="hub-sticky-header px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
             <div class="min-w-0">
-                <h1 class="text-lg font-bold text-gray-900 dark:text-white">My Progress</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="periodLabel"></p>
+                <h1 class="hub-page-title">My Progress</h1>
+                <p class="hub-page-subtitle" x-text="periodLabel"></p>
             </div>
 
             <!-- Controls -->
             <div class="flex items-center gap-3 flex-wrap">
                 <!-- Period Type -->
-                <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 gap-0.5">
+                <div class="hub-segmented" role="tablist" aria-label="Period type">
                     <template x-for="pt in ['month','quarter','year']" :key="pt">
-                        <button @click="setPeriodType(pt)"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md transition-all capitalize"
-                                :class="periodType === pt ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+                        <button type="button" role="tab" @click="setPeriodType(pt)" :aria-selected="periodType === pt"
+                                class="hub-segmented__item" :class="periodType === pt ? 'is-active' : ''"
                                 x-text="pt === 'month' ? 'Month' : pt === 'quarter' ? 'Quarter' : 'Year'"></button>
                     </template>
                 </div>
 
                 <!-- Year picker -->
-                <select x-model="selectedYear" @change="loadData()" class="text-xs border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <select x-model="selectedYear" @change="loadData()" class="hub-select !w-auto !py-1.5 text-xs" aria-label="Year">
                     <template x-for="y in yearOptions" :key="y">
                         <option :value="y" x-text="y"></option>
                     </template>
                 </select>
 
                 <!-- Month picker (month mode only) -->
-                <select x-show="periodType === 'month'" x-model.number="selectedMonth" @change="loadData()" class="text-xs border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <select x-show="periodType === 'month'" x-model.number="selectedMonth" @change="loadData()" class="hub-select !w-auto !py-1.5 text-xs" aria-label="Month">
                     <template x-for="(name, idx) in monthNames" :key="idx">
                         <option :value="idx" x-text="name"></option>
                     </template>
                 </select>
 
                 <!-- View toggle for managers/admins -->
-                <div x-show="canViewTeam" class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 gap-0.5">
-                    <button @click="view = 'personal'; loadData()"
-                            class="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
-                            :class="view === 'personal' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'">My Stats</button>
-                    <button @click="view = 'team'; loadData()"
-                            class="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
-                            :class="view === 'team' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'">Team View</button>
+                <div x-show="canViewTeam" class="hub-segmented" role="tablist" aria-label="View">
+                    <button type="button" role="tab" @click="view = 'personal'; loadData()" :aria-selected="view === 'personal'" class="hub-segmented__item" :class="view === 'personal' ? 'is-active' : ''">My stats</button>
+                    <button type="button" role="tab" @click="view = 'team'; loadData()" :aria-selected="view === 'team'" class="hub-segmented__item" :class="view === 'team' ? 'is-active' : ''">Team view</button>
                 </div>
 
-                <!-- Dark mode -->
-                <button @click="toggleDark()" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <svg x-show="!isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                    <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                </button>
+                <?php $hub_account_theme = true; include get_template_directory() . '/inc/hub-account-menu.php'; ?>
             </div>
         </header>
 
@@ -176,7 +129,8 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
             </div>
 
             <!-- PERSONAL VIEW -->
-            <div x-show="!loading && view === 'personal' && myData && myData.department" class="space-y-6 animate-fade-in">
+            <template x-if="!loading && view === 'personal' && myData && myData.department">
+            <div class="space-y-6 animate-fade-in">
 
                 <!-- Hero score card -->
                 <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
@@ -242,7 +196,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                           'text-red-600 dark:text-red-400': myData.score !== null && myData.score < 50,
                                           'text-gray-500': myData.score === null
                                       }"
-                                      x-text="myData.score >= 90 ? 'Excellent' : myData.score >= 70 ? 'Good' : myData.score >= 50 ? 'Needs Improvement' : myData.score !== null ? 'Behind' : 'Pending'"></span>
+                                      x-text="myData.score >= 90 ? 'Excellent' : myData.score >= 70 ? 'Good' : myData.score >= 50 ? 'Needs improvement' : myData.score !== null ? 'Behind' : 'Pending'"></span>
                             </div>
                         </div>
                     </div>
@@ -324,13 +278,13 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
 
                             <!-- Pending items for graphic designer -->
                             <div x-show="(goal.id === 'handoffs_completed' || goal.id === 'graphics_completed') && goal.details && goal.details.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Still in progress (<span x-text="goal.details.length"></span>):</p>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Still in progress (<span x-text="(goal.details || []).length"></span>):</p>
                                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
                                     <template x-for="item in (goal.details || [])" :key="item.title">
                                         <div class="flex items-start justify-between gap-2 text-xs">
                                             <span class="text-gray-700 dark:text-gray-300 truncate" x-text="item.title"></span>
                                             <span :class="item.overdueDays > 0 ? 'text-red-500 font-medium' : 'text-gray-400'"
-                                                  x-text="item.overdueDays > 0 ? item.overdueDays + 'd overdue' : 'Due ' + new Date(item.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })"></span>
+                                                  x-text="item.overdueDays > 0 ? item.overdueDays + 'd overdue' : 'Due ' + new Date(item.dueDate).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })"></span>
                                         </div>
                                     </template>
                                 </div>
@@ -338,7 +292,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
 
                             <!-- Revisions in progress (informational, no penalty) -->
                             <div x-show="goal.revisionItems && goal.revisionItems.length > 0" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                                <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Awaiting revision (<span x-text="goal.revisionItems.length"></span>) — already handed off:</p>
+                                <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Awaiting revision (<span x-text="(goal.revisionItems || []).length"></span>) — already handed off:</p>
                                 <div class="space-y-1 max-h-24 overflow-y-auto">
                                     <template x-for="item in (goal.revisionItems || [])" :key="item.title + '-rev'">
                                         <p class="text-xs text-gray-600 dark:text-gray-400 truncate" x-text="item.title"></p>
@@ -350,8 +304,8 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                             <div x-show="goal.brandBreakdown && goal.brandBreakdown.length > 0 && ['next_month_concepts','concept_deadline','posts_published','monthly_reports','deadline_compliance','concepts_created'].includes(goal.id)" class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
                                 <div class="flex items-center justify-between mb-1.5">
                                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Owned brands</p>
-                                    <p x-show="goal.secondFriday" class="text-xs text-indigo-600 dark:text-indigo-400">2nd Fri: <span x-text="new Date(goal.secondFriday).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })"></span></p>
-                                    <p x-show="goal.reportDeadline && goal.id === 'monthly_reports'" class="text-xs text-indigo-600 dark:text-indigo-400">Due: <span x-text="new Date(goal.reportDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })"></span></p>
+                                    <p x-show="goal.secondFriday" class="text-xs text-indigo-600 dark:text-indigo-400">2nd Fri: <span x-text="new Date(goal.secondFriday).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })"></span></p>
+                                    <p x-show="goal.reportDeadline && goal.id === 'monthly_reports'" class="text-xs text-indigo-600 dark:text-indigo-400">Due: <span x-text="new Date(goal.reportDeadline).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })"></span></p>
                                 </div>
                                 <div class="space-y-2">
                                     <template x-for="brand in (goal.brandBreakdown || [])" :key="brand.brandId + goal.id">
@@ -376,9 +330,11 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                     <p class="text-sm text-gray-500 dark:text-gray-400">No performance goals found for this period.</p>
                 </div>
             </div>
+            </template>
 
             <!-- TEAM VIEW -->
-            <div x-show="!loading && view === 'team'" class="space-y-6 animate-fade-in">
+            <template x-if="!loading && view === 'team'">
+            <div class="space-y-6 animate-fade-in">
 
                 <!-- Admin department filter -->
                 <div x-show="user?.role === 'admin'" class="flex items-center gap-2 flex-wrap">
@@ -392,7 +348,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                 </div>
 
                 <!-- My stats in team context -->
-                <div x-show="teamData && teamData.me && teamData.me.department" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-sm">
+                <div x-show="teamData?.me?.department" class="bg-white dark:bg-gray-800 rounded-xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-sm">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">My Performance</span>
                     </div>
@@ -404,11 +360,11 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                         :stroke="getScoreStroke(teamData?.me?.score)"
                                         stroke-width="6" stroke-linecap="round"
                                         :stroke-dasharray="163"
-                                        :stroke-dashoffset="teamData?.me?.score !== null ? 163 - (163 * Math.min(teamData.me.score, 100) / 100) : 163"
+                                        :stroke-dashoffset="teamData?.me?.score !== null ? 163 - (163 * Math.min(teamData?.me?.score, 100) / 100) : 163"
                                         class="ring-score"/>
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-sm font-extrabold text-gray-900 dark:text-white" x-text="teamData?.me?.score !== null ? teamData.me.score + '%' : '—'"></span>
+                                <span class="text-sm font-extrabold text-gray-900 dark:text-white" x-text="teamData?.me?.score !== null ? teamData?.me?.score + '%' : '—'"></span>
                             </div>
                         </div>
                         <div>
@@ -431,7 +387,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                              }">
                             <div>
                                 <h3 class="font-semibold text-gray-900 dark:text-white" x-text="dept.departmentLabel"></h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="dept.members.length + ' member' + (dept.members.length !== 1 ? 's' : '')"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="(dept.members || []).length + ' member' + ((dept.members || []).length !== 1 ? 's' : '')"></p>
                             </div>
                             <div class="text-right">
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Team Average</p>
@@ -533,7 +489,7 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                                                'text-red-500': member.score !== null && member.score < 50,
                                                'text-gray-400': member.score === null
                                            }"
-                                           x-text="member.score >= 90 ? 'Excellent' : member.score >= 70 ? 'Good' : member.score >= 50 ? 'Needs Work' : member.score !== null ? 'Behind' : 'No Data'"></p>
+                                           x-text="member.score >= 90 ? 'Excellent' : member.score >= 70 ? 'Good' : member.score >= 50 ? 'Needs improvement' : member.score !== null ? 'Behind' : 'No Data'"></p>
                                     </div>
                                 </div>
                             </template>
@@ -542,10 +498,11 @@ $website_projects_url = esc_url(get_permalink(get_page_by_path('website-projects
                 </template>
 
                 <!-- Empty team -->
-                <div x-show="!loading && teamData && (!teamData.departments || teamData.departments.length === 0)" class="bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center">
+                <div x-show="!loading && teamData && (!teamData?.departments || teamData?.departments.length === 0)" class="bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center">
                     <p class="text-sm text-gray-500 dark:text-gray-400">No team members with departments assigned. Set departments in the Admin Panel.</p>
                 </div>
             </div>
+            </template>
 
             <!-- Access denied for non-managers in team view -->
             <div x-show="!loading && view === 'team' && !canViewTeam" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-xl p-8 text-center">
@@ -564,7 +521,8 @@ function progressApp() {
         viewMode: localStorage.getItem('viewMode') || 'admin',
         showPwModal: false,
         pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
-        isDark: localStorage.getItem('darkMode') === 'true',
+        isDark: localStorage.getItem('theme') === 'dark',
+        get theme() { return this.isDark ? 'dark' : 'light'; },
         loading: false,
         view: 'personal',
         periodType: 'month',
@@ -612,9 +570,10 @@ function progressApp() {
 
         toggleDark() {
             this.isDark = !this.isDark;
-            localStorage.setItem('darkMode', this.isDark);
+            localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
             document.documentElement.classList.toggle('dark', this.isDark);
         },
+        toggleTheme() { this.toggleDark(); },
 
         async changePassword() {
             this.pwError = ''; this.pwSuccess = '';
@@ -669,7 +628,7 @@ function progressApp() {
                     localStorage.setItem('user', JSON.stringify(this.user));
 
                     if (this.user.role === 'client') {
-                        window.location.href = '<?php echo esc_js(get_permalink(get_page_by_path('dashboard'))); ?>';
+                        window.location.href = '<?php echo esc_js(esirom_hub_page_url('dashboard')); ?>';
                         return;
                     }
 

@@ -1,5 +1,20 @@
 [
   {
+    "id": 31,
+    "title": "Hub Design Refresh and Reliability Fixes",
+    "version": "2.3.63",
+    "description": "A full review of the Hub: a consistent, modern design system across every screen, a new sign-in experience, proper mobile layouts (including the Admin Panel), and dozens of fixes to silent failures, broken actions and dead code paths.",
+    "date": "2026-10-13",
+    "highlights": [
+      "Redesigned sign-in, registration and password reset pages",
+      "Shared navigation, buttons, cards, forms and tables across all sections",
+      "Admin Panel now works on mobile; every page has an account menu with Change password",
+      "Workflow toasts and the password modal now actually appear",
+      "Clearer loading, empty and error states; UK English throughout"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 30,
     "title": "Insights Paid + Organic Totals",
     "version": "2.3.62",
@@ -51,6 +66,8 @@
     ],
     "type": "fix"
   },
+  {
+    "id": 26,
     "title": "Modern Insights Dashboard Redesign",
     "version": "2.3.30",
     "description": "Insights page redesigned with a prominent audience overview, always-visible demographics section, and polished performance cards.",
@@ -63,6 +80,8 @@
     ],
     "type": "feature"
   },
+  {
+    "id": 25,
     "title": "Insights Dashboard & Admin Cleanup",
     "version": "2.3.29",
     "description": "Insights defaults to current month with clearer platform filters, live FB/IG follower counts, and audience demographics. Admin social section is less cluttered when connections are healthy.",
@@ -75,6 +94,8 @@
     ],
     "type": "feature"
   },
+  {
+    "id": 24,
     "title": "Instagram Sync & Published Posts Fix",
     "version": "2.3.26",
     "description": "Synced Instagram posts now show in Published Posts with reach, views, and engagement. Insights dashboard pulls live metrics after Sync Posts.",
@@ -98,7 +119,8 @@
       "Ads page — lists boostable synced posts (Marketing API campaigns coming next)",
       "Staff-only access for Messages and Ads (admins and brand reps)"
     ],
-    "type": "feature"
+    "type": "feature",
+    "id": 23
   },
   {
     "id": 22,

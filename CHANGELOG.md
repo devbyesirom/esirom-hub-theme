@@ -5,6 +5,30 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.63] - 2026-10-13
+
+### Added
+- Shared design system (`css/hub-ui.css`) with brand tokens, type scale, buttons, cards, forms, badges, tables, navigation, modal, toast and empty/loading/error components
+- Shared `<head>` partial (`inc/hub-head.php`) providing fonts, Tailwind brand config, dark-mode bootstrap and the API URL for every template
+- Shared account menu (`inc/hub-account-menu.php`) and toast stack (`inc/hub-toasts.php`); Change password is now available on every page
+- Mobile headers with brand selector / view switcher on Insights, Workflow, Agency Overview and Content Calendar; mobile layout and bottom navigation for the Admin Panel
+- Loading skeletons, empty states and error states for Insights, Reports, Event Coverage and Published Posts
+
+### Changed
+- Redesigned login, registration, password reset, 404, offline and fallback pages (logo now on a legible white card; split brand/form layout on desktop)
+- Sidebar and mobile navigation restyled with consistent active states, grouped sections and SVG icons; `aria-current`/`aria-expanded` added
+- Dates and numbers formatted for en-GB; UK English spellings in UI copy
+- Service worker is network-first for pages and versions its cache per release so GitDock deploys are picked up immediately
+- Theme version bumped to 2.3.63
+
+### Fixed
+- Workflow: toasts and the change-password modal were rendered outside the Alpine root and never appeared; multi-root `x-if` templates dropped video overlays and carousel controls; duplicate `getDesignAttachments` ignored carousel slide order; mention markup was injected without escaping (`x-html`); concept form `required` on hidden inputs; unclosed page wrapper; missing rewrite rules for `/workflow/assets` and `/workflow/dashboard`
+- Insights: `posts` undeclared at first render (console errors), reports/events/posts failures were silent, KPI "Save" could do nothing, UTC-shifted date parameters to GA/narratives, widget preferences never persisted for clients, auth check signed users out on any network error, division by zero in KPI modal, review modal bound to a null post, `[object Object]`/raw float values in cards, hash not kept in sync when switching views, global mobile CSS that forced 44px links and single-column grids
+- Admin: unusable on mobile (sidebar always visible, no navigation); Facebook export import unreachable; CSV/JSON import blocked by the folder picker; "Setup guide" button did nothing; dashboard widgets and post-type breakdown were never saved; silent delete/load failures and no expired-session handling; stale "Add user/client" forms; media upload always returned 401 for Hub users, and `upload-media.php` accepted any token and unsanitised paths
+- Ads / Inventory / Messages / Vault / Website Projects: a failed data load was shown as "You must be logged in"; `viewMode` changes were not persisted so the mobile nav could disagree with the page; vault edit could wipe a stored password and `<option x-for>` rendered nothing; null-safe bindings on Messages, My Progress and Agency Overview
+- functions.php: Tailwind CDN script enqueued as a stylesheet, duplicate `ESIROM_API_URL` injection, mismatched default API URLs, redirects via `get_permalink(get_page_by_path())` that resolved to the current page when a slug was missing, duplicate `<title>` from `title-tag`
+- Removed dead files: `hub.html`, `login.html`, `js/role-switcher.js`, `inc/hub-staff-mobile-nav.php`, `inc/hub-client-mobile-nav.php`
+
 ## [1.9.0] - 2026-06-01
 
 ### Added

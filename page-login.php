@@ -14,334 +14,244 @@ if (!defined('ABSPATH')) {
 // Hide WordPress admin bar on this page
 show_admin_bar(false);
 
-$register_page = get_page_by_path('register');
-$register_url = $register_page ? get_permalink($register_page) : home_url('/register/');
+$register_url = esirom_hub_page_url('register');
+$workflow_url = esirom_hub_page_url('workflow');
+$privacy_url = esirom_hub_page_url('privacy');
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?> class="h-full">
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php wp_title('|', true, 'right'); ?> <?php bloginfo('name'); ?></title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    <link rel="shortcut icon" href="<?php echo get_template_directory_uri(); ?>/img/agencyhub-icon.png">
-    
-    <script>
-        // Suppress Tailwind CDN production warning
-        window.tailwindCDNWarning = false;
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+    <title>Sign in | <?php bloginfo('name'); ?></title>
+    <?php esirom_hub_head_assets(array('description' => 'Sign in to Agency Hub by Esirom — workflow, insights, content and reports for clients and the Esirom team.')); ?>
     <?php wp_head(); ?>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
-    <div class="min-h-screen flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
-        <div class="w-full max-w-5xl">
+<body class="min-h-full antialiased text-gray-900 dark:text-gray-100">
+    <div class="hub-auth">
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-
-                <!-- Left Column — Login Card -->
-                <div class="w-full">
-                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-
-                        <!-- Card header with logo -->
-                        <div class="bg-gradient-to-br from-indigo-600 to-purple-600 px-8 py-6 flex items-center justify-center">
-                            <img src="<?php echo get_template_directory_uri(); ?>/img/agencyhub-by-esirom.png" alt="Agency Hub by Esirom" class="h-20 w-auto">
-                        </div>
-
-                        <div class="px-8 py-8 space-y-5">
-                            <div>
-                                <h1 class="text-xl font-bold text-gray-900">Welcome back</h1>
-                                <p class="text-sm text-gray-500 mt-1">Sign in to your account to continue</p>
-                            </div>
-
-                            <!-- Alert messages -->
-                            <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
-                                <p class="text-sm"></p>
-                            </div>
-                            <div id="successMessage" class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg" role="alert">
-                                <p class="text-sm"></p>
-                            </div>
-
-                            <!-- Google Sign-In -->
-                            <a
-                                id="googleSignInBtn"
-                                href="#"
-                                class="w-full flex items-center justify-center gap-3 py-3 px-4 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
-                            >
-                                <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                </svg>
-                                Continue with Google
-                            </a>
-
-                            <!-- Divider -->
-                            <div class="relative">
-                                <div class="absolute inset-0 flex items-center">
-                                    <div class="w-full border-t border-gray-200"></div>
-                                </div>
-                                <div class="relative flex justify-center text-xs">
-                                    <span class="px-3 bg-white text-gray-400 uppercase tracking-wide font-medium">or sign in with email</span>
-                                </div>
-                            </div>
-
-                            <!-- Email / Password Form -->
-                            <form id="loginForm" class="space-y-4">
-                                <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">
-                                        Email address
-                                    </label>
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        autocomplete="email"
-                                        required
-                                        class="block w-full px-4 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
-                                        placeholder="you@example.com"
-                                    >
-                                </div>
-
-                                <div>
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <label for="password" class="block text-sm font-medium text-gray-700">
-                                            Password
-                                        </label>
-                                        <button type="button" onclick="showForgotPasswordModal()" class="text-xs font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                                            Forgot password?
-                                        </button>
-                                    </div>
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        autocomplete="current-password"
-                                        required
-                                        class="block w-full px-4 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
-                                        placeholder="••••••••"
-                                    >
-                                </div>
-
-                                <div class="flex items-center">
-                                    <input
-                                        id="remember-me"
-                                        name="remember-me"
-                                        type="checkbox"
-                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                    >
-                                    <label for="remember-me" class="ml-2 text-sm text-gray-600">
-                                        Remember me
-                                    </label>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    id="submitBtn"
-                                    class="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <span id="btnText">Sign in</span>
-                                    <svg id="btnSpinner" class="hidden animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </button>
-                            </form>
-
-                            <!-- Sign up -->
-                            <div class="pt-5 mt-5 border-t border-gray-100">
-                                <p class="text-sm text-center text-gray-600">
-                                    New to Agency Hub?
-                                </p>
-                                <a
-                                    href="<?php echo esc_url($register_url); ?>"
-                                    class="mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 border border-indigo-200 rounded-lg text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
-                                >
-                                    <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                                    </svg>
-                                    Create an account
-                                </a>
-                                <p class="mt-2 text-xs text-center text-gray-500 leading-relaxed">
-                                    For <span class="font-medium text-gray-600">clients</span> and <span class="font-medium text-gray-600">Esirom staff</span>. Your request is reviewed before access is granted — or use Google above for a faster sign-up.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Brand panel (desktop) -->
+        <aside class="hub-auth__brand" aria-hidden="true">
+            <div class="flex items-center justify-between">
+                <div class="hub-auth__logo-card">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-by-esirom.png" alt="" class="h-14 w-auto">
                 </div>
-
-                <!-- Right Column — Info panels -->
-                <div class="hidden lg:flex flex-col gap-6">
-                    <!-- About Agency Hub -->
-                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-                        <div class="flex items-start mb-3">
-                            <div class="bg-white/20 rounded-xl p-2 mr-3 flex-shrink-0">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold leading-tight">What is Agency Hub?</h3>
-                                <p class="text-indigo-200 text-xs mt-0.5">Your all-in-one social media command center</p>
-                            </div>
-                        </div>
-                        <p class="text-sm text-indigo-50 leading-relaxed mb-4">
-                            A comprehensive platform to streamline content workflows, track performance metrics, and collaborate seamlessly with your team and clients.
-                        </p>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <?php
-                            $features = ['Published Posts', 'KPI Tracking', 'Campaign Management', 'Team Collaboration'];
-                            foreach ($features as $f): ?>
-                            <div class="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-                                <svg class="h-3.5 w-3.5 text-green-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="font-medium"><?php echo esc_html($f); ?></span>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <!-- Collective Impact -->
-                    <div class="bg-white rounded-2xl shadow-xl p-6" id="showcaseCard">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900">Collective Impact</h3>
-                                <p class="text-xs text-gray-500 mt-0.5" id="showcasePeriod">Results across our client portfolio</p>
-                            </div>
-                        </div>
-
-                        <div id="showcaseLoading" class="py-10 text-center text-sm text-gray-400">
-                            Loading portfolio insights…
-                        </div>
-
-                        <div id="showcaseEmpty" class="hidden py-8 text-center text-sm text-gray-500">
-                            Performance data will appear here as posts are synced across client accounts.
-                        </div>
-
-                        <div id="showcaseContent" class="hidden space-y-4">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="rounded-xl p-3.5 border-t-[3px] border-emerald-500 bg-gray-50">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total Reach</p>
-                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricReach">—</p>
-                                    <p class="text-xs mt-1 hidden" id="changeReach"></p>
-                                </div>
-                                <div class="rounded-xl p-3.5 border-t-[3px] border-cyan-500 bg-gray-50">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Content Views</p>
-                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricViews">—</p>
-                                    <p class="text-xs mt-1 hidden" id="changeViews"></p>
-                                    <p class="text-[10px] text-gray-400 mt-1">Synced posts + Meta account totals</p>
-                                </div>
-                                <div class="rounded-xl p-3.5 border-t-[3px] border-pink-500 bg-gray-50">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Engagement</p>
-                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricEngagement">—</p>
-                                    <p class="text-xs mt-1 hidden" id="changeEngagement"></p>
-                                </div>
-                                <div class="rounded-xl p-3.5 border-t-[3px] border-violet-500 bg-gray-50">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Combined Audience</p>
-                                    <p class="text-2xl font-bold text-gray-900 mt-1" id="metricAudience">—</p>
-                                    <p class="text-xs text-gray-400 mt-1">Live follower counts</p>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-4 gap-2 text-center">
-                                <div class="rounded-lg bg-gray-50 px-2 py-2">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Posts</p>
-                                    <p class="text-sm font-semibold text-gray-800" id="metricPosts">—</p>
-                                </div>
-                                <div class="rounded-lg bg-gray-50 px-2 py-2">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Impressions</p>
-                                    <p class="text-sm font-semibold text-gray-800" id="metricImpressions">—</p>
-                                </div>
-                                <div class="rounded-lg bg-gray-50 px-2 py-2">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">All-time views</p>
-                                    <p class="text-sm font-semibold text-gray-800" id="metricAllTimeViews">—</p>
-                                </div>
-                                <div class="rounded-lg bg-gray-50 px-2 py-2">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400">Eng. rate</p>
-                                    <p class="text-sm font-semibold text-gray-800" id="metricEngRate">—</p>
-                                </div>
-                            </div>
-
-                            <p class="text-[11px] text-gray-400 text-center leading-relaxed" id="showcaseFootnote">
-                                Aggregated portfolio performance.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
+                <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Client portal</span>
             </div>
-        </div>
+
+            <div class="max-w-md">
+                <h2 class="text-3xl xl:text-4xl font-bold leading-tight tracking-tight">Everything your brand does on social, in one place.</h2>
+                <p class="mt-4 text-base text-white/80 leading-relaxed">
+                    Review and approve content, follow the production pipeline, read monthly insights and download reports — all from a single, secure hub.
+                </p>
+                <div class="mt-6 grid grid-cols-2 gap-2">
+                    <?php
+                    $features = array('Content approvals', 'Live insights', 'Monthly reports', 'Event coverage');
+                    foreach ($features as $f) : ?>
+                    <div class="hub-auth__feature">
+                        <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span><?php echo esc_html($f); ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Collective impact (public showcase) -->
+            <div id="showcaseCard">
+                <div class="flex items-end justify-between gap-4 mb-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/70">Collective impact</p>
+                        <p class="text-sm text-white/85 mt-1" id="showcasePeriod">Results across our client portfolio</p>
+                    </div>
+                </div>
+                <div id="showcaseLoading" class="grid grid-cols-2 gap-3" aria-hidden="true">
+                    <div class="hub-auth__stat h-[5.25rem] animate-pulse"></div>
+                    <div class="hub-auth__stat h-[5.25rem] animate-pulse"></div>
+                    <div class="hub-auth__stat h-[5.25rem] animate-pulse"></div>
+                    <div class="hub-auth__stat h-[5.25rem] animate-pulse"></div>
+                </div>
+                <div id="showcaseEmpty" class="hidden hub-auth__stat text-sm text-white/85">
+                    Performance data will appear here as posts are synced across client accounts.
+                </div>
+                <div id="showcaseContent" class="hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="hub-auth__stat">
+                            <p class="hub-auth__stat-label">Total reach</p>
+                            <p class="hub-auth__stat-value" id="metricReach">—</p>
+                            <p class="hub-auth__stat-sub hidden" id="changeReach"></p>
+                        </div>
+                        <div class="hub-auth__stat">
+                            <p class="hub-auth__stat-label">Content views</p>
+                            <p class="hub-auth__stat-value" id="metricViews">—</p>
+                            <p class="hub-auth__stat-sub hidden" id="changeViews"></p>
+                        </div>
+                        <div class="hub-auth__stat">
+                            <p class="hub-auth__stat-label">Engagement</p>
+                            <p class="hub-auth__stat-value" id="metricEngagement">—</p>
+                            <p class="hub-auth__stat-sub hidden" id="changeEngagement"></p>
+                        </div>
+                        <div class="hub-auth__stat">
+                            <p class="hub-auth__stat-label">Combined audience</p>
+                            <p class="hub-auth__stat-value" id="metricAudience">—</p>
+                            <p class="hub-auth__stat-sub">Live follower counts</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 grid grid-cols-4 gap-2 text-center">
+                        <div class="rounded-lg bg-white/10 px-2 py-2">
+                            <p class="text-[10px] uppercase tracking-wide text-white/70">Posts</p>
+                            <p class="text-sm font-semibold" id="metricPosts">—</p>
+                        </div>
+                        <div class="rounded-lg bg-white/10 px-2 py-2">
+                            <p class="text-[10px] uppercase tracking-wide text-white/70">Impressions</p>
+                            <p class="text-sm font-semibold" id="metricImpressions">—</p>
+                        </div>
+                        <div class="rounded-lg bg-white/10 px-2 py-2">
+                            <p class="text-[10px] uppercase tracking-wide text-white/70">All-time views</p>
+                            <p class="text-sm font-semibold" id="metricAllTimeViews">—</p>
+                        </div>
+                        <div class="rounded-lg bg-white/10 px-2 py-2">
+                            <p class="text-[10px] uppercase tracking-wide text-white/70">Eng. rate</p>
+                            <p class="text-sm font-semibold" id="metricEngRate">—</p>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-[11px] text-white/70 leading-relaxed" id="showcaseFootnote">Aggregated portfolio performance.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Sign-in panel -->
+        <main class="hub-auth__panel">
+            <div class="hub-auth__card">
+                <div class="lg:hidden mb-8 flex justify-center">
+                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/img/agencyhub-by-esirom.png" alt="Agency Hub by Esirom" class="h-16 w-auto">
+                </div>
+
+                <div class="mb-6">
+                    <h1 class="hub-auth__title">Welcome back</h1>
+                    <p class="hub-auth__subtitle">Sign in to your Agency Hub account to continue.</p>
+                </div>
+
+                <!-- Alert messages -->
+                <div id="errorMessage" class="hidden hub-alert hub-alert--error mb-4" role="alert" aria-live="assertive">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <p class="text-sm"></p>
+                </div>
+                <div id="successMessage" class="hidden hub-alert hub-alert--success mb-4" role="status" aria-live="polite">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-sm"></p>
+                </div>
+
+                <!-- Google Sign-In -->
+                <a id="googleSignInBtn" href="#" class="hub-btn hub-btn--secondary hub-btn--lg hub-btn--block">
+                    <svg class="!h-5 !w-5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </a>
+
+                <div class="hub-auth__divider my-5"><span>or sign in with email</span></div>
+
+                <!-- Email / Password Form -->
+                <form id="loginForm" class="space-y-4" novalidate>
+                    <div>
+                        <label for="email" class="hub-label">Email address</label>
+                        <input id="email" name="email" type="email" autocomplete="email" required inputmode="email" spellcheck="false"
+                               class="hub-input" placeholder="you@example.com">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="password" class="hub-label !mb-0">Password</label>
+                            <button type="button" onclick="showForgotPasswordModal()" class="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">
+                                Forgotten your password?
+                            </button>
+                        </div>
+                        <div class="hub-input-group">
+                            <input id="password" name="password" type="password" autocomplete="current-password" required
+                                   class="hub-input" placeholder="Your password">
+                            <div class="hub-input-group__addon">
+                                <button type="button" id="togglePassword" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" aria-label="Show password" aria-pressed="false">
+                                    <svg id="eyeOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <svg id="eyeClosed" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="hub-btn hub-btn--primary hub-btn--lg hub-btn--block">
+                        <span id="btnText">Sign in</span>
+                        <svg id="btnSpinner" class="hidden animate-spin !h-4 !w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+
+                <!-- Sign up -->
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm text-center text-gray-600 dark:text-gray-300">New to Agency Hub?</p>
+                    <a href="<?php echo esc_url($register_url); ?>" class="hub-btn hub-btn--soft hub-btn--block mt-3">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                        Create an account
+                    </a>
+                    <p class="mt-3 text-xs text-center text-gray-500 dark:text-gray-400 leading-relaxed">
+                        For <span class="font-medium text-gray-700 dark:text-gray-200">clients</span> and <span class="font-medium text-gray-700 dark:text-gray-200">Esirom staff</span>. Requests are reviewed before access is granted, or use Google above for a faster sign-up.
+                    </p>
+                </div>
+
+                <p class="mt-8 text-center text-xs text-gray-400 dark:text-gray-500">
+                    &copy; <?php echo esc_html(gmdate('Y')); ?> Esirom &middot; <a href="<?php echo esc_url($privacy_url); ?>" class="hover:text-gray-600 dark:hover:text-gray-300 underline-offset-2 hover:underline">Privacy &amp; terms</a>
+                </p>
+            </div>
+        </main>
     </div>
 
     <!-- Forgot Password Modal -->
-    <div id="forgotPasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Reset Password</h2>
-                <button onclick="closeForgotPasswordModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+    <div id="forgotPasswordModal" class="hidden hub-modal" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+        <div class="hub-modal__backdrop"></div>
+        <div class="hub-modal__panel">
+            <div class="hub-modal__header">
+                <div>
+                    <h2 id="forgotTitle" class="hub-modal__title">Reset your password</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Enter your email address and we'll send you a link to choose a new password.</p>
+                </div>
+                <button type="button" onclick="closeForgotPasswordModal()" class="hub-btn hub-btn--ghost hub-btn--icon" aria-label="Close">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            
-            <p class="text-gray-600 mb-6">Enter your email address and we'll send you a link to reset your password.</p>
-            
-            <form id="forgotPasswordForm" class="space-y-4">
-                <!-- Success Message -->
-                <div id="forgotSuccessMessage" class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg" role="alert">
+            <form id="forgotPasswordForm" class="hub-modal__body space-y-4" novalidate>
+                <div id="forgotSuccessMessage" class="hidden hub-alert hub-alert--success" role="status" aria-live="polite">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <p class="text-sm"></p>
                 </div>
-                
-                <!-- Error Message -->
-                <div id="forgotErrorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                <div id="forgotErrorMessage" class="hidden hub-alert hub-alert--error" role="alert" aria-live="assertive">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <p class="text-sm"></p>
                 </div>
-                
                 <div>
-                    <label for="forgotEmail" class="block text-sm font-medium text-gray-700 mb-2">
-                        Email address
-                    </label>
-                    <input 
-                        id="forgotEmail" 
-                        name="email" 
-                        type="email" 
-                        required 
-                        class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                        placeholder="you@example.com"
-                    >
+                    <label for="forgotEmail" class="hub-label">Email address</label>
+                    <input id="forgotEmail" name="email" type="email" required autocomplete="email" inputmode="email" class="hub-input" placeholder="you@example.com">
                 </div>
-                
-                <button 
-                    type="submit" 
-                    id="forgotSubmitBtn"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <span id="forgotBtnText">Send Reset Link</span>
-                    <svg id="forgotBtnSpinner" class="hidden animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeForgotPasswordModal()" class="hub-btn hub-btn--secondary">Cancel</button>
+                    <button type="submit" id="forgotSubmitBtn" class="hub-btn hub-btn--primary">
+                        <span id="forgotBtnText">Send reset link</span>
+                        <svg id="forgotBtnSpinner" class="hidden animate-spin !h-4 !w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
     <script>
-        // Configuration - Use WordPress localized variable or fallback
         const API_URL = typeof ESIROM_API_URL !== 'undefined' ? ESIROM_API_URL : 'https://esirom-hub-backend-production.up.railway.app/api';
+        const WORKFLOW_URL = <?php echo wp_json_encode(esc_url_raw($workflow_url)); ?>;
 
-        // Get form elements
         const loginForm = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -350,12 +260,14 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
         const btnSpinner = document.getElementById('btnSpinner');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
+        let errorTimer = null;
 
         function showError(message) {
             errorMessage.querySelector('p').textContent = message;
             errorMessage.classList.remove('hidden');
             successMessage.classList.add('hidden');
-            setTimeout(() => errorMessage.classList.add('hidden'), 8000);
+            clearTimeout(errorTimer);
+            errorTimer = setTimeout(() => errorMessage.classList.add('hidden'), 10000);
         }
 
         function showSuccess(message) {
@@ -364,13 +276,34 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
             errorMessage.classList.add('hidden');
         }
 
-        function redirectAfterLogin(user) {
-            if (user.role === 'admin' || user.role === 'brand_rep') {
-                window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>';
-            } else {
-                window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank';
-            }
+        function setBusy(busy, label) {
+            submitBtn.disabled = busy;
+            btnText.textContent = label || 'Sign in';
+            btnSpinner.classList.toggle('hidden', !busy);
         }
+
+        // Clients land on the Content Bank; staff on the Workflow dashboard.
+        function redirectAfterLogin(user) {
+            const isStaff = user && (user.role === 'admin' || user.role === 'brand_rep');
+            window.location.href = isStaff ? WORKFLOW_URL : WORKFLOW_URL + (WORKFLOW_URL.includes('?') ? '&' : '?') + 'tab=contentBank';
+        }
+
+        function clearSession() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('requirePasswordChange');
+        }
+
+        // Show / hide password
+        const togglePassword = document.getElementById('togglePassword');
+        togglePassword.addEventListener('click', () => {
+            const show = passwordInput.type === 'password';
+            passwordInput.type = show ? 'text' : 'password';
+            togglePassword.setAttribute('aria-pressed', show ? 'true' : 'false');
+            togglePassword.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            document.getElementById('eyeOpen').classList.toggle('hidden', show);
+            document.getElementById('eyeClosed').classList.toggle('hidden', !show);
+        });
 
         document.getElementById('googleSignInBtn').addEventListener('click', (e) => {
             e.preventDefault();
@@ -398,6 +331,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
 
             if (!oauthToken) return;
 
+            setBusy(true, 'Signing you in…');
             fetch(`${API_URL}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${oauthToken}` }
             })
@@ -413,40 +347,32 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                 redirectAfterLogin(data.user);
             })
             .catch(() => {
+                setBusy(false);
                 showError('Google sign-in completed but the session could not be established. Please try again.');
                 window.history.replaceState({}, document.title, window.location.pathname);
             });
         })();
 
-        // Check if already logged in
-        const token = localStorage.getItem('token');
-        if (token) {
+        // Already signed in? Verify the stored token and continue.
+        (function resumeSession() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
             fetch(`${API_URL}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                }
+                if (response.ok) return response.json();
+                if (response.status === 401 || response.status === 403) clearSession();
+                return null;
             })
             .then(data => {
                 if (data && data.user) {
-                    // Redirect based on role: admins/brand_reps go to Workflow, clients go to dashboard
-                    if (data.user.role === 'admin' || data.user.role === 'brand_rep') {
-                        window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>';
-                    } else {
-                        window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank';
-                    }
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    redirectAfterLogin(data.user);
                 }
             })
-            .catch(() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-            });
-        }
+            .catch(() => { /* offline: stay on the sign-in page */ });
+        })();
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -455,13 +381,12 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
             const password = passwordInput.value;
 
             if (!email || !password) {
-                showError('Please enter both email and password');
+                showError('Please enter both your email address and password.');
+                (email ? passwordInput : emailInput).focus();
                 return;
             }
 
-            submitBtn.disabled = true;
-            btnText.textContent = 'Signing in...';
-            btnSpinner.classList.remove('hidden');
+            setBusy(true, 'Signing in…');
             errorMessage.classList.add('hidden');
 
             try {
@@ -471,59 +396,40 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
 
                 if (response.ok && data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    // Check if password change is required
+
                     if (data.requirePasswordChange) {
                         localStorage.setItem('requirePasswordChange', 'true');
-                        btnText.textContent = 'Password change required...';
+                        setBusy(true, 'Password change required…');
                     } else {
-                        btnText.textContent = 'Success!';
+                        localStorage.removeItem('requirePasswordChange');
+                        setBusy(true, 'Signed in');
                     }
-                    
-                    setTimeout(() => {
-                        // Redirect based on role: admins/brand_reps go to Workflow, clients go to dashboard
-                        if (data.user.role === 'admin' || data.user.role === 'brand_rep') {
-                            window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>';
-                        } else {
-                            window.location.href = '<?php echo esc_url(get_permalink(get_page_by_path('workflow'))); ?>?tab=contentBank';
-                        }
-                    }, 500);
+
+                    setTimeout(() => redirectAfterLogin(data.user), 400);
                 } else {
-                    showError(data.message || 'Login failed. Please check your credentials.');
-                    submitBtn.disabled = false;
-                    btnText.textContent = 'Sign in';
-                    btnSpinner.classList.add('hidden');
+                    const fieldError = Array.isArray(data.errors) && data.errors.length ? data.errors.map(err => err.msg).join(' ') : '';
+                    showError(data.message || fieldError || 'Sign-in failed. Please check your details and try again.');
+                    setBusy(false);
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('Unable to connect to server. Please try again later.');
-                submitBtn.disabled = false;
-                btnText.textContent = 'Sign in';
-                btnSpinner.classList.add('hidden');
+                showError('We could not reach the server. Please check your connection and try again.');
+                setBusy(false);
             }
         });
 
-        // Quick login for demo
-        document.querySelectorAll('[data-email]').forEach(box => {
-            box.addEventListener('click', function() {
-                emailInput.value = this.dataset.email;
-                passwordInput.value = this.dataset.password;
-            });
-        });
-
-        // Load anonymous portfolio showcase
+        // Anonymous portfolio showcase (brand panel)
         function formatShowcaseNumber(value) {
             const n = Number(value) || 0;
             if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
             if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
-            if (n >= 1e4) return `${(n / 1e3).toFixed(1)}K`;
             if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
-            return n.toLocaleString();
+            return n.toLocaleString('en-GB');
         }
 
         function formatChangeEl(el, change) {
@@ -531,7 +437,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
             const rounded = Math.round(change * 10) / 10;
             const positive = rounded >= 0;
             el.textContent = `${positive ? '+' : ''}${rounded}% vs last year`;
-            el.className = `text-xs mt-1 font-medium ${positive ? 'text-emerald-600' : 'text-rose-600'}`;
+            el.className = `hub-auth__stat-sub font-semibold ${positive ? 'text-emerald-200' : 'text-rose-200'}`;
             el.classList.remove('hidden');
         }
 
@@ -548,7 +454,7 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
 
                 if (!response.ok || !data.success) {
                     empty.classList.remove('hidden');
-                    empty.textContent = 'Unable to load portfolio insights right now.';
+                    empty.textContent = 'Portfolio insights are unavailable right now.';
                     return;
                 }
 
@@ -593,56 +499,60 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                     document.getElementById('showcaseFootnote').textContent = data.methodology;
                 }
             } catch (error) {
-                console.error('Showcase load error:', error);
                 loading.classList.add('hidden');
                 empty.classList.remove('hidden');
-                empty.textContent = 'Unable to load portfolio insights right now.';
+                empty.textContent = 'Portfolio insights are unavailable right now.';
             }
         }
 
-        loadShowcaseInsights();
+        if (window.matchMedia('(min-width: 1024px)').matches) {
+            loadShowcaseInsights();
+        }
 
-        // Forgot Password Modal Functions
+        // Forgot password modal
+        const forgotModal = document.getElementById('forgotPasswordModal');
+        let lastFocused = null;
+
         function showForgotPasswordModal() {
-            document.getElementById('forgotPasswordModal').classList.remove('hidden');
-            document.getElementById('forgotEmail').value = '';
+            lastFocused = document.activeElement;
+            forgotModal.classList.remove('hidden');
+            document.getElementById('forgotEmail').value = emailInput.value.trim();
             document.getElementById('forgotSuccessMessage').classList.add('hidden');
             document.getElementById('forgotErrorMessage').classList.add('hidden');
+            setTimeout(() => document.getElementById('forgotEmail').focus(), 20);
         }
 
         function closeForgotPasswordModal() {
-            document.getElementById('forgotPasswordModal').classList.add('hidden');
+            forgotModal.classList.add('hidden');
+            if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
         }
 
-        // Close modal on outside click
-        document.getElementById('forgotPasswordModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeForgotPasswordModal();
-            }
+        forgotModal.querySelector('.hub-modal__backdrop').addEventListener('click', closeForgotPasswordModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !forgotModal.classList.contains('hidden')) closeForgotPasswordModal();
         });
 
-        // Handle forgot password form submission
         document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const email = document.getElementById('forgotEmail').value.trim();
-            const submitBtn = document.getElementById('forgotSubmitBtn');
-            const btnText = document.getElementById('forgotBtnText');
-            const btnSpinner = document.getElementById('forgotBtnSpinner');
-            const successMessage = document.getElementById('forgotSuccessMessage');
-            const errorMessage = document.getElementById('forgotErrorMessage');
+            const forgotBtn = document.getElementById('forgotSubmitBtn');
+            const forgotText = document.getElementById('forgotBtnText');
+            const forgotSpinner = document.getElementById('forgotBtnSpinner');
+            const forgotSuccess = document.getElementById('forgotSuccessMessage');
+            const forgotError = document.getElementById('forgotErrorMessage');
 
             if (!email) {
-                errorMessage.querySelector('p').textContent = 'Please enter your email address';
-                errorMessage.classList.remove('hidden');
+                forgotError.querySelector('p').textContent = 'Please enter your email address.';
+                forgotError.classList.remove('hidden');
                 return;
             }
 
-            submitBtn.disabled = true;
-            btnText.textContent = 'Sending...';
-            btnSpinner.classList.remove('hidden');
-            successMessage.classList.add('hidden');
-            errorMessage.classList.add('hidden');
+            forgotBtn.disabled = true;
+            forgotText.textContent = 'Sending…';
+            forgotSpinner.classList.remove('hidden');
+            forgotSuccess.classList.add('hidden');
+            forgotError.classList.add('hidden');
 
             try {
                 const response = await fetch(`${API_URL}/auth/forgot-password`, {
@@ -651,29 +561,24 @@ $register_url = $register_page ? get_permalink($register_page) : home_url('/regi
                     body: JSON.stringify({ email })
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
 
                 if (response.ok && data.success) {
-                    successMessage.querySelector('p').textContent = data.message || 'Password reset link sent! Check your email.';
-                    successMessage.classList.remove('hidden');
+                    forgotSuccess.querySelector('p').textContent = data.message || 'If an account exists for that address, a reset link is on its way. Check your inbox.';
+                    forgotSuccess.classList.remove('hidden');
                     document.getElementById('forgotEmail').value = '';
-                    
-                    // Close modal after 3 seconds
-                    setTimeout(() => {
-                        closeForgotPasswordModal();
-                    }, 3000);
+                    setTimeout(closeForgotPasswordModal, 4000);
                 } else {
-                    errorMessage.querySelector('p').textContent = data.message || 'Failed to send reset link. Please try again.';
-                    errorMessage.classList.remove('hidden');
+                    forgotError.querySelector('p').textContent = data.message || 'We could not send a reset link. Please try again.';
+                    forgotError.classList.remove('hidden');
                 }
             } catch (error) {
-                console.error('Forgot password error:', error);
-                errorMessage.querySelector('p').textContent = 'Unable to connect to server. Please try again later.';
-                errorMessage.classList.remove('hidden');
+                forgotError.querySelector('p').textContent = 'We could not reach the server. Please try again later.';
+                forgotError.classList.remove('hidden');
             } finally {
-                submitBtn.disabled = false;
-                btnText.textContent = 'Send Reset Link';
-                btnSpinner.classList.add('hidden');
+                forgotBtn.disabled = false;
+                forgotText.textContent = 'Send reset link';
+                forgotSpinner.classList.add('hidden');
             }
         });
     </script>
