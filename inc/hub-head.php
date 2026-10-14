@@ -4,8 +4,9 @@
  *
  * Outputs: viewport/theme meta, favicons (and PWA manifest when requested),
  * Inter font, Tailwind Play CDN with the shared brand config, the Hub design
- * system stylesheet, the dark-mode bootstrap (runs before first paint) and the
- * `ESIROM_API_URL` global used by every page script.
+ * system stylesheet, the dark-mode bootstrap (runs before first paint), the
+ * `ESIROM_API_URL` / `ESIROM_SUPER_ADMIN_EMAILS` globals and the `HubAuth`
+ * helper (js/hub-auth.js) used by every page script.
  *
  * Expects (all optional):
  *   $hub_head = [
@@ -50,6 +51,7 @@ $hub_tailwind_src = 'https://cdn.tailwindcss.com' . ($hub_head_plugins !== '' ? 
 <script>
     window.tailwindCDNWarning = false;
     window.ESIROM_API_URL = <?php echo wp_json_encode(esc_url_raw($hub_api_url)); ?>;
+    window.ESIROM_SUPER_ADMIN_EMAILS = <?php echo wp_json_encode(array_values(esirom_hub_super_admin_emails())); ?>;
     // Verbose diagnostics are opt-in: run localStorage.setItem('hubDebug', '1') in the console.
     window.hubDebug = function () {
         try {
@@ -64,6 +66,7 @@ $hub_tailwind_src = 'https://cdn.tailwindcss.com' . ($hub_head_plugins !== '' ? 
         } catch (e) { /* storage unavailable */ }
     })();
 </script>
+<script src="<?php echo esc_url($hub_theme_uri . '/js/hub-auth.js?ver=' . rawurlencode($hub_theme_ver)); ?>"></script>
 <script src="<?php echo esc_url($hub_tailwind_src); ?>"></script>
 <script>
     tailwind.config = {

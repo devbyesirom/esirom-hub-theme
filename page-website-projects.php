@@ -495,7 +495,7 @@ function websiteProjectsApp() {
                 setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 1500);
             } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
         },
-        viewMode: localStorage.getItem('viewMode') || 'admin',
+        viewMode: window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })()), // provisional until /auth/me answers
         isSidebarOpen: true,
         loading: true,
         tab: 'dashboard',
@@ -623,11 +623,10 @@ function websiteProjectsApp() {
                     return;
                 }
                 this.user = data.user;
+                window.HubAuth.setUser(data.user);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                this.viewMode = this.user.role === 'client' ? 'client' : (localStorage.getItem('viewMode') || 'admin');
-                if (this.user.role === 'brand_rep' && this.viewMode === 'admin') this.viewMode = 'brand_rep';
-                localStorage.setItem('viewMode', this.viewMode);
-                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                // Derive the view mode from the verified role: only super admins keep a stored preview mode.
+                this.viewMode = window.HubAuth.applyViewMode();
                 try {
                     await this.loadAll();
                     const params = new URLSearchParams(window.location.search);

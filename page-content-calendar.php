@@ -297,7 +297,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         return {
             user: {},
             userRole: '',
-            viewMode: localStorage.getItem('viewMode') || 'admin',
+            viewMode: window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })()), // provisional until /auth/me answers
             userName: '',
             showPwModal: false,
             pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
@@ -339,21 +339,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     if (!res.ok) throw new Error('server');
                     const data = await res.json();
                     this.user = data.user;
+                    window.HubAuth.setUser(data.user);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     this.userRole = data.user.role;
                     this.userName = data.user.firstName + ' ' + data.user.lastName;
-                    // Ensure true client accounts always use client viewMode
-                    if (this.userRole === 'client') {
-                        this.viewMode = 'client';
-                        localStorage.setItem('viewMode', 'client');
-                    } else if (this.userRole === 'brand_rep' && this.viewMode === 'admin') {
-                        this.viewMode = 'brand_rep';
-                        localStorage.setItem('viewMode', 'brand_rep');
-                    } else if (this.userRole === 'admin' && !['admin', 'brand_rep', 'client'].includes(this.viewMode)) {
-                        this.viewMode = 'admin';
-                        localStorage.setItem('viewMode', 'admin');
-                    }
-                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                    // Derive the view mode from the verified role: only super admins keep a stored preview mode.
+                    this.viewMode = window.HubAuth.applyViewMode();
                     await this.loadClients();
                     const savedClientId = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                     if (this.clients.length > 0 && this.viewMode !== 'client') {

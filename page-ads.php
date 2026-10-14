@@ -344,7 +344,7 @@ function adsApp() {
                 setTimeout(() => { this.showPwModal = false; this.pwSuccess = ''; }, 1500);
             } catch (e) { this.pwError = e.message; } finally { this.pwLoading = false; }
         },
-        viewMode: localStorage.getItem('viewMode') || 'admin',
+        viewMode: window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), (() => { try { return JSON.parse(localStorage.getItem('user') || '{}') || {}; } catch (e) { return {}; } })()), // provisional until /auth/me answers
         isSidebarOpen: true,
         loading: false,
         tab: 'boost',
@@ -389,15 +389,14 @@ function adsApp() {
                 if (!res.ok) throw new Error('server');
                 const data = await res.json();
                 this.user = data.user;
+                window.HubAuth.setUser(data.user);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 if (this.user.role === 'client') {
                     window.location.href = DASHBOARD_URL;
                     return;
                 }
-                if (this.user.role === 'brand_rep') this.viewMode = 'brand_rep';
-                if (this.user.role === 'admin' && this.viewMode === 'client') this.viewMode = 'admin';
-                localStorage.setItem('viewMode', this.viewMode);
-                window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                // Staff-only page: derive the view mode from the verified role; a super admin previewing as client falls back to admin.
+                this.viewMode = window.HubAuth.applyViewMode(window.HubAuth.readStoredViewMode() === 'client' ? 'admin' : undefined);
                 await this.loadClients();
                 const saved = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                 if (saved && this.clients.some(c => c._id === saved)) {

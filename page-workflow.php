@@ -121,8 +121,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <div x-show="notifications.length === 0" class="p-4 text-center text-sm text-gray-500">No notifications</div>
                         </div>
                     </div>
-                    <!-- Admin view switcher (mobile) -->
-                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                    <!-- "Viewing as" switcher (mobile) — super admins only -->
+                    <div x-show="isSuperAdmin" x-cloak class="relative" x-data="{ showRoleSwitcher: false }">
                         <button type="button" @click="showRoleSwitcher = !showRoleSwitcher" class="hub-btn hub-btn--ghost hub-btn--icon hub-btn--sm" :aria-expanded="showRoleSwitcher" aria-label="Switch view mode">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
@@ -207,8 +207,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <div x-show="notifications.length === 0" class="p-4 text-center text-gray-500">No notifications</div>
                         </div>
                     </div>
-                    <!-- Admin Role Switcher (only for admins) -->
-                    <div x-show="user.role === 'admin'" class="relative" x-data="{ showRoleSwitcher: false }">
+                    <!-- "Viewing as" switcher — super admins only -->
+                    <div x-show="isSuperAdmin" x-cloak class="relative" x-data="{ showRoleSwitcher: false }">
                         <button @click="showRoleSwitcher = !showRoleSwitcher" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-semibold transition-colors border border-purple-100 dark:border-purple-800/50">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -3241,13 +3241,16 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             return {
                 loading: true,
                 user: {},
+                // Provisional until /auth/me answers; HubAuth re-derives it from the real role in init().
                 viewMode: (() => {
                     try {
                         const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                        if (cachedUser?.role === 'client') return 'client';
+                        return window.HubAuth.resolveViewMode(window.HubAuth.readStoredViewMode(), cachedUser);
                     } catch (_err) {}
                     return localStorage.getItem('viewMode') || 'admin';
                 })(),
+                get isSuperAdmin() { void this.user?.role; return window.HubAuth.isSuperAdmin(window.HubAuth.getUser() || this.user); }, // reads this.user for reactivity, decides on the verified /auth/me payload
+                get isSimulatingView() { return window.HubAuth.isSimulating(this.viewMode); },
                 showPwModal: false,
                 pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 theme: localStorage.getItem('theme') || 'light',
@@ -3365,7 +3368,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 showMentionDropdown: false,
                 filteredUsers: [],
                 contentBankItems: [],
-                contentBankStatusFilter: localStorage.getItem('viewMode') === 'client' ? 'pending' : '',
+                contentBankStatusFilter: window.HubAuth.readStoredViewMode() === 'client' ? 'pending' : '',
                 contentBankClientFilter: '',
                 selectedContentBankItem: null,
                 showContentBankDetail: false,
@@ -3427,16 +3430,8 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     await this.checkAuth();
                     this.loadDashboardCards();
 
-                    // Normalize viewMode for role
-                    if (this.user?.role === 'client') {
-                        this.viewMode = 'client';
-                    } else if (this.user?.role === 'brand_rep' && this.viewMode === 'admin') {
-                        this.viewMode = 'brand_rep';
-                    } else if (this.user?.role === 'admin' && !['admin', 'brand_rep', 'client'].includes(this.viewMode)) {
-                        this.viewMode = 'admin';
-                    }
-                    localStorage.setItem('viewMode', this.viewMode);
-                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: this.viewMode } }));
+                    // Derive the view mode from the verified role: only super admins keep a stored preview mode.
+                    this.viewMode = window.HubAuth.applyViewMode(this.viewMode);
 
                     this.applyTheme();
                     this.setCurrentDate();
@@ -3609,12 +3604,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         if (!response.ok) throw new Error('Auth failed');
                         const data = await response.json();
                         this.user = data.user;
+                        window.HubAuth.setUser(data.user);
                         localStorage.setItem('user', JSON.stringify(data.user));
-                        if (this.user?.role === 'client') {
-                            this.viewMode = 'client';
-                            localStorage.setItem('viewMode', 'client');
-                            window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: 'client' } }));
-                        }
+                        this.viewMode = window.HubAuth.applyViewMode();
                         // Allow clients to access Content Bank only
                         if (!['admin', 'brand_rep', 'client'].includes(this.user.role)) { window.location.href = DASHBOARD_URL; }
                     } catch (error) {
@@ -3681,7 +3673,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         params.append('assignedYear', this.efficiencyYear);
                         params.append('assignedMonth', this.efficiencyMonth);
                     }
-                    // Add viewAs for role simulation
+                    // viewMode is derived from the verified role (HubAuth), so viewAs can never exceed it
                     if (this.viewMode && this.viewMode !== 'admin') {
                         params.append('viewAs', this.viewMode);
                         if (this.viewMode === 'client' && this.selectedViewClient) {
@@ -5730,9 +5722,14 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 },
 
                 switchViewMode(mode) {
-                    this.viewMode = mode;
-                    localStorage.setItem('viewMode', mode);
-                    window.dispatchEvent(new CustomEvent('viewModeChanged', { detail: { viewMode: mode } }));
+                    // Only verified super admins (per /auth/me) may preview another role.
+                    if (!window.HubAuth.isSuperAdmin()) {
+                        this.viewMode = window.HubAuth.applyViewMode(this.viewMode);
+                        this.showToast('Only super admins can switch views.', 'error');
+                        return;
+                    }
+                    mode = window.HubAuth.resolveViewMode(mode);
+                    this.viewMode = window.HubAuth.persistViewMode(mode);
                     
                     // For client view, prompt to select a client if not already selected
                     if (mode === 'client' && !this.selectedViewClient && this.clients.length > 0) {
