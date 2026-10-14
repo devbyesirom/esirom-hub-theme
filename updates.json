@@ -1,5 +1,19 @@
 [
   {
+    "id": 32,
+    "title": "Super Admin View Switcher and Mobile Concepts",
+    "version": "2.3.64",
+    "description": "The 'Viewing as' switcher (eye icon) is now limited to super admins and always derived from the role the backend reports, and the Workflow Concepts list and concept detail are fully usable on phones.",
+    "date": "2026-10-14",
+    "highlights": [
+      "Only super admins (alex@esirom.com by default; configurable in Hub Settings) see or can use Admin / Brand rep / Client view",
+      "Brand reps, clients and regular staff always get their real role, even with stored state, URL or console changes",
+      "Concepts filters stack on phones; no more sideways page scroll",
+      "Concept detail is a full-height sheet on phones with media fitted to the width and all buttons reachable"
+    ],
+    "type": "fix"
+  },
+  {
     "id": 31,
     "title": "Hub Design Refresh and Reliability Fixes",
     "version": "2.3.63",
