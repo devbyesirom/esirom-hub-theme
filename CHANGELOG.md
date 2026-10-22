@@ -5,6 +5,19 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.65] - 2026-10-22
+
+### Added
+- **Disable / re-enable clients** (Admin Panel → Clients). A disabled client keeps all of its data but its users cannot sign in and any existing sessions or tokens stop working on their next request. The brand is hidden from brand pickers and client lists; admins see it under the new **Active / Disabled / All** filter with a red **Disabled** badge and a "Disabled *date* by *admin*" audit line. A confirmation dialog (bottom sheet on phones) lists the client accounts that will lose access before anything changes; **Re-enable client** restores access. Staff accounts are never affected
+- Sign-in page shows "This account has been disabled. Please contact Esirom." when a disabled client signs in, when a stored session is resumed, when a session is terminated mid-use and on the Google sign-in callback (`?error=account_disabled`)
+- `HubAuth` gained `isClientActive` / `activeClients`, `isDisabledResponse`, `clearSession`, `redirectToLogin`, `consumeSignOutReason` and a `fetch` guard (installed by `inc/hub-head.php` on every app page) that signs the user out as soon as the API answers `403 ACCOUNT_DISABLED`
+- Users tab shows a **Disabled** badge for client accounts whose brands are all disabled; brand pickers in the user form, approval modal and import tools list active brands only (plus any disabled brand that is already assigned, labelled)
+- `DISABLE_CLIENT_BACKEND.md` documents the backend contract (`PUT /clients/:id/status`, audit fields, lockout in login and auth middleware, default list filtering)
+
+### Changed
+- Brand lists on Workflow, Insights, Agency Overview, Content Calendar, Messages, Ads, Inventory and Website Projects drop `isActive: false` brands client-side as a safety net; the API remains the source of truth
+- Theme version bumped to 2.3.65
+
 ## [2.3.64] - 2026-10-14
 
 ### Changed
