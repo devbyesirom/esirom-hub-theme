@@ -838,7 +838,7 @@ show_admin_bar(false);
                         }
 
                         const data = await overviewRes.json();
-                        this.brands = Array.isArray(data.brands) ? data.brands : [];
+                        this.brands = window.HubAuth.activeClients(data.brands);
                         this.stats = {
                             totalBrands: 0,
                             totalPosts: 0,

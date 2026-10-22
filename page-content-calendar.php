@@ -370,7 +370,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 const token = localStorage.getItem('token');
                 try {
                     const res = await fetch(`${API_URL}/calendar/clients`, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (res.ok) { const d = await res.json(); this.clients = d.data || []; }
+                    if (res.ok) { const d = await res.json(); this.clients = window.HubAuth.activeClients(d.data); }
                     else this.showToast('Brands could not be loaded.', 'error');
                 } catch (e) { this.showToast('Brands could not be loaded. Check your connection.', 'error'); }
             },
