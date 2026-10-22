@@ -27,7 +27,20 @@ Brand representatives can be assigned to multiple clients.
 - When creating a **Brand Rep user**, select which clients they should manage
 - They will only see data for their assigned clients
 
-### 4. Platform Updates on Login Page
+### 4. Disable / Re-enable a Client
+Lock a client out of the Hub without deleting anything.
+
+**How it works:**
+- Admin Panel → **Clients** → on the client card click **Disable**, read the confirmation (it lists the client accounts that will lose access) and confirm
+- The client's users can no longer sign in; any sessions already open are signed out on their next request and the sign-in page shows *"This account has been disabled. Please contact Esirom."*
+- The brand disappears from brand pickers and client lists. Admins find it under the **Disabled** filter on the Clients tab, with a red **Disabled** badge and a "Disabled 14 Oct 2026, 09:12 by Alex Morrison" audit line
+- All posts, reports, insights and settings are kept. Click **Re-enable client** to restore access
+- Only client accounts are affected. Staff (admin / brand rep) are never locked out this way; a client user with another active brand keeps access to that brand
+- The Users tab shows a **Disabled** badge for client accounts whose brands are all disabled
+
+**Backend:** the lockout is enforced by the Hub API (`PUT /clients/:id/status`, `403 ACCOUNT_DISABLED` on login and on every authenticated request). See `DISABLE_CLIENT_BACKEND.md` for the exact contract.
+
+### 5. Platform Updates on Login Page
 The login page shows the latest platform updates loaded from `updates.json` in the theme. No admin management is required.
 
 **Features:**
@@ -81,6 +94,7 @@ The login page shows the latest platform updates loaded from `updates.json` in t
 ### Admin
 - Full access to everything
 - Can create/edit/delete users and clients
+- Can disable and re-enable clients
 - Can manage platform updates
 - Access to admin panel
 

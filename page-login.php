@@ -261,13 +261,27 @@ $privacy_url = esirom_hub_page_url('privacy');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         let errorTimer = null;
+        const DISABLED_MESSAGE = window.HubAuth ? window.HubAuth.DISABLED_MESSAGE : 'This account has been disabled. Please contact Esirom.';
 
-        function showError(message) {
+        // `persistent` keeps the alert on screen (used for the disabled-account notice).
+        function showError(message, persistent = false) {
             errorMessage.querySelector('p').textContent = message;
             errorMessage.classList.remove('hidden');
             successMessage.classList.add('hidden');
             clearTimeout(errorTimer);
-            errorTimer = setTimeout(() => errorMessage.classList.add('hidden'), 10000);
+            if (!persistent) {
+                errorTimer = setTimeout(() => errorMessage.classList.add('hidden'), 10000);
+            }
+        }
+
+        function showDisabledNotice() {
+            showError(DISABLED_MESSAGE, true);
+        }
+
+        function isDisabledResponse(response, data) {
+            return window.HubAuth
+                ? window.HubAuth.isDisabledResponse(response.status, data)
+                : (response.status === 403 && data && data.code === 'ACCOUNT_DISABLED');
         }
 
         function showSuccess(message) {
@@ -310,12 +324,22 @@ $privacy_url = esirom_hub_page_url('privacy');
             window.location.href = `${API_URL}/auth/google`;
         });
 
-        // Handle Google OAuth redirect callback
+        // Handle Google OAuth redirect callback and sign-out reasons from other Hub pages
         (function handleOAuthRedirect() {
             const params = new URLSearchParams(window.location.search);
             const oauthToken = params.get('token');
             const oauthError = params.get('error');
             const oauthSuccess = params.get('success');
+            const reason = window.HubAuth ? window.HubAuth.consumeSignOutReason() : params.get('reason');
+
+            // Sent here by HubAuth after the backend rejected a disabled account mid-session,
+            // or by the backend's Google callback (`?error=account_disabled`).
+            if (reason === 'disabled' || (oauthError && /^account[_ -]?disabled$/i.test(oauthError.trim()))) {
+                clearSession();
+                showDisabledNotice();
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
 
             if (oauthError) {
                 showError(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
@@ -335,9 +359,15 @@ $privacy_url = esirom_hub_page_url('privacy');
             fetch(`${API_URL}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${oauthToken}` }
             })
-            .then(response => {
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
+                if (isDisabledResponse(response, data)) {
+                    const err = new Error(DISABLED_MESSAGE);
+                    err.accountDisabled = true;
+                    throw err;
+                }
                 if (!response.ok) throw new Error('Failed to load user profile');
-                return response.json();
+                return data;
             })
             .then(data => {
                 if (!data || !data.user) throw new Error('Invalid session');
@@ -346,9 +376,13 @@ $privacy_url = esirom_hub_page_url('privacy');
                 window.history.replaceState({}, document.title, window.location.pathname);
                 redirectAfterLogin(data.user);
             })
-            .catch(() => {
+            .catch((error) => {
                 setBusy(false);
-                showError('Google sign-in completed but the session could not be established. Please try again.');
+                if (error && error.accountDisabled) {
+                    showDisabledNotice();
+                } else {
+                    showError('Google sign-in completed but the session could not be established. Please try again.');
+                }
                 window.history.replaceState({}, document.title, window.location.pathname);
             });
         })();
@@ -360,9 +394,13 @@ $privacy_url = esirom_hub_page_url('privacy');
             fetch(`${API_URL}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) return response.json();
-                if (response.status === 401 || response.status === 403) clearSession();
+                if (response.status === 401 || response.status === 403) {
+                    clearSession();
+                    const data = await response.json().catch(() => ({}));
+                    if (isDisabledResponse(response, data)) showDisabledNotice();
+                }
                 return null;
             })
             .then(data => {
@@ -411,6 +449,10 @@ $privacy_url = esirom_hub_page_url('privacy');
                     }
 
                     setTimeout(() => redirectAfterLogin(data.user), 400);
+                } else if (isDisabledResponse(response, data)) {
+                    clearSession();
+                    showDisabledNotice();
+                    setBusy(false);
                 } else {
                     const fieldError = Array.isArray(data.errors) && data.errors.length ? data.errors.map(err => err.msg).join(' ') : '';
                     showError(data.message || fieldError || 'Sign-in failed. Please check your details and try again.');

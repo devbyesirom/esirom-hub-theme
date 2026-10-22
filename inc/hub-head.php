@@ -5,8 +5,11 @@
  * Outputs: viewport/theme meta, favicons (and PWA manifest when requested),
  * Inter font, Tailwind Play CDN with the shared brand config, the Hub design
  * system stylesheet, the dark-mode bootstrap (runs before first paint), the
- * `ESIROM_API_URL` / `ESIROM_SUPER_ADMIN_EMAILS` globals and the `HubAuth`
- * helper (js/hub-auth.js) used by every page script.
+ * `ESIROM_API_URL` / `ESIROM_SUPER_ADMIN_EMAILS` / `ESIROM_LOGIN_URL` globals
+ * and the `HubAuth` helper (js/hub-auth.js) used by every page script. On app
+ * pages (everything except sign-in, registration and password reset) it also
+ * installs the HubAuth disabled-account guard, which signs the user out as
+ * soon as the backend answers 403 ACCOUNT_DISABLED.
  *
  * Expects (all optional):
  *   $hub_head = [
@@ -28,6 +31,8 @@ $hub_head_description = isset($hub_head['description']) ? (string) $hub_head['de
 $hub_theme_uri = get_template_directory_uri();
 $hub_theme_ver = wp_get_theme()->get('Version');
 $hub_api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.up.railway.app/api');
+$hub_login_url = esirom_hub_page_url('login');
+$hub_head_auth_page = is_page_template(array('page-login.php', 'page-register.php', 'page-reset-password.php'));
 $hub_tailwind_src = 'https://cdn.tailwindcss.com' . ($hub_head_plugins !== '' ? '?plugins=' . rawurlencode($hub_head_plugins) : '');
 ?>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -52,6 +57,7 @@ $hub_tailwind_src = 'https://cdn.tailwindcss.com' . ($hub_head_plugins !== '' ? 
     window.tailwindCDNWarning = false;
     window.ESIROM_API_URL = <?php echo wp_json_encode(esc_url_raw($hub_api_url)); ?>;
     window.ESIROM_SUPER_ADMIN_EMAILS = <?php echo wp_json_encode(array_values(esirom_hub_super_admin_emails())); ?>;
+    window.ESIROM_LOGIN_URL = <?php echo wp_json_encode(esc_url_raw($hub_login_url)); ?>;
     // Verbose diagnostics are opt-in: run localStorage.setItem('hubDebug', '1') in the console.
     window.hubDebug = function () {
         try {
@@ -67,6 +73,9 @@ $hub_tailwind_src = 'https://cdn.tailwindcss.com' . ($hub_head_plugins !== '' ? 
     })();
 </script>
 <script src="<?php echo esc_url($hub_theme_uri . '/js/hub-auth.js?ver=' . rawurlencode($hub_theme_ver)); ?>"></script>
+<?php if (!$hub_head_auth_page) : ?>
+<script>window.HubAuth && window.HubAuth.installDisabledAccountGuard();</script>
+<?php endif; ?>
 <script src="<?php echo esc_url($hub_tailwind_src); ?>"></script>
 <script>
     tailwind.config = {

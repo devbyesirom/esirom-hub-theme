@@ -3635,7 +3635,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             this.workloadByAssignee = d.workloadByAssignee || [];
                             this.teamMonthlyEfficiency = d.teamMonthlyEfficiency || [];
                         }
-                        if (clientsRes.ok) { const d = await clientsRes.json(); this.clients = d.data || []; }
+                        if (clientsRes.ok) { const d = await clientsRes.json(); this.clients = window.HubAuth.activeClients(d.data); }
                         if (usersRes.ok) { const d = await usersRes.json(); this.teamMembers = d.data || []; } else { await usersRes.text(); }
                         if (mentionsRes && mentionsRes.ok) {
                             const d = await mentionsRes.json();

@@ -1,5 +1,19 @@
 [
   {
+    "id": 33,
+    "title": "Disable and Re-enable Clients",
+    "version": "2.3.65",
+    "description": "Admins can now disable a client from the Admin Panel. Disabled clients cannot sign in and are signed out everywhere, their brand is hidden from pickers, and all of their data is kept so they can be re-enabled at any time.",
+    "date": "2026-10-22",
+    "highlights": [
+      "Active / Disabled / All filter on the Clients tab with a clear Disabled badge",
+      "Confirmation dialog shows which client accounts will lose access",
+      "Records who disabled the client and when",
+      "Friendly 'This account has been disabled' message on the sign-in page"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 32,
     "title": "Super Admin View Switcher and Mobile Concepts",
     "version": "2.3.64",

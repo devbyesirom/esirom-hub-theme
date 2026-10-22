@@ -433,7 +433,7 @@ function adsApp() {
         async loadClients() {
             const res = await fetch(`${API_URL}/calendar/clients`, { headers: this.headers() });
             const data = await res.json();
-            if (data.success) this.clients = data.data || [];
+            if (data.success) this.clients = window.HubAuth.activeClients(data.data);
         },
 
         async selectClient(client) {

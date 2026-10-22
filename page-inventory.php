@@ -493,7 +493,7 @@ function inventoryApp() {
         async loadClients() {
             const res = await fetch(`${API_URL}/inventory/clients`, { headers: this.headers() });
             const data = await res.json();
-            if (data.success) this.clients = data.clients;
+            if (data.success) this.clients = window.HubAuth.activeClients(data.clients);
         },
 
         openEquipmentModal(item = null) {

@@ -2567,7 +2567,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                         if (response.ok) {
                             const data = await response.json();
-                            this.availableClients = data.data || [];
+                            this.availableClients = window.HubAuth.activeClients(data.data);
 
                             if (this.user.role === 'client') {
                                 // For real client users: allow "All Brands" when they have more than one brand.

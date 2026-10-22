@@ -205,7 +205,11 @@ show_admin_bar(false);
                                         <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-50 text-indigo-700 capitalize" x-text="user.role.replace('_', ' ')"></span>
                                     </td>
                                     <td class="whitespace-nowrap">
-                                        <span :class="user.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" class="px-2 py-0.5 text-[10px] font-semibold rounded-full" x-text="user.isActive ? 'Active' : 'Inactive'"></span>
+                                        <span x-show="userLockedByDisabledClient(user)" class="hub-badge hub-badge--danger" :title="'All brands assigned to this account are disabled, so they cannot sign in.'">
+                                            <span class="hub-badge__dot" aria-hidden="true"></span>
+                                            Disabled
+                                        </span>
+                                        <span x-show="!userLockedByDisabledClient(user)" :class="user.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" class="px-2 py-0.5 text-[10px] font-semibold rounded-full" x-text="user.isActive ? 'Active' : 'Inactive'"></span>
                                     </td>
                                     <td class="whitespace-nowrap font-medium space-x-3">
                                         <button @click="editUser(user)" class="text-indigo-600 hover:text-indigo-800">Edit</button>
@@ -276,33 +280,67 @@ show_admin_bar(false);
 
             <!-- Clients Tab -->
             <div x-show="activeTab === 'clients'" x-cloak class="w-full space-y-4">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="admin-stat">
                         <p class="admin-stat-value" x-text="clients.length"></p>
                         <p class="admin-stat-label">Brands</p>
                     </div>
                     <div class="admin-stat">
-                        <p class="admin-stat-value" x-text="clients.filter(c => c.isActive !== false).length"></p>
+                        <p class="admin-stat-value" x-text="activeClients.length"></p>
                         <p class="admin-stat-label">Active</p>
                     </div>
-                    <div class="admin-stat col-span-2 sm:col-span-1 flex items-center justify-end">
-                        <button type="button" @click="openNewClient()" class="admin-btn-primary">
+                    <div class="admin-stat">
+                        <p class="admin-stat-value" :class="disabledClients.length ? 'text-red-700' : ''" x-text="disabledClients.length"></p>
+                        <p class="admin-stat-label">Disabled</p>
+                    </div>
+                    <div class="admin-stat flex items-center justify-end">
+                        <button type="button" @click="openNewClient()" class="admin-btn-primary w-full sm:w-auto">
                             Add client
                         </button>
                     </div>
                 </div>
+
+                <!-- Status filter -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+                        <div class="hub-segmented w-max" role="tablist" aria-label="Filter clients by status">
+                            <button type="button" role="tab" @click="clientFilter = 'active'" :aria-selected="clientFilter === 'active'" :class="clientFilter === 'active' ? 'is-active' : ''" class="hub-segmented__item">
+                                Active <span class="ml-1 text-gray-400 font-medium" x-text="activeClients.length"></span>
+                            </button>
+                            <button type="button" role="tab" @click="clientFilter = 'disabled'" :aria-selected="clientFilter === 'disabled'" :class="clientFilter === 'disabled' ? 'is-active' : ''" class="hub-segmented__item">
+                                Disabled <span class="ml-1 font-medium" :class="disabledClients.length ? 'text-red-600' : 'text-gray-400'" x-text="disabledClients.length"></span>
+                            </button>
+                            <button type="button" role="tab" @click="clientFilter = 'all'" :aria-selected="clientFilter === 'all'" :class="clientFilter === 'all' ? 'is-active' : ''" class="hub-segmented__item">
+                                All <span class="ml-1 text-gray-400 font-medium" x-text="clients.length"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500" x-show="clientFilter === 'disabled'">Disabled clients keep their data but cannot sign in and are hidden from brand pickers.</p>
+                </div>
+
+                <div x-show="!visibleClients.length" class="hub-empty admin-card">
+                    <div class="hub-empty__icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    </div>
+                    <p class="hub-empty__title" x-text="clientFilter === 'disabled' ? 'No disabled clients' : (clientFilter === 'active' ? 'No active clients' : 'No clients yet')"></p>
+                    <p class="hub-empty__text" x-text="clientFilter === 'disabled' ? 'Clients you disable will appear here. Their data is kept and you can re-enable them at any time.' : 'Add a client to get started.'"></p>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    <template x-for="client in clients" :key="client._id">
-                        <div class="admin-card p-4 flex flex-col">
+                    <template x-for="client in visibleClients" :key="client._id">
+                        <div class="admin-card p-4 flex flex-col" :class="isClientDisabled(client) ? 'ring-1 ring-red-200 bg-red-50/30' : ''">
                             <div class="flex items-start justify-between gap-2 mb-3">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <img :src="client.logo || 'https://placehold.co/80x80/e0e7ff/4338ca?text=' + encodeURIComponent((client.brandName || client.name || 'C').charAt(0))" class="h-10 w-10 rounded-lg object-cover shrink-0" :alt="client.brandName || client.name">
+                                    <img :src="client.logo || 'https://placehold.co/80x80/e0e7ff/4338ca?text=' + encodeURIComponent((client.brandName || client.name || 'C').charAt(0))" class="h-10 w-10 rounded-lg object-cover shrink-0" :class="isClientDisabled(client) ? 'grayscale opacity-70' : ''" :alt="client.brandName || client.name">
                                     <div class="min-w-0">
                                         <h3 class="text-sm font-semibold text-gray-900 truncate" x-text="client.brandName || client.companyName || client.name || 'Unnamed'"></h3>
                                         <p class="text-xs text-gray-500 truncate" x-text="client.contactEmail || 'No email'"></p>
                                     </div>
                                 </div>
-                                <span :class="client.isActive !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" class="shrink-0 px-2 py-0.5 text-[10px] font-semibold rounded-full" x-text="client.isActive !== false ? 'Active' : 'Inactive'"></span>
+                                <span class="hub-badge shrink-0" :class="isClientDisabled(client) ? 'hub-badge--danger' : 'hub-badge--success'">
+                                    <span class="hub-badge__dot" aria-hidden="true"></span>
+                                    <span x-text="isClientDisabled(client) ? 'Disabled' : 'Active'"></span>
+                                </span>
                             </div>
                             <div class="flex flex-wrap gap-1 mb-3">
                                 <span x-show="!client.serviceType || client.serviceType === 'social_media'" class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium">Social</span>
@@ -311,12 +349,20 @@ show_admin_bar(false);
                                 <span x-show="client.serviceType === 'website'" class="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-medium">Website</span>
                                 <span x-show="client.industry" class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px]" x-text="client.industry"></span>
                             </div>
+                            <p x-show="isClientDisabled(client)" class="mb-3 text-xs text-red-700 flex items-start gap-1.5">
+                                <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                <span x-text="clientDisabledSummary(client)"></span>
+                            </p>
                             <div class="mt-auto flex flex-col gap-2">
-                                <button @click="customizeClient(client)" class="w-full admin-btn-primary bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                                <button x-show="!isClientDisabled(client)" @click="customizeClient(client)" class="w-full admin-btn-primary bg-emerald-600 hover:bg-emerald-700 transition-colors">
                                     Customise dashboard
+                                </button>
+                                <button x-show="isClientDisabled(client)" @click="confirmClientStatus(client, 'enable')" class="w-full admin-btn-primary bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                                    Re-enable client
                                 </button>
                                 <div class="flex gap-2">
                                     <button @click="editClient(client)" class="flex-1 admin-btn-secondary">Edit</button>
+                                    <button x-show="!isClientDisabled(client)" @click="confirmClientStatus(client, 'disable')" class="flex-1 text-xs font-semibold text-amber-700 border border-amber-200 rounded-[0.625rem] hover:bg-amber-50 px-3 py-1.5">Disable</button>
                                     <button @click="deleteClient(client._id)" class="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-[0.625rem] hover:bg-red-50 px-3 py-1.5">Delete</button>
                                 </div>
                             </div>
@@ -786,7 +832,7 @@ show_admin_bar(false);
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Brand</label>
                             <select x-model="importClientId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
                                 <option value="">Choose a brand…</option>
-                                <template x-for="client in clients" :key="client._id">
+                                <template x-for="client in activeClients" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.companyName || client.name"></option>
                                 </template>
                             </select>
@@ -840,7 +886,7 @@ show_admin_bar(false);
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Brand</label>
                             <select x-model="apiImportClientId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
                                 <option value="">Choose a brand…</option>
-                                <template x-for="client in clients" :key="client._id">
+                                <template x-for="client in activeClients" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.companyName || client.name"></option>
                                 </template>
                             </select>
@@ -1022,29 +1068,31 @@ show_admin_bar(false);
                     <label class="block text-sm font-medium mb-1">Assign to Clients (Multiple)</label>
                     <div class="border rounded px-3 py-2 max-h-40 overflow-y-auto space-y-2">
                         <div class="flex items-center justify-between mb-1">
-                            <button type="button" @click="userForm.clientIds = clients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
+                            <button type="button" @click="userForm.clientIds = activeClients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
                             <button type="button" @click="userForm.clientIds = []" class="text-xs text-gray-500 hover:underline">Clear</button>
                         </div>
-                        <template x-for="client in clients" :key="`client-user-${client._id}`">
-                            <label class="flex items-center gap-2 text-sm py-0.5">
+                        <template x-for="client in pickerClients(userForm.clientIds)" :key="`client-user-${client._id}`">
+                            <label class="flex items-center gap-2 text-sm py-0.5" :class="isClientDisabled(client) ? 'text-gray-400' : ''">
                                 <input type="checkbox" :value="client._id" x-model="userForm.clientIds" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                 <span x-text="client.brandName || client.companyName || client.name"></span>
+                                <span x-show="isClientDisabled(client)" class="hub-badge hub-badge--danger">Disabled</span>
                             </label>
                         </template>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Assign one or more brands to this client account</p>
+                    <p class="text-xs text-gray-500 mt-1">Assign one or more brands to this client account. Disabled brands are only listed if already assigned.</p>
                 </div>
                 <div class="mb-4" x-show="userForm.role === 'brand_rep'">
                     <label class="block text-sm font-medium mb-1">Owned Brands (My Progress)</label>
                     <div class="border rounded px-3 py-2 max-h-40 overflow-y-auto space-y-2">
                         <div class="flex items-center justify-between mb-1">
-                            <button type="button" @click="userForm.assignedClients = clients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
+                            <button type="button" @click="userForm.assignedClients = activeClients.map(c => c._id)" class="text-xs text-indigo-600 hover:underline">Select all</button>
                             <button type="button" @click="userForm.assignedClients = []" class="text-xs text-gray-500 hover:underline">Clear</button>
                         </div>
-                        <template x-for="client in clients" :key="`rep-client-${client._id}`">
-                            <label class="flex items-center gap-2 text-sm py-0.5">
+                        <template x-for="client in pickerClients(userForm.assignedClients)" :key="`rep-client-${client._id}`">
+                            <label class="flex items-center gap-2 text-sm py-0.5" :class="isClientDisabled(client) ? 'text-gray-400' : ''">
                                 <input type="checkbox" :value="client._id" x-model="userForm.assignedClients" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                 <span x-text="client.brandName || client.companyName || client.name"></span>
+                                <span x-show="isClientDisabled(client)" class="hub-badge hub-badge--danger">Disabled</span>
                             </label>
                         </template>
                     </div>
@@ -1113,7 +1161,7 @@ show_admin_bar(false);
                 <label class="block text-sm font-medium text-gray-700 mb-2">Assign to Client (Optional)</label>
                 <select x-model="approvalClientId" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">-- Select Client --</option>
-                    <template x-for="client in clients" :key="client._id">
+                    <template x-for="client in activeClients" :key="client._id">
                         <option :value="client._id" x-text="client.brandName || client.name"></option>
                     </template>
                 </select>
@@ -1179,6 +1227,59 @@ show_admin_bar(false);
                     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Disable / Re-enable Client Confirmation -->
+    <div x-show="showClientStatusModal" x-cloak class="hub-modal" role="dialog" aria-modal="true" aria-labelledby="clientStatusTitle" @keydown.escape.window="showClientStatusModal && closeClientStatusModal()">
+        <div class="hub-modal__backdrop" @click="closeClientStatusModal()"></div>
+        <div class="hub-modal__panel">
+            <div class="hub-modal__header">
+                <div class="flex items-start gap-3 min-w-0">
+                    <div class="shrink-0 h-10 w-10 rounded-full flex items-center justify-center" :class="clientStatusAction === 'disable' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'">
+                        <svg x-show="clientStatusAction === 'disable'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                        <svg x-show="clientStatusAction === 'enable'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 id="clientStatusTitle" class="hub-modal__title" x-text="clientStatusAction === 'disable' ? 'Disable this client?' : 'Re-enable this client?'"></h2>
+                        <p class="text-sm font-medium text-gray-700 mt-0.5 truncate" x-text="clientStatusTarget ? (clientStatusTarget.brandName || clientStatusTarget.companyName || clientStatusTarget.name) : ''"></p>
+                    </div>
+                </div>
+                <button type="button" @click="closeClientStatusModal()" class="hub-btn hub-btn--ghost hub-btn--icon" aria-label="Close">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="hub-modal__body space-y-3">
+                <template x-if="clientStatusAction === 'disable'">
+                    <div class="space-y-3">
+                        <p class="text-sm text-gray-600">Disabling a client locks them out of the Hub without deleting anything.</p>
+                        <ul class="text-sm text-gray-600 space-y-1.5 list-disc pl-5">
+                            <li>Their client users can no longer sign in, and any sessions already open are signed out.</li>
+                            <li>The brand is hidden from brand pickers and client lists. Admins can still find it under the <span class="font-medium text-gray-800">Disabled</span> filter.</li>
+                            <li>All posts, reports, insights and settings are kept. You can re-enable the client at any time.</li>
+                        </ul>
+                        <p x-show="clientStatusAffectedUsers.length" class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                            <span class="font-semibold" x-text="clientStatusAffectedUsers.length === 1 ? '1 client account' : clientStatusAffectedUsers.length + ' client accounts'"></span>
+                            will lose access: <span x-text="clientStatusAffectedUsers.map(u => u.email).join(', ')"></span>
+                        </p>
+                        <p class="text-xs text-gray-500">Staff accounts are not affected. Recorded as disabled by <span class="font-medium text-gray-700" x-text="user?.fullName || user?.email || 'you'"></span>.</p>
+                    </div>
+                </template>
+                <template x-if="clientStatusAction === 'enable'">
+                    <div class="space-y-3">
+                        <p class="text-sm text-gray-600">The brand becomes visible again and its client users can sign in with their existing details.</p>
+                        <p x-show="clientStatusTarget && clientStatusTarget.disabledAt" class="text-xs text-gray-500" x-text="clientStatusTarget ? clientDisabledSummary(clientStatusTarget) : ''"></p>
+                    </div>
+                </template>
+                <p x-show="clientStatusError" class="hub-alert hub-alert--error text-sm" x-text="clientStatusError" role="alert"></p>
+            </div>
+            <div class="hub-modal__footer">
+                <button type="button" @click="closeClientStatusModal()" class="hub-btn hub-btn--secondary w-full sm:w-auto" :disabled="clientStatusBusy">Cancel</button>
+                <button type="button" @click="applyClientStatus()" class="hub-btn w-full sm:w-auto" :class="clientStatusAction === 'disable' ? 'hub-btn--danger' : 'hub-btn--success'" :disabled="clientStatusBusy">
+                    <span class="hub-spinner" x-show="clientStatusBusy" aria-hidden="true"></span>
+                    <span x-text="clientStatusBusy ? (clientStatusAction === 'disable' ? 'Disabling…' : 'Re-enabling…') : (clientStatusAction === 'disable' ? 'Disable client' : 'Re-enable client')"></span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1732,6 +1833,13 @@ show_admin_bar(false);
                 pwCurrent: '', pwNew: '', pwConfirm: '', pwLoading: false, pwError: '', pwSuccess: '',
                 showUserModal: false,
                 showClientModal: false,
+                // Clients tab: 'active' (default) | 'disabled' | 'all'
+                clientFilter: 'active',
+                showClientStatusModal: false,
+                clientStatusTarget: null,
+                clientStatusAction: 'disable',
+                clientStatusBusy: false,
+                clientStatusError: '',
                 workflowDigestLoading: false,
                 teamProgressEmailForm: { period: 'current', sampleUserId: '' },
                 teamProgressEmailPreview: { recipients: [], enabled: false },
@@ -2223,6 +2331,165 @@ show_admin_bar(false);
                     } catch (error) {
                         this.showToast(`Could not delete client: ${error.message}`, 'error', 6000);
                     }
+                },
+
+                // ── Disable / re-enable clients ─────────────────────────
+                isClientDisabled(client) {
+                    return !window.HubAuth.isClientActive(client);
+                },
+
+                get activeClients() {
+                    return this.clients.filter(c => !this.isClientDisabled(c));
+                },
+
+                get disabledClients() {
+                    return this.clients.filter(c => this.isClientDisabled(c));
+                },
+
+                get visibleClients() {
+                    if (this.clientFilter === 'disabled') return this.disabledClients;
+                    if (this.clientFilter === 'all') return this.clients;
+                    return this.activeClients;
+                },
+
+                // Brands offered in a picker: active ones, plus disabled ones that are already selected
+                // (so an existing assignment is visible and can be removed rather than silently dropped).
+                pickerClients(selectedIds = []) {
+                    const selected = new Set((selectedIds || []).map(id => String(id?._id || id)));
+                    return this.clients.filter(c => !this.isClientDisabled(c) || selected.has(String(c._id)));
+                },
+
+                clientIdsForUser(user) {
+                    const ids = [];
+                    const primary = user?.clientId?._id || user?.clientId;
+                    if (primary) ids.push(String(primary));
+                    (Array.isArray(user?.clientIds) ? user.clientIds : []).forEach(c => {
+                        const id = c?._id || c;
+                        if (id) ids.push(String(id));
+                    });
+                    return [...new Set(ids)];
+                },
+
+                // A client-role account is locked out when every brand it is assigned to is disabled.
+                userLockedByDisabledClient(user) {
+                    if (!user || user.role !== 'client') return false;
+                    const ids = this.clientIdsForUser(user);
+                    if (!ids.length) return false;
+                    const known = ids.map(id => this.clients.find(c => String(c._id) === id)).filter(Boolean);
+                    return known.length > 0 && known.every(c => this.isClientDisabled(c));
+                },
+
+                get clientStatusAffectedUsers() {
+                    const target = this.clientStatusTarget;
+                    if (!target) return [];
+                    const targetId = String(target._id);
+                    return this.users.filter(u => {
+                        if (u.role !== 'client') return false;
+                        const ids = this.clientIdsForUser(u);
+                        if (!ids.includes(targetId)) return false;
+                        // Only accounts with no other active brand are actually locked out.
+                        return ids.every(id => id === targetId || this.isClientDisabled(this.clients.find(c => String(c._id) === id) || {}));
+                    });
+                },
+
+                formatAuditDate(value) {
+                    const date = value ? new Date(value) : null;
+                    if (!date || Number.isNaN(date.getTime())) return '';
+                    return date.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                },
+
+                personLabel(person) {
+                    if (!person) return '';
+                    if (typeof person === 'string') return '';
+                    const name = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
+                    return name || person.fullName || person.email || '';
+                },
+
+                clientDisabledSummary(client) {
+                    if (!client || !this.isClientDisabled(client)) return '';
+                    const when = this.formatAuditDate(client.disabledAt);
+                    const who = this.personLabel(client.disabledBy);
+                    if (when && who) return `Disabled ${when} by ${who}`;
+                    if (when) return `Disabled ${when}`;
+                    if (who) return `Disabled by ${who}`;
+                    return 'Disabled';
+                },
+
+                confirmClientStatus(client, action) {
+                    this.clientStatusTarget = client;
+                    this.clientStatusAction = action === 'enable' ? 'enable' : 'disable';
+                    this.clientStatusError = '';
+                    this.clientStatusBusy = false;
+                    this.showClientStatusModal = true;
+                },
+
+                closeClientStatusModal() {
+                    if (this.clientStatusBusy) return;
+                    this.showClientStatusModal = false;
+                    this.clientStatusTarget = null;
+                    this.clientStatusError = '';
+                },
+
+                async applyClientStatus() {
+                    const target = this.clientStatusTarget;
+                    if (!target || this.clientStatusBusy) return;
+                    const enable = this.clientStatusAction === 'enable';
+                    const label = target.brandName || target.companyName || target.name || 'Client';
+                    this.clientStatusBusy = true;
+                    this.clientStatusError = '';
+
+                    try {
+                        await this.setClientStatus(target._id, enable);
+                        await this.loadClients();
+
+                        const updated = this.clients.find(c => String(c._id) === String(target._id));
+                        if (updated && this.isClientDisabled(updated) === enable) {
+                            throw new Error('The backend accepted the request but did not change the client status. The Hub API needs the disable-client update (see DISABLE_CLIENT_BACKEND.md).');
+                        }
+
+                        this.showClientStatusModal = false;
+                        this.clientStatusTarget = null;
+                        if (enable) {
+                            this.showToast(`${label} re-enabled. Their users can sign in again.`, 'success', 4000);
+                        } else {
+                            this.showToast(`${label} disabled. Their users have been signed out.`, 'success', 4000);
+                            if (this.clientFilter === 'active' && !this.activeClients.length) this.clientFilter = 'all';
+                        }
+                    } catch (error) {
+                        this.clientStatusError = error.message || `Could not ${enable ? 're-enable' : 'disable'} client.`;
+                    } finally {
+                        this.clientStatusBusy = false;
+                    }
+                },
+
+                // Preferred: PUT /clients/:id/status { isActive }. The backend records disabledAt / disabledBy
+                // from the authenticated admin. Falls back to PUT /clients/:id on older backends that
+                // do not have the status route yet.
+                async setClientStatus(id, isActive) {
+                    try {
+                        return await this.api(`/clients/${id}/status`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ isActive })
+                        });
+                    } catch (error) {
+                        if (!/\(404\)|not found|cannot (put|post)/i.test(error.message || '')) throw error;
+                    }
+
+                    const current = this.clients.find(c => String(c._id) === String(id)) || {};
+                    const payload = {
+                        name: current.name || current.brandName || '',
+                        brandName: current.brandName || current.companyName || current.name || '',
+                        companyName: current.brandName || current.companyName || current.name || '',
+                        contactEmail: current.contactEmail || 'client@example.com',
+                        contactPhone: current.contactPhone || '',
+                        industry: current.industry || '',
+                        logo: current.logo || '',
+                        serviceType: current.serviceType || 'social_media',
+                        isActive,
+                        disabledAt: isActive ? null : new Date().toISOString(),
+                        disabledBy: isActive ? null : (this.user?._id || this.user?.id || null)
+                    };
+                    return this.api(`/clients/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
                 },
 
                 async customizeClient(client) {
@@ -3724,7 +3991,7 @@ show_admin_bar(false);
                         case 'pending':
                             return 'Review and approve new user registration requests';
                         case 'clients':
-                            return 'Manage brands, dashboards, and client settings';
+                            return 'Manage brands, dashboards, client settings and access';
                         case 'emails':
                             return 'Test sends, team progress, monthly reports, reminders, and announcements';
                         case 'import':
