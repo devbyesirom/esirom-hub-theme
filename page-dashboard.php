@@ -1080,19 +1080,37 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
 
                 <!-- Reports View -->
-                <div x-show="activeView === 'reports'" x-cloak>
-                    <div class="bg-white dark:bg-gray-800/50 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-                        <div class="flex items-center justify-between gap-3 mb-4">
-                            <div>
-                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Reports</h2>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Monthly reports are drafted automatically on the 1st, reviewed by the team, then published. Open the web report, or download PDF, CSV or PowerPoint.</p>
-                            </div>
-                            <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openUploadReportModal()" class="px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-1.5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                Upload PDF Report
+                <div x-show="activeView === 'reports'" x-cloak class="hub-reports">
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-400">Insights</p>
+                            <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Reports</h2>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl" x-text="isReportStaff() ? 'Drafted automatically on the 1st. Review, approve, then publish to the client.' : 'Your monthly performance reports from the Esirom team.'"></p>
+                        </div>
+                        <div x-show="isReportStaff()" class="flex items-center gap-2">
+                            <button @click="openUploadReportModal()" class="hub-btn hub-btn--secondary hub-btn--sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Upload PDF
+                            </button>
+                            <button @click="reportBuilderOpen = !reportBuilderOpen" class="hub-btn hub-btn--primary hub-btn--sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span x-text="reportBuilderOpen ? 'Close' : 'New report'"></span>
                             </button>
                         </div>
+                    </div>
 
+                    <!-- New report (collapsible) -->
+                    <div x-show="isReportStaff() && reportBuilderOpen" x-transition.opacity x-cloak class="bg-white dark:bg-gray-800/60 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-white">New report</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Build a custom report for any date range. Monthly reports are created for you on the 1st.</p>
+                            </div>
+                            <button @click="reportBuilderOpen = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Close">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
                         <div x-show="user.role === 'admin' || user.role === 'brand_rep'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Name</label>
@@ -1190,47 +1208,128 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <div x-show="reportsLoading" class="space-y-3" aria-busy="true">
-                            <div class="hub-skeleton h-12"></div>
-                            <div class="hub-skeleton h-12"></div>
-                            <div class="hub-skeleton h-12"></div>
-                        </div>
-
-                        <div x-show="!reportsLoading && !reports.length" class="hub-empty">
-                            <div class="hub-empty__icon">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            </div>
-                            <p class="hub-empty__title">No reports yet</p>
-                            <p class="hub-empty__text" x-text="(user.role === 'admin' || user.role === 'brand_rep') ? 'Generate a report from the builder above or upload a PDF to share it with this brand.' : 'Your monthly reports will appear here as soon as they are published.'"></p>
-                        </div>
-
-                        <ul x-show="!reportsLoading && reports.length" class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <template x-for="report in reports" :key="report._id">
-                                <li class="py-3 first:pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div>
-                                        <p class="font-medium text-gray-900 dark:text-white" x-text="report.name"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatReportPeriod(report)"></p>
-                                    </div>
-                                    <div class="flex items-center flex-wrap gap-3">
-                                        <span x-show="report.customData?.autoGenerated" class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Auto-generated</span>
-                                        <span x-show="report.source === 'uploaded'" class="text-xs font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Uploaded PDF</span>
-                                        <span x-show="(report.version || 1) > 1" class="text-xs font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200" x-text="'v' + report.version"></span>
-                                        <span class="text-xs font-medium px-2 py-0.5 rounded"
-                                            :class="(report.reviewStatus || 'published') === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : ((report.reviewStatus === 'approved') ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200')"
-                                            x-text="({draft: 'Draft', in_review: 'In review', approved: 'Approved', published: 'Published'})[report.reviewStatus || 'published']"></span>
-                                        <a x-show="report.source !== 'uploaded'" :href="'<?php echo esc_url(home_url('/reports/')); ?>' + report._id + '/'" class="hub-btn hub-btn--primary hub-btn--sm">Open report</a>
-                                        <button @click.prevent="openReport(report)" class="hub-btn hub-btn--soft hub-btn--sm">View</button>
-                                        <button x-show="report.pdfUrl || report.source === 'uploaded'" @click.prevent="downloadReportExport(report, 'pdf')" class="hub-btn hub-btn--secondary hub-btn--sm">PDF</button>
-                                        <button x-show="report.csvUrl" @click.prevent="downloadReportExport(report, 'csv')" class="hub-btn hub-btn--secondary hub-btn--sm">CSV</button>
-                                        <button x-show="report.pptUrl" @click.prevent="downloadReportExport(report, 'ppt')" class="hub-btn hub-btn--secondary hub-btn--sm">PPT</button>
-                                        <button x-show="!report.pdfUrl && report.source !== 'uploaded'" @click.prevent="downloadReport(report)" class="hub-btn hub-btn--secondary hub-btn--sm">Download PDF</button>
-                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="startReportEdit(report)" class="hub-btn hub-btn--ghost hub-btn--sm">Edit</button>
-                                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click.prevent="deleteReport(report)" class="hub-btn hub-btn--ghost hub-btn--sm !text-red-600 dark:!text-red-400" aria-label="Delete report">Delete</button>
-                                    </div>
-                                </li>
-                            </template>
-                        </ul>
                     </div>
+
+                    <!-- Review queue (staff) -->
+                    <div x-show="isReportStaff() && reportQueue().length" class="mb-6 rounded-2xl border border-amber-200 dark:border-amber-700/50 bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-800/40 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex h-7 min-w-[1.75rem] px-2 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold" x-text="reportQueue().length"></span>
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Needs review</h3>
+                            </div>
+                            <button @click="reportFilter.status = 'queue'" class="text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline">Show only these</button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <template x-for="report in reportQueue().slice(0, 6)" :key="'q-' + report._id">
+                                <a :href="reportUrl(report)" class="group block rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3.5 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="report.clientId?.brandName || report.clientId?.name || report.name"></p>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap" :class="reportPillClass(report)" x-text="reportStatusLabel(report)"></span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="reportMonthLabel(report)"></p>
+                                    <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-2 group-hover:underline" x-text="report.reviewStatus === 'approved' ? 'Ready to publish →' : (report.reviewStatus === 'in_review' ? 'Approve →' : 'Review draft →')"></p>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div x-show="reports.length" class="flex flex-wrap items-center gap-2 mb-4">
+                        <div class="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 overflow-x-auto max-w-full" x-show="isReportStaff()">
+                            <template x-for="opt in [['all','All'],['queue','Needs review'],['draft','Draft'],['in_review','In review'],['approved','Approved'],['published','Published']]" :key="opt[0]">
+                                <button @click="reportFilter.status = opt[0]" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition"
+                                    :class="reportFilter.status === opt[0] ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'" x-text="opt[1]"></button>
+                            </template>
+                        </div>
+                        <select x-show="isReportStaff()" x-model="reportFilter.kind" class="text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-3 py-2">
+                            <option value="all">Auto &amp; manual</option>
+                            <option value="auto">Auto-generated</option>
+                            <option value="manual">Manual / uploaded</option>
+                        </select>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto" x-text="filteredReports().length + ' report' + (filteredReports().length === 1 ? '' : 's')"></span>
+                    </div>
+
+                    <div x-show="reportsLoading" class="space-y-3" aria-busy="true">
+                        <div class="hub-skeleton h-20"></div>
+                        <div class="hub-skeleton h-20"></div>
+                        <div class="hub-skeleton h-20"></div>
+                    </div>
+
+                    <div x-show="!reportsLoading && !reports.length" class="hub-empty bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 py-10">
+                        <div class="hub-empty__icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <p class="hub-empty__title">No reports yet</p>
+                        <p class="hub-empty__text" x-text="isReportStaff() ? 'Use New report to build one, or upload a PDF to share it with this brand.' : 'Your monthly reports will appear here as soon as they are published.'"></p>
+                    </div>
+                    <p x-show="!reportsLoading && reports.length && !filteredReports().length" class="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">No reports match these filters.</p>
+
+                    <!-- Reports grouped by year -->
+                    <template x-for="group in reportGroups()" :key="'y-' + group.year">
+                        <section class="mb-8">
+                            <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500 mb-3" x-text="group.year"></h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                <template x-for="report in group.items" :key="report._id">
+                                    <article class="relative flex flex-col rounded-2xl bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 p-5 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400" x-text="report.clientId?.brandName || report.clientId?.name || ''"></p>
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white leading-tight" x-text="reportMonthLabel(report)"></h4>
+                                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate" x-show="report.source === 'uploaded' || !report.customData?.autoGenerated" x-text="report.name"></p>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                                <span x-show="isReportStaff() || report.reviewStatus !== 'published'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap" :class="reportPillClass(report)" x-text="reportStatusLabel(report)"></span>
+                                                <div class="relative" x-show="isReportStaff()" @click.outside="reportMenu === 'm-' + report._id && (reportMenu = null)">
+                                                    <button @click="reportMenu = reportMenu === 'm-' + report._id ? null : 'm-' + report._id" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="More actions">
+                                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                                                    </button>
+                                                    <div x-show="reportMenu === 'm-' + report._id" x-transition.opacity x-cloak class="absolute right-0 mt-1 w-40 z-20 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg py-1 text-sm">
+                                                        <button @click="reportMenu = null; startReportEdit(report)" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Rename</button>
+                                                        <button x-show="report.source !== 'uploaded'" @click="reportMenu = null; openReport(report)" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Legacy PDF view</button>
+                                                        <button @click="reportMenu = null; deleteReport(report)" class="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <dl x-show="report.source !== 'uploaded'" class="grid grid-cols-3 gap-2 mt-4 mb-5">
+                                            <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-2">
+                                                <dt class="text-[11px] text-gray-500 dark:text-gray-400">Posts</dt>
+                                                <dd class="text-base font-semibold text-gray-900 dark:text-white" x-text="formatNumber(report.customData?.postCount ?? 0)"></dd>
+                                            </div>
+                                            <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-2">
+                                                <dt class="text-[11px] text-gray-500 dark:text-gray-400">Reach</dt>
+                                                <dd class="text-base font-semibold text-gray-900 dark:text-white" x-text="formatNumber(report.metrics?.totalReach || 0)"></dd>
+                                            </div>
+                                            <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-2">
+                                                <dt class="text-[11px] text-gray-500 dark:text-gray-400">Reach MoM</dt>
+                                                <dd class="text-base font-semibold" :class="reportMoM(report) > 0 ? 'text-emerald-600 dark:text-emerald-400' : (reportMoM(report) < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400')" x-text="reportMoMLabel(report)"></dd>
+                                            </div>
+                                        </dl>
+                                        <p x-show="report.source === 'uploaded'" class="mt-4 mb-5 text-xs text-gray-500 dark:text-gray-400">Uploaded PDF report</p>
+
+                                        <div class="flex items-center gap-2 mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/70">
+                                            <a x-show="report.source !== 'uploaded'" :href="reportUrl(report)" class="hub-btn hub-btn--primary hub-btn--sm flex-1 justify-center">Open report</a>
+                                            <button x-show="report.source === 'uploaded'" @click.prevent="openReport(report)" class="hub-btn hub-btn--primary hub-btn--sm flex-1 justify-center">Open PDF</button>
+                                            <div class="relative" x-show="report.pdfUrl || report.csvUrl || report.pptUrl" @click.outside="reportMenu === 'd-' + report._id && (reportMenu = null)">
+                                                <button @click="reportMenu = reportMenu === 'd-' + report._id ? null : 'd-' + report._id" class="hub-btn hub-btn--secondary hub-btn--sm" aria-label="Downloads">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M8 12l4 4m0 0l4-4m-4 4V4"/></svg>
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </button>
+                                                <div x-show="reportMenu === 'd-' + report._id" x-transition.opacity x-cloak class="absolute right-0 bottom-full mb-1 w-44 z-20 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg py-1 text-sm">
+                                                    <a x-show="report.source !== 'uploaded'" :href="reportUrl(report) + '?print=1'" class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">PDF (web report)</a>
+                                                    <button x-show="report.pdfUrl" @click="reportMenu = null; downloadReportExport(report, 'pdf')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700" x-text="report.source === 'uploaded' ? 'PDF' : 'PDF (classic)'"></button>
+                                                    <button x-show="report.csvUrl" @click="reportMenu = null; downloadReportExport(report, 'csv')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">CSV</button>
+                                                    <button x-show="report.pptUrl" @click="reportMenu = null; downloadReportExport(report, 'ppt')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">PowerPoint</button>
+                                                </div>
+                                            </div>
+                                            <span x-show="(report.version || 1) > 1" class="text-[11px] text-gray-400 dark:text-gray-500" x-text="'v' + report.version"></span>
+                                        </div>
+                                    </article>
+                                </template>
+                            </div>
+                        </section>
+                    </template>
                 </div>
 
                 <!-- Event Coverage View -->
@@ -2308,6 +2407,53 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 posts: [],
                 reports: [],
                 reportsLoading: false,
+                reportBuilderOpen: false,
+                reportMenu: null,
+                reportFilter: { status: 'all', kind: 'all' },
+                isReportStaff() { return this.user?.role === 'admin' || this.user?.role === 'brand_rep'; },
+                reportUrl(r) { return '<?php echo esc_url(home_url('/reports/')); ?>' + r._id + '/'; },
+                reportStatusLabel(r) { return ({ draft: 'Draft', in_review: 'In review', approved: 'Approved', published: 'Published' })[r.reviewStatus || 'published']; },
+                reportPillClass(r) {
+                    return ({
+                        draft: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
+                        in_review: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300',
+                        approved: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-300',
+                        published: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    })[r.reviewStatus || 'published'];
+                },
+                reportStart(r) { return new Date(r.dateRange?.start || r.createdAt); },
+                reportMonthLabel(r) {
+                    const s = this.reportStart(r), e = new Date(r.dateRange?.end || s);
+                    const opt = { month: 'long', year: 'numeric', timeZone: 'America/Jamaica' };
+                    const a = s.toLocaleDateString('en-GB', opt), b = e.toLocaleDateString('en-GB', opt);
+                    return a === b ? a : s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'America/Jamaica' }) + ' – ' + e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Jamaica' });
+                },
+                reportMoM(r) { const c = r.customData?.metricsChanges?.reach; return Number.isFinite(c) ? c : null; },
+                reportMoMLabel(r) { const c = this.reportMoM(r); if (c === null) return '—'; return (c > 0 ? '+' : '') + Math.round(c) + '%'; },
+                reportQueue() { return (this.reports || []).filter((r) => ['draft', 'in_review', 'approved'].includes(r.reviewStatus)); },
+                filteredReports() {
+                    const f = this.reportFilter;
+                    return (this.reports || []).filter((r) => {
+                        const st = r.reviewStatus || 'published';
+                        if (f.status === 'queue' && !['draft', 'in_review', 'approved'].includes(st)) return false;
+                        if (!['all', 'queue'].includes(f.status) && st !== f.status) return false;
+                        const auto = !!r.customData?.autoGenerated;
+                        if (f.kind === 'auto' && !auto) return false;
+                        if (f.kind === 'manual' && auto) return false;
+                        return true;
+                    });
+                },
+                reportGroups() {
+                    const by = {};
+                    this.filteredReports()
+                        .slice()
+                        .sort((a, b) => this.reportStart(b) - this.reportStart(a))
+                        .forEach((r) => {
+                            const y = this.reportStart(r).toLocaleDateString('en-GB', { year: 'numeric', timeZone: 'America/Jamaica' });
+                            (by[y] = by[y] || []).push(r);
+                        });
+                    return Object.keys(by).sort((a, b) => b - a).map((year) => ({ year, items: by[year] }));
+                },
                 postsLoading: false,
                 dashboardError: '',
                 selectedReport: null,

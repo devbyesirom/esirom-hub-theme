@@ -1,5 +1,19 @@
 [
   {
+    "id": 36,
+    "title": "Cleaner Reports Page",
+    "version": "2.3.68",
+    "description": "The Reports page now shows reports as cards grouped by year, with posts, reach and month-on-month change at a glance. Each card has one Open report button, a downloads menu (PDF, CSV, PowerPoint) and a ⋯ menu for rename and delete. Staff see a Needs review queue and can filter by status and by auto or manual. The report builder now sits in a New report panel.",
+    "date": "2026-10-29",
+    "highlights": [
+      "Status pills: Draft, In review, Approved, Published",
+      "Needs review queue for staff and admins",
+      "Filters for status and auto/manual",
+      "Clients only see published reports"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 35,
     "title": "Redesigned Monthly Reports with Review and Publish",
     "version": "2.3.67",
