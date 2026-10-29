@@ -1,5 +1,19 @@
 [
   {
+    "id": 35,
+    "title": "Redesigned Monthly Reports with Review and Publish",
+    "version": "2.3.67",
+    "description": "Monthly reports now open as a branded web report at hub.esirom.com/reports/… with a PDF download of the same page. Reports are drafted automatically on the 1st, staff review and edit the summary and next-month plan, an admin approves and publishes, and only then does the client see it and get the email. All earlier reports were regenerated with the corrected post counts; the old versions are hidden, not deleted.",
+    "date": "2026-10-29",
+    "highlights": [
+      "Executive summary, headline numbers with month-on-month change, content mix with carousel slides, platform split, top posts with thumbnails",
+      "Draft → In review → Approved → Published, with a version number on every report",
+      "Client email goes out when a report is published, not automatically",
+      "CSV and PowerPoint downloads are still available"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 34,
     "title": "Accurate Team Progress and Carousel Counts",
     "version": "2.3.66",
