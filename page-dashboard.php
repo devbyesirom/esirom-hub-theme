@@ -1285,7 +1285,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                                     </button>
                                                     <div x-show="reportMenu === 'm-' + report._id" x-transition.opacity x-cloak class="absolute right-0 mt-1 w-40 z-20 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg py-1 text-sm">
                                                         <button @click="reportMenu = null; startReportEdit(report)" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Rename</button>
-                                                        <button x-show="report.source !== 'uploaded'" @click="reportMenu = null; openReport(report)" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Legacy PDF view</button>
+                                                        <button x-show="report.source !== 'uploaded'" @click="reportMenu = null; openReport(report)" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">PDF preview</button>
                                                         <button @click="reportMenu = null; deleteReport(report)" class="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
                                                     </div>
                                                 </div>
@@ -1317,8 +1317,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                                 </button>
                                                 <div x-show="reportMenu === 'd-' + report._id" x-transition.opacity x-cloak class="absolute right-0 bottom-full mb-1 w-44 z-20 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg py-1 text-sm">
-                                                    <a x-show="report.source !== 'uploaded'" :href="reportUrl(report) + '?print=1'" class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">PDF (web report)</a>
-                                                    <button x-show="report.pdfUrl" @click="reportMenu = null; downloadReportExport(report, 'pdf')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700" x-text="report.source === 'uploaded' ? 'PDF' : 'PDF (classic)'"></button>
+                                                    <a x-show="report.source !== 'uploaded'" :href="reportUrl(report) + '?print=1'" class="block px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Print from web report</a>
+                                                    <button x-show="report.pdfUrl" @click="reportMenu = null; downloadReportExport(report, 'pdf')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700" x-text="'PDF'"></button>
                                                     <button x-show="report.csvUrl" @click="reportMenu = null; downloadReportExport(report, 'csv')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">CSV</button>
                                                     <button x-show="report.pptUrl" @click="reportMenu = null; downloadReportExport(report, 'ppt')" class="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">PowerPoint</button>
                                                 </div>
