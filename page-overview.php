@@ -357,7 +357,7 @@ show_admin_bar(false);
                                     </div>
                                     <div>
                                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Team Efficiency</h3>
-                                        <p class="text-xs text-gray-400">Completion rate per creative</p>
+                                        <p class="text-xs text-gray-400">Artwork handed off for review vs due this month (matches My Progress)</p>
                                     </div>
                                 </div>
                                 <input type="month" :value="`${efficiencyYear}-${String(efficiencyMonth).padStart(2, '0')}`" @change="updateEfficiencyMonth($event.target.value)" class="px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
@@ -380,9 +380,11 @@ show_admin_bar(false);
                                                  :class="w.completionRate >= 70 ? 'bg-emerald-500' : (w.completionRate >= 40 ? 'bg-amber-500' : 'bg-red-500')"></div>
                                         </div>
                                         <div class="mt-1.5 flex items-center gap-3 text-xs text-gray-500">
-                                            <span>Done <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="w.completedCount"></span></span>
+                                            <span>Handed off <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="w.handedOffCount ?? w.completedCount"></span></span>
                                             <span class="text-gray-300 dark:text-gray-600">·</span>
-                                            <span>Assigned <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="w.assignedCount"></span></span>
+                                            <span>Due <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="w.assignedCount"></span></span>
+                                            <span class="text-gray-300 dark:text-gray-600" x-show="w.approvedCount !== undefined">·</span>
+                                            <span class="text-emerald-600" x-show="w.approvedCount !== undefined">Approved <span class="font-semibold" x-text="w.approvedCount"></span></span>
                                             <span class="text-gray-300 dark:text-gray-600">·</span>
                                             <span class="text-blue-500">WIP <span class="font-semibold" x-text="w.inProgressCount"></span></span>
                                         </div>
@@ -514,6 +516,13 @@ show_admin_bar(false);
                                                  'bg-red-500':     brand.progress < 50
                                              }"
                                              :style="`width:${Math.min(brand.progress, 100)}%`"></div>
+                                    </div>
+                                    <!-- What the count is made of: a carousel is one post; cross-posts count once -->
+                                    <div x-show="brand.postBreakdown && brand.postBreakdown.posts" class="flex flex-wrap gap-1 mt-2 text-[10px]">
+                                        <span x-show="brand.postBreakdown?.singles" class="px-1.5 py-0.5 rounded bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300" x-text="brand.postBreakdown?.singles + ' single'"></span>
+                                        <span x-show="brand.postBreakdown?.reels" class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" x-text="brand.postBreakdown?.reels + (brand.postBreakdown?.reels === 1 ? ' reel' : ' reels')"></span>
+                                        <span x-show="brand.postBreakdown?.carousels" class="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" x-text="brand.postBreakdown?.carousels + (brand.postBreakdown?.carousels === 1 ? ' carousel' : ' carousels') + (brand.postBreakdown?.carouselSlides ? ' · ' + brand.postBreakdown.carouselSlides + ' slides' : '')"></span>
+                                        <span x-show="brand.postBreakdown?.crossPosted" class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" :title="'Same post on Facebook and Instagram is counted once. ' + brand.postBreakdown?.platformPosts + ' platform posts in total.'" x-text="brand.postBreakdown?.crossPosted + ' on FB + IG'"></span>
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-xs text-gray-400" x-text="`${brand.progress}% complete`"></span>

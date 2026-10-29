@@ -5,6 +5,15 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.66] - 2026-10-29
+
+### Fixed
+- **My Progress / Agency Overview accuracy** (backend `fix/accurate-progress-metrics-carousels`): Posts Published and Monthly Posts count each piece of content once (carousel/album = 1 post, same caption on FB + IG the same Jamaica day = 1, stories excluded, only published posts), in Jamaica calendar months instead of UTC; on-time handoffs use the end of the due day in Jamaica (was 6:59 pm) and the first design upload when there is no submit stamp; monthly reports finalised/sent/uploaded by anyone count for the brand; Team Efficiency uses due-this-month and handed-off, like My Progress, and no longer drops people with no pending work
+
+### Added
+- Carousel badge ("Carousel · N slides") and a posts / singles / reels / carousels summary on the brand Published Posts view; Monthly Posts cards show the same breakdown plus FB + IG cross-posts
+- Theme version bumped to 2.3.66
+
 ## [2.3.65] - 2026-10-22
 
 ### Added
