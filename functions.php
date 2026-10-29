@@ -446,10 +446,32 @@ function esirom_hub_workflow_rewrite_rules() {
 add_action('init', 'esirom_hub_workflow_rewrite_rules');
 
 /**
+ * Web reports: hub.esirom.com/reports/{reportId}/ renders page-report.php
+ */
+function esirom_hub_report_rewrite_rules() {
+    add_rewrite_rule('^reports/([a-fA-F0-9]{24})/?$', 'index.php?esirom_report_id=$matches[1]', 'top');
+}
+add_action('init', 'esirom_hub_report_rewrite_rules');
+
+add_filter('query_vars', function ($vars) {
+    $vars[] = 'esirom_report_id';
+    return $vars;
+});
+
+add_filter('template_include', function ($template) {
+    if (get_query_var('esirom_report_id')) {
+        $t = locate_template('page-report.php');
+        if ($t) return $t;
+    }
+    return $template;
+});
+
+/**
  * Flush rewrite rules on theme activation
  */
 function esirom_hub_flush_rewrite_rules() {
     esirom_hub_workflow_rewrite_rules();
+    esirom_hub_report_rewrite_rules();
     flush_rewrite_rules();
 }
 add_action('after_switch_theme', 'esirom_hub_flush_rewrite_rules');
@@ -458,10 +480,11 @@ add_action('after_switch_theme', 'esirom_hub_flush_rewrite_rules');
  * Auto-flush rewrite rules if not yet registered (runs once)
  */
 function esirom_hub_maybe_flush_rewrite_rules() {
-    if (get_transient('esirom_hub_rewrite_flushed_v7') !== 'yes') {
+    if (get_transient('esirom_hub_rewrite_flushed_v8') !== 'yes') {
         esirom_hub_workflow_rewrite_rules();
+        esirom_hub_report_rewrite_rules();
         flush_rewrite_rules();
-        set_transient('esirom_hub_rewrite_flushed_v7', 'yes', 0);
+        set_transient('esirom_hub_rewrite_flushed_v8', 'yes', 0);
     }
 }
 add_action('init', 'esirom_hub_maybe_flush_rewrite_rules', 20);
