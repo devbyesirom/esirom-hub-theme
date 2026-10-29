@@ -314,7 +314,7 @@ $website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
                                                 <span class="font-medium text-gray-700 dark:text-gray-300 truncate" x-text="brand.brandName"></span>
                                                 <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'next_month_concepts' || goal.id === 'concepts_created'" x-text="(brand.conceptsCreated ?? 0) + ' / ' + (brand.conceptsTarget ?? brand.target) + ' concepts'"></span>
                                                 <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'concept_deadline' || goal.id === 'deadline_compliance'" x-text="(brand.conceptsOnTime ?? 0) + ' / ' + (brand.conceptsTarget ?? brand.target) + ' on time'"></span>
-                                                <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'posts_published'" x-text="(brand.postsPublished ?? 0) + ' / ' + (brand.target ?? 0) + ' posts'"></span>
+                                                <span class="text-gray-500 whitespace-nowrap" x-show="goal.id === 'posts_published'" x-text="(brand.postsPublished ?? 0) + ' / ' + (brand.target ?? 0) + ' posts' + (brand.carousels ? ' · ' + brand.carousels + (brand.carousels === 1 ? ' carousel' : ' carousels') + (brand.carouselSlides ? ' (' + brand.carouselSlides + ' slides)' : '') : '')"></span>
                                                 <span class="whitespace-nowrap font-medium" x-show="goal.id === 'monthly_reports'" :class="brand.reportSubmitted ? 'text-green-600' : 'text-amber-600'" x-text="brand.reportSubmitted ? 'Report ✓' : 'Report missing'"></span>
                                             </div>
                                         </div>

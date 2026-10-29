@@ -1601,6 +1601,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         </div>
                     </div>
 
+                    <!-- Post type summary: a carousel is one post, its slides are counted separately -->
+                    <div x-show="filteredPosts.length" class="flex flex-wrap items-center gap-2 mb-4 text-xs">
+                        <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold" x-text="postTypeSummary.posts + (postTypeSummary.posts === 1 ? ' post' : ' posts')"></span>
+                        <span x-show="postTypeSummary.singles" class="px-2.5 py-1 rounded-full bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300" x-text="postTypeSummary.singles + ' single image' + (postTypeSummary.singles === 1 ? '' : 's')"></span>
+                        <span x-show="postTypeSummary.reels" class="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" x-text="postTypeSummary.reels + (postTypeSummary.reels === 1 ? ' reel/video' : ' reels/videos')"></span>
+                        <span x-show="postTypeSummary.carousels" class="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" x-text="postTypeSummary.carousels + (postTypeSummary.carousels === 1 ? ' carousel' : ' carousels') + (postTypeSummary.slides ? ' (' + postTypeSummary.slides + ' slides)' : '')"></span>
+                        <span class="text-gray-400">Each carousel counts as one post.</span>
+                    </div>
+
                     <!-- Posts Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <template x-for="post in filteredPosts" :key="post.id">
@@ -1629,7 +1638,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                     </template>
                                     
                                     <!-- Image for Static Posts -->
-                                    <template x-if="post.contentType === 'static' && post.finalContent">
+                                    <!-- Carousel badge: one post made of several slides -->
+                                    <div x-show="post.contentType === 'carousel'" class="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-white text-[11px] font-semibold pointer-events-none">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h10a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V9a2 2 0 012-2zM4 15V5a2 2 0 012-2h10"/></svg>
+                                        <span x-text="post.mediaCount ? 'Carousel · ' + post.mediaCount + ' slides' : 'Carousel'"></span>
+                                    </div>
+                                    <template x-if="(post.contentType === 'static' || post.contentType === 'carousel') && post.finalContent">
                                         <img :src="post.finalContent" class="w-full h-full object-cover" alt="Post preview" @error="hubDebug('Image load error:', post.finalContent)">
                                     </template>
                                     
@@ -1737,7 +1751,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                             <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400" x-text="new Date(post.scheduledDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })"></span>
                                         </div>
                                         <div class="flex flex-col items-end">
-                                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 capitalize" x-text="post.contentType"></span>
+                                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 capitalize" x-text="post.contentType === 'carousel' ? ('Carousel' + (post.mediaCount ? ' · ' + post.mediaCount + ' slides' : '')) : post.contentType"></span>
                                             <span x-show="post.campaignId" class="text-xs text-green-600 dark:text-green-400 font-medium" x-text="getCampaignName(post.campaignId)"></span>
                                         </div>
                                     </div>
@@ -3493,6 +3507,17 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 // Published Posts Functions
+                get postTypeSummary() {
+                    const list = this.filteredPosts || [];
+                    const out = { posts: list.length, singles: 0, reels: 0, carousels: 0, slides: 0 };
+                    list.forEach((p) => {
+                        if (p.contentType === 'carousel') { out.carousels += 1; out.slides += Number(p.mediaCount) || 0; }
+                        else if (p.contentType === 'reel' || p.contentType === 'video') out.reels += 1;
+                        else out.singles += 1;
+                    });
+                    return out;
+                },
+
                 get filteredPosts() {
                     return this.posts.filter(post => {
                         const platformMatch = !this.filterPlatform || (post.platforms && post.platforms.includes(this.filterPlatform));
@@ -3629,6 +3654,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 finalContent: resolvedUrl,
                                 permalink: post.content?.link || '',
                                 mediaType: post.mediaType || this.inferContentType(post),
+                                mediaCount: Number(post.mediaCount) || null,
                                 campaignId: post.campaignId,
                                 createdBy: post.createdBy,
                                 createdAt: post.createdAt,
@@ -3682,7 +3708,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 inferContentType(post) {
                     const mt = (post.mediaType || '').toLowerCase();
                     if (mt === 'reels' || mt === 'reel' || mt === 'video') return 'reel';
-                    if (mt === 'carousel_album' || mt === 'carousel') return 'carousel';
+                    if (mt === 'carousel_album' || mt === 'carousel' || mt === 'album') return 'carousel';
                     if (Array.isArray(post.tags) && post.tags.includes('reel')) return 'reel';
                     if (Array.isArray(post.tags) && post.tags.includes('carousel')) return 'carousel';
                     const first = Array.isArray(post.content?.media) ? post.content.media[0] : post.content?.media;
@@ -4773,6 +4799,8 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             // Merge KPIs and source IDs
                             existing.kpis = { ...(existing.kpis || {}), ...(p.kpis || {}) };
                             existing.sourceIds = { ...(existing.sourceIds || {}), ...(p.sourceIds || {}) };
+                            if (p.contentType === 'carousel') existing.contentType = 'carousel';
+                            if ((p.mediaCount || 0) > (existing.mediaCount || 0)) existing.mediaCount = p.mediaCount;
                             // Choose a stable id
                             if (!existing._id && p._id) { existing._id = p._id; existing.id = p._id; }
                         }

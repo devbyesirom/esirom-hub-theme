@@ -1,5 +1,19 @@
 [
   {
+    "id": 34,
+    "title": "Accurate Team Progress and Carousel Counts",
+    "version": "2.3.66",
+    "description": "Posts Published and Monthly Posts now count one piece of content once: a carousel is one post (its slides are shown separately) and the same post on Facebook and Instagram counts once. Months follow Jamaica time, on-time handoffs use the end of the due day in Jamaica, and Team Efficiency now uses the same handed-off-vs-due measure as My Progress.",
+    "date": "2026-10-29",
+    "highlights": [
+      "Carousel badge with slide count on posts, and a posts / carousels / reels breakdown",
+      "Monthly Posts cards show singles, reels, carousels (with slides) and FB + IG cross-posts",
+      "Team Efficiency shows Handed off / Due / Approved, matching My Progress",
+      "Monthly reports finalised by any teammate now count for the brand"
+    ],
+    "type": "fix"
+  },
+  {
     "id": 33,
     "title": "Disable and Re-enable Clients",
     "version": "2.3.65",
