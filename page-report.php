@@ -231,6 +231,7 @@ function webReport() {
         await this.load();
       } catch (e) { this.error = 'Could not load this report.'; }
       this.loading = false;
+      if (this.r && new URLSearchParams(location.search).get('print') === '1') setTimeout(() => window.print(), 800);
     },
     async load() {
       const res = await fetch(API_URL + '/reports/' + REPORT_ID + '/snapshot', { headers: this.headers() });
