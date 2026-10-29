@@ -781,6 +781,7 @@ show_admin_bar(false);
                         <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-2">
                             <select x-model="announcementFeature" @change="loadActiveAnnouncementPreview()"
                                     class="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white">
+                                <option value="reports_redesign">Redesigned Reports</option>
                                 <option value="live_insights">Live Insights</option>
                                 <option value="website_analytics_connected">Website Analytics — Connected</option>
                                 <option value="website_analytics_upsell">Website Analytics — Upsell</option>
