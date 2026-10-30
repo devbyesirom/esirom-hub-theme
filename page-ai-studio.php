@@ -4,6 +4,7 @@
  * Description: Product-safe AI images and on-voice captions — staff only (feature-flagged)
  */
 if (!defined('ABSPATH')) exit;
+require_once get_template_directory() . '/inc/ai-knowledge-editor.php';
 
 show_admin_bar(false);
 
@@ -18,6 +19,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
     <meta charset="UTF-8">
     <title>AI Studio — Agency Hub</title>
     <?php esirom_hub_head_assets(array('pwa' => true)); ?>
+    <script src="<?php echo esc_url(get_template_directory_uri() . '/js/ai-knowledge.js?ver=' . rawurlencode(wp_get_theme()->get('Version'))); ?>"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         const API_URL = '<?php echo esc_js($api_url); ?>';
@@ -29,7 +31,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
         <?php esirom_hub_layout_styles(); ?>
     </style>
 </head>
-<body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="aiStudioApp()" x-init="init()">
+<body class="hub-has-mobile-nav h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 md:pb-0" x-data="Object.assign(aiKnowledgeEditor('staff'), aiStudioApp())" x-init="init()">
 
 <div x-show="!authChecked" class="hub-boot" aria-busy="true">
     <span class="hub-spinner hub-spinner--lg"></span>
@@ -65,7 +67,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                 <div class="flex items-center gap-2">
                     <div class="relative" x-data="{ open: false }" x-show="status.enabled">
                         <button type="button" @click="open = !open" class="hub-btn hub-btn--soft hub-btn--sm" :aria-expanded="open">
-                            <span x-text="brand ? brand.name : 'Select brand'"></span>
+                            <span x-text="brand ? brand.name : 'Select company'"></span>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-72 hub-card hub-card--elevated z-50 max-h-80 overflow-y-auto py-1">
@@ -100,7 +102,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                 <p class="mt-1">The Gemini API key hasn't been added to the Hub backend, so images and captions can't be generated. You can still set up brand profiles and product libraries.</p>
             </div>
 
-            <div x-show="status.enabled && !brand" x-cloak class="hub-card p-8 text-center text-sm text-gray-500">Select a brand to get started.</div>
+            <div x-show="status.enabled && !brand" x-cloak class="hub-card p-8 text-center text-sm text-gray-500">Select a company to get started.</div>
 
             <template x-if="status.enabled && brand">
             <div class="space-y-4">
@@ -120,21 +122,37 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                     <div class="lg:col-span-2 space-y-4">
                         <div class="hub-card p-4 space-y-3">
                             <h2 class="font-semibold">1. Image</h2>
-                            <div x-show="!products().length" class="text-sm text-gray-500">No products yet. Add approved cut-outs in <button class="underline" @click="tab='products'">Products</button>.</div>
-                            <div x-show="products().length">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Brand</label>
+                                <select x-model="form.brandId" @change="form.productId = ''; form.imageIndex = 0; form.templateIndex = ''; pickFirstProduct()" class="hub-input w-full mt-1">
+                                    <option value="">Choose a brand…</option>
+                                    <template x-for="b in kTree.brands" :key="b._id"><option :value="b._id" :disabled="!b.approved" x-text="(b.approved ? b.approved.name : kData(b).name + ' (awaiting client approval)')"></option></template>
+                                </select>
+                                <p x-show="!kTree.brands.length" class="text-xs text-gray-500 mt-1">No brands yet. Add them in <button type="button" class="underline" @click="tab='knowledge'">Brand knowledge</button>.</p>
+                                <p x-show="kTree.brands.length && !kTree.brands.some(b => b.approved)" class="text-xs text-amber-700 mt-1">No brand is client-approved yet, so nothing can be generated for this company.</p>
+                            </div>
+                            <div x-show="form.brandId">
                                 <label class="text-xs font-medium text-gray-500">Product</label>
                                 <div class="grid grid-cols-3 gap-2 mt-1">
-                                    <template x-for="p in products()" :key="p._id">
-                                        <button type="button" @click="form.productId = p._id" class="rounded-lg border p-1 text-xs" :class="form.productId === p._id ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-gray-200 dark:border-gray-700'">
-                                            <img :src="p.imageUrl" alt="" class="h-16 w-full object-contain checker">
-                                            <span class="block truncate mt-1" x-text="p.name"></span>
+                                    <template x-for="p in brandProducts()" :key="p._id">
+                                        <button type="button" @click="if (p.approved) { form.productId = p._id; form.imageIndex = 0 }" :disabled="!p.approved" class="rounded-lg border p-1 text-xs text-left" :class="form.productId === p._id ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-gray-200 dark:border-gray-700'" :title="p.approved ? '' : 'Awaiting client approval'">
+                                            <img x-show="((p.approved || {}).images || []).length" :src="(((p.approved || {}).images || [])[0] || {}).url" alt="" class="h-16 w-full object-contain checker">
+                                            <div x-show="!((p.approved || {}).images || []).length" class="h-16 flex items-center justify-center text-[10px] text-gray-400 text-center">No approved cut-out</div>
+                                            <span class="block truncate mt-1" x-text="kData(p).name"></span>
+                                            <span x-show="!p.approved" class="block text-[10px] text-amber-700">Awaiting client approval</span>
+                                            <span x-show="p.approved && p.hasPendingChanges" class="block text-[10px] text-amber-700">Changes awaiting approval</span>
                                         </button>
                                     </template>
                                 </div>
+                                <p x-show="!brandProducts().length" class="text-xs text-gray-500 mt-1">No products for this brand yet.</p>
                             </div>
-                            <div x-show="profile.sceneTemplates && profile.sceneTemplates.length">
+                            <div x-show="selectedProduct() && ((selectedProduct().approved || {}).images || []).length > 1">
+                                <label class="text-xs font-medium text-gray-500">Cut-out</label>
+                                <div class="flex gap-2 mt-1"><template x-for="(img, ix) in (selectedProduct() ? selectedProduct().approved.images : [])" :key="ix"><button type="button" @click="form.imageIndex = ix" class="rounded border p-1" :class="form.imageIndex === ix ? 'border-brand-500' : 'border-gray-200'"><img :src="img.url" class="h-12 w-12 object-contain checker" alt=""></button></template></div>
+                            </div>
+                            <div x-show="brandTemplates().length">
                                 <label class="text-xs font-medium text-gray-500">Scene template</label>
-                                <select x-model="form.templateId" class="hub-input w-full mt-1"><option value="">None (describe below)</option><template x-for="t in profile.sceneTemplates" :key="t._id"><option :value="t._id" x-text="t.name"></option></template></select>
+                                <select x-model="form.templateIndex" class="hub-input w-full mt-1"><option value="">None (describe below)</option><template x-for="(t, i) in brandTemplates()" :key="i"><option :value="i" x-text="t.name"></option></template></select>
                             </div>
                             <div><label class="text-xs font-medium text-gray-500">Scene</label><textarea x-model="form.scene" rows="2" class="hub-input w-full mt-1" placeholder="e.g. sunny kitchen counter with coffee beans and a hibiscus flower"></textarea></div>
                             <div class="grid grid-cols-3 gap-2">
@@ -143,7 +161,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <div><label class="text-xs font-medium text-gray-500">Previews</label><select x-model.number="form.previews" class="hub-input w-full mt-1"><option :value="1">1</option><option :value="2">2</option><option :value="3">3</option></select></div>
                             </div>
                             <p class="text-[11px] text-gray-500">The AI only creates the background. Your real product photo is placed on top and checked pixel by pixel, so packaging, colours and text never change.</p>
-                            <button class="hub-btn hub-btn--primary hub-btn--block" :disabled="busy.image || !status.configured || !budget.canGenerate || !form.productId" @click="generateImages()">
+                            <button class="hub-btn hub-btn--primary hub-btn--block" :disabled="busy.image || !status.configured || !budget.canGenerate || !form.productId || !selectedProductHasImage()" @click="generateImages()">
                                 <span x-show="!busy.image">Generate previews</span><span x-show="busy.image">Generating… (up to a minute)</span>
                             </button>
                         </div>
@@ -151,7 +169,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                             <h2 class="font-semibold">2. Caption</h2>
                             <textarea x-model="captionBrief" rows="3" class="hub-input w-full" placeholder="Post brief: what is the post about, any offer or call to action?"></textarea>
                             <p class="text-[11px] text-gray-500" x-text="'Written in this brand\'s voice, using ' + examples.length + ' approved or top-performing captions as examples.'"></p>
-                            <button class="hub-btn hub-btn--soft hub-btn--block" :disabled="busy.caption || !status.configured || budget.paused" @click="generateCaptions()"><span x-show="!busy.caption">Suggest 3 captions</span><span x-show="busy.caption">Writing…</span></button>
+                            <button class="hub-btn hub-btn--soft hub-btn--block" :disabled="busy.caption || !status.configured || budget.paused || !form.brandId" @click="generateCaptions()"><span x-show="!busy.caption">Suggest 3 captions</span><span x-show="busy.caption">Writing…</span></button>
                             <template x-for="(opt, i) in captionGen ? captionGen.captionOptions : []" :key="i">
                                 <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
                                     <textarea x-model="captionEdits[i]" rows="4" class="hub-input w-full text-sm"></textarea>
@@ -185,66 +203,15 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                     </div>
                 </div>
 
-                <!-- PROFILE -->
-                <div x-show="tab === 'profile'" class="hub-card p-4 space-y-3 max-w-3xl">
-                    <h2 class="font-semibold">Brand knowledge</h2>
-                    <p class="text-xs text-gray-500">Any staff member can edit this. The AI uses it for every caption and scene.</p>
-                    <div><label class="text-xs font-medium text-gray-500">About the company</label><textarea x-model="profile.companyInfo" rows="3" class="hub-input w-full mt-1"></textarea></div>
-                    <div><label class="text-xs font-medium text-gray-500">About the products</label><textarea x-model="profile.productInfo" rows="3" class="hub-input w-full mt-1"></textarea></div>
-                    <div><label class="text-xs font-medium text-gray-500">Audience</label><input x-model="profile.audience" class="hub-input w-full mt-1"></div>
-                    <div><label class="text-xs font-medium text-gray-500">Voice guide</label><textarea x-model="profile.voiceGuide" rows="3" class="hub-input w-full mt-1" placeholder="Tone, sentence length, patois or not, sign-offs…"></textarea></div>
-                    <div class="grid sm:grid-cols-2 gap-3">
-                        <div><label class="text-xs font-medium text-gray-500">Words to use (comma-separated)</label><input x-model="profileText.doWords" class="hub-input w-full mt-1"></div>
-                        <div><label class="text-xs font-medium text-gray-500">Words never to use</label><input x-model="profileText.dontWords" class="hub-input w-full mt-1"></div>
-                        <div><label class="text-xs font-medium text-gray-500">Hashtags</label><input x-model="profileText.hashtags" class="hub-input w-full mt-1"></div>
-                        <div><label class="text-xs font-medium text-gray-500">Emoji use</label><select x-model="profile.emojiUse" class="hub-input w-full mt-1"><option value="none">None</option><option value="light">Light</option><option value="moderate">Moderate</option><option value="heavy">Heavy</option></select></div>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between"><label class="text-xs font-medium text-gray-500">Scene templates</label><button class="text-xs underline" @click="profile.sceneTemplates.push({ name: '', prompt: '', aspectRatio: '1:1' })">Add template</button></div>
-                        <template x-for="(t, i) in profile.sceneTemplates" :key="i">
-                            <div class="grid grid-cols-12 gap-2 mt-2">
-                                <input x-model="t.name" placeholder="Name" class="hub-input col-span-3">
-                                <input x-model="t.prompt" placeholder="Scene description" class="hub-input col-span-6">
-                                <select x-model="t.aspectRatio" class="hub-input col-span-2"><option>1:1</option><option>4:5</option><option>9:16</option><option>16:9</option></select>
-                                <button class="text-xs text-red-600 col-span-1" @click="profile.sceneTemplates.splice(i, 1)">Remove</button>
-                            </div>
-                        </template>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500">Caption examples the AI will follow</p>
-                        <ul class="mt-1 space-y-1 text-xs text-gray-600 dark:text-gray-300 max-h-48 overflow-y-auto">
-                            <template x-for="(e, i) in examples" :key="i"><li class="border-l-2 pl-2" :class="e.source === 'top_post' ? 'border-emerald-400' : 'border-indigo-300'"><span class="font-medium" x-text="e.label"></span>: <span x-text="e.text.slice(0, 160)"></span></li></template>
-                            <li x-show="!examples.length">No approved or synced captions yet for this brand.</li>
-                        </ul>
-                    </div>
-                    <button class="hub-btn hub-btn--primary" :disabled="busy.profile" @click="saveProfile()">Save brand profile</button>
-                </div>
-
-                <!-- PRODUCTS -->
-                <div x-show="tab === 'products'" class="hub-card p-4 space-y-3">
-                    <h2 class="font-semibold">Product library</h2>
-                    <p class="text-xs text-gray-500">Upload approved cut-outs (PNG with a transparent background is best, at least 600px). These exact pixels are used in every image.</p>
-                    <div class="flex flex-wrap gap-2 items-end">
-                        <div><label class="text-xs text-gray-500">Name</label><input x-model="newProduct.name" class="hub-input mt-1"></div>
-                        <div><label class="text-xs text-gray-500">Image</label><input type="file" accept="image/png,image/webp,image/jpeg" x-ref="productFile" class="block text-sm mt-1"></div>
-                        <button class="hub-btn hub-btn--primary hub-btn--sm" :disabled="busy.product" @click="uploadProduct()">Add product</button>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                        <template x-for="p in products()" :key="p._id">
-                            <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-2 text-xs">
-                                <img :src="p.imageUrl" alt="" class="h-28 w-full object-contain checker">
-                                <p class="font-medium truncate mt-1" x-text="p.name"></p>
-                                <p class="text-gray-400" x-text="p.hasAlpha ? 'Cut-out' : 'No transparency'"></p>
-                                <button class="text-red-600 underline mt-1" @click="retireProduct(p)">Remove</button>
-                            </div>
-                        </template>
-                    </div>
+                <!-- KNOWLEDGE -->
+                <div x-show="tab === 'knowledge'">
+                    <?php esirom_hub_ai_knowledge_editor(); ?>
                 </div>
 
                 <!-- USAGE (admin) -->
                 <div x-show="tab === 'usage'" class="space-y-4">
                     <div class="hub-card p-4 space-y-3" x-show="status.isAdmin">
-                        <h2 class="font-semibold" x-text="'Budget for ' + brand.name"></h2>
+                        <h2 class="font-semibold" x-text="'Image budget for ' + brand.name + ' (shared by all its brands)'"></h2>
                         <div class="flex flex-wrap gap-3 items-end">
                             <div><label class="text-xs text-gray-500">Monthly images (blank = client allocation)</label><input type="number" min="0" x-model="budgetForm.monthlyImageAllowance" class="hub-input mt-1 w-40"></div>
                             <button class="hub-btn hub-btn--soft hub-btn--sm" @click="saveBudget({ monthlyImageAllowance: budgetForm.monthlyImageAllowance === '' ? null : budgetForm.monthlyImageAllowance })">Save</button>
@@ -303,17 +270,27 @@ function aiStudioApp() {
         budget: { usage: { finished: 0, costUsd: 0 }, allowance: { total: 0 }, reasons: [], canGenerate: false },
         budgetForm: { monthlyImageAllowance: '' },
         examples: [], usage: null,
-        form: { productId: '', templateId: '', scene: '', aspectRatio: '1:1', placement: 'centre', previews: 3 },
+        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'centre', previews: 3 },
         imageGen: null, captionBrief: '', captionGen: null, captionEdits: [], captionFlags: [], approvedCaptionIndex: null,
         newProduct: { name: '' },
         busy: {}, toast: { show: false, message: '', type: 'success' },
 
         tabs() {
-            const t = [{ id: 'create', label: 'Create' }, { id: 'profile', label: 'Brand profile' }, { id: 'products', label: 'Products' }];
+            const t = [{ id: 'create', label: 'Create' }, { id: 'knowledge', label: 'Brand knowledge' }];
             if (this.status.isAdmin) t.push({ id: 'usage', label: 'Usage & budgets' });
             return t;
         },
-        products() { return (this.profile.products || []).filter(p => p.approved !== false); },
+        brandProducts() { const b = this.kTree.brands.find(x => x._id === this.form.brandId); return b ? b.products : []; },
+        selectedBrand() { return this.kTree.brands.find(x => x._id === this.form.brandId) || null; },
+        selectedProduct() { return this.brandProducts().find(p => p._id === this.form.productId) || null; },
+        selectedProductHasImage() { const p = this.selectedProduct(); return Boolean(p && p.approved && (p.approved.images || []).length); },
+        brandTemplates() { const b = this.selectedBrand(); return (b && b.approved && b.approved.sceneTemplates) || []; },
+        pickFirstProduct() { const p = this.brandProducts().find(x => x.approved && (x.approved.images || []).length); this.form.productId = p ? p._id : ''; },
+        onKnowledgeLoaded(tree) {
+            if (!tree.brands.some(b => b._id === this.form.brandId)) {
+                const b = tree.brands.find(x => x.approved); this.form.brandId = b ? b._id : ''; this.pickFirstProduct();
+            }
+        },
         allowanceLabel() {
             const a = this.budget.allowance || {};
             const src = a.source === 'client_allocation' ? 'From client allocation' : a.source === 'ai_override' ? 'Set by admin' : 'Default';
@@ -358,7 +335,8 @@ function aiStudioApp() {
             this.budget = d.budget; this.examples = d.examples;
             this.budgetForm.monthlyImageAllowance = d.profile.monthlyImageAllowance ?? '';
             this.imageGen = null; this.captionGen = null; this.approvedCaptionIndex = null;
-            this.form.productId = this.products()[0]?._id || '';
+            this.form.brandId = ''; this.form.productId = '';
+            this.kInit(id);
             localStorage.setItem('hubSelectedClientId', id);
         },
         async refreshBrand() { const d = await this.api(`/brands/${this.brand._id}`); this.budget = d.budget; this.examples = d.examples; },
@@ -379,7 +357,7 @@ function aiStudioApp() {
         async generateCaptions() {
             this.busy.caption = true;
             try {
-                const d = await this.api(`/brands/${this.brand._id}/captions`, { method: 'POST', body: JSON.stringify({ brief: this.captionBrief, productId: this.form.productId, imageGenerationId: this.imageGen?._id }) });
+                const d = await this.api(`/brands/${this.brand._id}/captions`, { method: 'POST', body: JSON.stringify({ brief: this.captionBrief, brandId: this.form.brandId, productId: this.form.productId || undefined, imageGenerationId: this.imageGen?._id }) });
                 this.captionGen = d.generation; this.captionEdits = [...d.generation.captionOptions]; this.captionFlags = d.flags || []; this.approvedCaptionIndex = null;
             } catch (e) { this.showToast(e.message, 'error'); }
             finally { this.busy.caption = false; }
@@ -396,32 +374,6 @@ function aiStudioApp() {
                 this.showToast('Sent to Workflow for review.');
             } catch (e) { this.showToast(e.message, 'error'); }
             finally { this.busy.send = false; }
-        },
-        async saveProfile() {
-            this.busy.profile = true;
-            try {
-                const d = await this.api(`/brands/${this.brand._id}/profile`, { method: 'PUT', body: JSON.stringify({ ...this.profile, products: undefined, topUps: undefined, ...this.profileText }) });
-                this.profile = d.profile; this.showToast('Brand profile saved.');
-            } catch (e) { this.showToast(e.message, 'error'); }
-            finally { this.busy.profile = false; }
-        },
-        async uploadProduct() {
-            const f = this.$refs.productFile.files[0];
-            if (!f) { this.showToast('Choose an image first.', 'error'); return; }
-            this.busy.product = true;
-            try {
-                const fd = new FormData(); fd.append('file', f); fd.append('name', this.newProduct.name || f.name);
-                const d = await this.api(`/brands/${this.brand._id}/products`, { method: 'POST', body: fd });
-                this.profile.products.push(d.product); this.newProduct.name = ''; this.$refs.productFile.value = '';
-                if (!this.form.productId) this.form.productId = d.product._id;
-                this.showToast(d.warning || 'Product added.', d.warning ? 'error' : 'success');
-            } catch (e) { this.showToast(e.message, 'error'); }
-            finally { this.busy.product = false; }
-        },
-        async retireProduct(p) {
-            if (!confirm(`Remove ${p.name} from the library?`)) return;
-            try { await this.api(`/brands/${this.brand._id}/products/${p._id}`, { method: 'DELETE' }); p.approved = false; this.profile.products = [...this.profile.products]; }
-            catch (e) { this.showToast(e.message, 'error'); }
         },
         async saveBudget(body) {
             try { const d = await this.api(`/brands/${this.brand._id}/budget`, { method: 'PUT', body: JSON.stringify(body) }); this.budget = d.budget; this.showToast('Budget updated.'); this.loadUsage(); }
