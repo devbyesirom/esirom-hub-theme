@@ -5,6 +5,11 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.77] - 2026-10-30
+
+### Fixed
+- AI Studio: on mobile the freestyle note no longer covers the bottom of the feed. It now sits inside the prompt bar with shorter mobile wording, and the feed scrolls clear of the taller bar.
+
 ## [2.3.76] - 2026-10-30
 
 ### Added

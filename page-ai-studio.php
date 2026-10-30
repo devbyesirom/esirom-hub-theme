@@ -136,7 +136,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
 
             <!-- CREATE: conversational canvas -->
             <section x-show="status.enabled && tab === 'create'" x-cloak class="ais-create flex flex-col" aria-label="Create">
-                <div id="ais-feed" class="flex-1 space-y-6 pb-4" role="log" aria-live="polite" aria-relevant="additions">
+                <div id="ais-feed" :class="form.freestyle ? 'pb-6' : ''" class="flex-1 space-y-6 pb-4" role="log" aria-live="polite" aria-relevant="additions">
                     <!-- Empty feed -->
                     <div x-show="!generations.length" class="text-center py-16 max-w-md mx-auto">
                         <div class="mx-auto w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 flex items-center justify-center" aria-hidden="true">
@@ -152,7 +152,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                     </div>
 
                     <template x-for="(g, gi) in generations" :key="g.key">
-                        <article class="space-y-3 scroll-mb-48 scroll-mt-40" :aria-label="'Generation ' + (gi + 1)">
+                        <article class="space-y-3 scroll-mt-40" :class="form.freestyle ? 'scroll-mb-72' : 'scroll-mb-48'" :aria-label="'Generation ' + (gi + 1)">
                             <!-- Prompt (user message) -->
                             <div class="flex justify-end">
                                 <div class="max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-br-md text-white px-4 py-2.5 shadow-sm" :class="g.freestyle ? 'bg-amber-600' : 'bg-indigo-600'">
@@ -244,10 +244,10 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                     <div class="max-w-4xl mx-auto">
                         <p x-show="brand && activeReasons().length" class="mb-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-1.5" x-text="activeReasons()[0] ? activeReasons()[0].message : ''" role="status"></p>
                         <p x-show="!status.configured" class="mb-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-1.5" data-testid="not-configured">Generation is off until the Gemini API key and credits are in place. You can still set up brand knowledge.</p>
-                        <p x-show="form.freestyle" class="mb-2 text-xs text-amber-900 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5" role="status" data-freestyle-note>
-                            <strong>Freestyle:</strong> uses draft or no brand info, so outputs are labelled "Freestyle, not client-approved info". Counts towards your own monthly freestyle limit, not the brand's images.
-                        </p>
                         <form @submit.prevent="generateImages()" class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20">
+                            <p x-show="form.freestyle" class="text-xs text-amber-900 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 rounded-t-2xl px-3 py-1.5" role="status" data-freestyle-note>
+                                <strong>Freestyle:</strong> <span class="sm:hidden">not client-approved info. Uses your own monthly limit.</span><span class="hidden sm:inline">uses draft or no brand info, so outputs are labelled "Freestyle, not client-approved info". Counts towards your own monthly freestyle limit, not the brand's images.</span>
+                            </p>
                             <!-- Pills -->
                             <div class="flex flex-wrap items-center gap-1.5 px-3 pt-2.5">
                                 <button type="button" class="ais-pill" :class="form.freestyle ? 'ais-pill--freestyle' : ''" @click="toggleFreestyle()" :aria-pressed="form.freestyle" data-pill="freestyle"
