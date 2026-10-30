@@ -5,6 +5,13 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.73] - 2026-10-30
+### Added
+- Inbox: "Suggest replies" gives 3 AI reply options for a DM, using the client-approved brand profile and voice plus replies your team actually sent. Staff click one to put it in the reply box, edit, then press Send — nothing is sent automatically.
+- Sensitive messages (complaints, refunds, legal, medical) are flagged for a person; suggestions become holding replies and Send needs a "checked by a person" tick.
+- AI Studio usage tab shows reply suggestions separately from the image allowance.
+- Same feature flag as AI Studio (admins only for now).
+
 ## [2.3.72] - 2026-10-30
 
 ### Added

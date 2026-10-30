@@ -202,11 +202,43 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                             </div>
 
                             <div class="border-t dark:border-gray-700 p-3 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50">
+                                <!-- AI suggested replies: staff choose and edit; nothing is sent automatically -->
+                                <div x-show="ai.enabled" class="mb-2" data-ai-replies>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button type="button" @click="suggestReplies()" :disabled="ai.loading || !lastIncoming()"
+                                                class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:opacity-50">
+                                            <span x-show="!ai.loading">✨ Suggest replies</span><span x-show="ai.loading">Thinking…</span>
+                                        </button>
+                                        <select x-show="ai.brands.length" x-model="ai.brandId" class="text-xs rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1">
+                                            <template x-for="b in ai.brands" :key="b._id"><option :value="b._id" x-text="b.name + (b.approved ? '' : ' (awaiting client approval)')" :disabled="!b.approved"></option></template>
+                                        </select>
+                                        <span class="text-[10px] text-gray-400">Suggestions only. You review, edit and send.</span>
+                                    </div>
+                                    <p x-show="ai.error" class="text-xs text-red-600 mt-1" x-text="ai.error"></p>
+                                    <div x-show="ai.sensitive" class="mt-2 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs p-2">
+                                        <strong>Needs a person:</strong> flagged as <span x-text="ai.categories.join(', ')"></span>. The suggestions below are holding replies only. Check with the account lead before promising anything.
+                                    </div>
+                                    <p x-show="ai.note" class="text-[11px] text-gray-500 mt-1" x-text="ai.note"></p>
+                                    <div class="mt-2 grid gap-2" x-show="ai.suggestions.length">
+                                        <template x-for="(s, i) in ai.suggestions" :key="i">
+                                            <button type="button" @click="useSuggestion(i)"
+                                                    :class="ai.chosen === i ? 'ring-2 ring-indigo-500' : ''"
+                                                    class="text-left text-xs rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-800 p-2 hover:border-indigo-400">
+                                                <span x-text="s"></span>
+                                                <span x-show="(ai.flags[i] || []).length" class="block mt-1 text-[10px] text-red-600" x-text="'Contains words to avoid: ' + (ai.flags[i] || []).join(', ')"></span>
+                                            </button>
+                                        </template>
+                                        <p class="text-[10px] text-gray-400">Click one to put it in the reply box, then edit before sending.</p>
+                                    </div>
+                                    <label x-show="ai.sensitive && ai.chosen !== null" class="mt-2 flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200">
+                                        <input type="checkbox" x-model="ai.acknowledged"> A person has checked this reply for a sensitive message
+                                    </label>
+                                </div>
                                 <div class="flex gap-2 items-end">
                                     <textarea x-model="replyText" rows="2" placeholder="Type a reply…"
                                               @keydown.meta.enter="sendReply()" @keydown.ctrl.enter="sendReply()"
                                               class="flex-1 resize-none rounded-xl border dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                                    <button type="button" @click="sendReply()" :disabled="sending || !replyText.trim()"
+                                    <button type="button" @click="sendReply()" :disabled="sending || !replyText.trim() || (ai.sensitive && ai.chosen !== null && !ai.acknowledged)"
                                             class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
                                         <span x-show="!sending">Send</span>
                                         <span x-show="sending">…</span>
@@ -268,6 +300,68 @@ function messagesApp() {
         replyText: '',
         sending: false,
         sendError: null,
+        ai: { enabled: false, brands: [], brandId: '', loading: false, error: null, suggestions: [], flags: [], sensitive: false, categories: [], note: null, generationId: null, chosen: null, acknowledged: false },
+
+        resetAi() {
+            Object.assign(this.ai, { loading: false, error: null, suggestions: [], flags: [], sensitive: false, categories: [], note: null, generationId: null, chosen: null, acknowledged: false });
+        },
+
+        async loadAiStatus() {
+            try {
+                const r = await fetch(`${API_URL}/ai-studio/status`, { headers: this.headers() });
+                const d = await r.json();
+                this.ai.enabled = Boolean(d.enabled);
+            } catch (e) { this.ai.enabled = false; }
+        },
+
+        async loadAiBrands() {
+            this.ai.brands = []; this.ai.brandId = '';
+            if (!this.ai.enabled || !this.selectedClient) return;
+            try {
+                const r = await fetch(`${API_URL}/ai-studio/brands/${this.selectedClient}/reply-profiles`, { headers: this.headers() });
+                const d = await r.json();
+                if (d.success) {
+                    this.ai.brands = d.brands || [];
+                    const first = this.ai.brands.find(b => b.approved);
+                    this.ai.brandId = first ? first._id : '';
+                }
+            } catch (e) { /* optional */ }
+        },
+
+        lastIncoming() {
+            const list = this.threadMessages || [];
+            for (let i = list.length - 1; i >= 0; i--) if (!list[i].isPage && list[i].text) return list[i].text;
+            return '';
+        },
+
+        async suggestReplies() {
+            const incoming = this.lastIncoming();
+            if (!incoming || this.ai.loading) return;
+            this.resetAi();
+            this.ai.loading = true;
+            try {
+                const r = await fetch(`${API_URL}/ai-studio/brands/${this.selectedClient}/replies`, {
+                    method: 'POST', headers: this.headers(),
+                    body: JSON.stringify({
+                        itemType: 'dm', platform: this.activeThread.platform, threadId: this.activeThread.id,
+                        incomingText: incoming, brandId: this.ai.brandId || undefined,
+                        thread: (this.threadMessages || []).slice(-10).map(m => ({ text: m.text || '', isPage: Boolean(m.isPage) }))
+                    })
+                });
+                const d = await r.json();
+                if (!d.success) { this.ai.error = d.message || 'Could not get suggestions'; return; }
+                Object.assign(this.ai, { suggestions: d.suggestions || [], flags: d.flags || [], sensitive: Boolean(d.sensitive), categories: d.categories || [], note: d.note || null, generationId: d.generationId });
+            } catch (e) {
+                this.ai.error = 'Could not get suggestions';
+            } finally {
+                this.ai.loading = false;
+            }
+        },
+
+        useSuggestion(i) {
+            this.ai.chosen = i;
+            this.replyText = this.ai.suggestions[i] || '';
+        },
 
         async init() {
             const token = localStorage.getItem('token');
@@ -286,6 +380,7 @@ function messagesApp() {
                 }
                 // Staff-only page: derive the view mode from the verified role; a super admin previewing as client falls back to admin.
                 this.viewMode = window.HubAuth.applyViewMode(window.HubAuth.readStoredViewMode() === 'client' ? 'admin' : undefined);
+                await this.loadAiStatus();
                 await this.loadClients();
                 const saved = localStorage.getItem('selectedClientId') || localStorage.getItem('hubSelectedClientId');
                 if (saved && this.clients.some(c => c._id === saved)) {
@@ -328,6 +423,8 @@ function messagesApp() {
             localStorage.setItem('selectedClientId', client._id);
             this.activeThread = null;
             this.threadMessages = [];
+            this.resetAi();
+            await this.loadAiBrands();
             await this.loadMessages();
         },
 
@@ -360,6 +457,7 @@ function messagesApp() {
 
         openThread(thread) {
             this.activeThread = thread;
+            this.resetAi();
             this.replyText = '';
             this.sendError = null;
             this.threadError = null;
@@ -420,12 +518,18 @@ function messagesApp() {
                     body: JSON.stringify({
                         recipientId: this.activeThread.recipientId,
                         text: this.replyText.trim(),
-                        platform: this.activeThread.platform
+                        platform: this.activeThread.platform,
+                        threadId: this.activeThread.id,
+                        incomingText: this.lastIncoming(),
+                        aiGenerationId: this.ai.chosen !== null ? this.ai.generationId : undefined,
+                        suggestionIndex: this.ai.chosen !== null ? this.ai.chosen : undefined,
+                        sensitiveAcknowledged: this.ai.acknowledged
                     })
                 });
                 const data = await res.json();
                 if (data.success) {
                     this.replyText = '';
+                    this.resetAi();
                     await this.loadThreadMessages();
                     await this.loadMessages();
                 } else {
