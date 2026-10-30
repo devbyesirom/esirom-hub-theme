@@ -3,7 +3,7 @@
  * Shared sidebar navigation for client view (viewMode === 'client').
  *
  * Expects:
- *   $hub_client_nav_active   content_bank|password_vault|published_posts|overview|reports|event_coverage|content_calendar|website_projects
+ *   $hub_client_nav_active   content_bank|password_vault|brand_info|published_posts|overview|reports|event_coverage|content_calendar|website_projects
  *   $hub_client_nav_context    site|dashboard
  *   $hub_nav_alpine_labels     bool
  */
@@ -22,6 +22,7 @@ $hub_dashboard_url = esc_url(esirom_hub_page_url('dashboard'));
 $hub_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
+$hub_brand_info_url = esc_url(esirom_hub_page_url('brand-info'));
 $hub_is_dashboard = ($hub_client_nav_context === 'dashboard');
 
 $hub_client_show = esirom_hub_client_nav_show_attr();
@@ -103,6 +104,11 @@ $hub_view_class = function ($view) {
         <a href="<?php echo $hub_vault_url; ?>" class="<?php echo esc_attr($hub_link_class('password_vault')); ?>"<?php echo $hub_current('password_vault'); ?>>
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
             <span class="nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
+        </a>
+        <?php /* Shown only when the backend enables client access (AI_KNOWLEDGE_CLIENT_ACCESS=on). */ ?>
+        <a x-data="{ on: false }" x-init="fetch((window.ESIROM_API_URL || '') + '/ai-knowledge/status', { headers: { Authorization: 'Bearer ' + (localStorage.getItem('token') || '') } }).then(r => r.ok ? r.json() : {}).then(d => { on = Boolean(d.enabled) }).catch(() => {})" x-show="on" x-cloak href="<?php echo $hub_brand_info_url; ?>" class="<?php echo esc_attr($hub_link_class('brand_info')); ?>"<?php echo $hub_current('brand_info'); ?>>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg>
+            <span class="nav-text"<?php echo $hub_label_attrs; ?>>Brand info</span>
         </a>
     </div>
 </div>

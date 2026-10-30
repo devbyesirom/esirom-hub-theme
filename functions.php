@@ -224,6 +224,7 @@ function esirom_hub_templates() {
         'page-content-calendar.php',
         'page-ads.php',
         'page-ai-studio.php',
+        'page-brand-info.php',
         'page-messages.php',
         'page-inventory.php',
         'page-website-projects.php',
@@ -387,7 +388,7 @@ function esirom_hub_settings_page_html() {
         <ol>
             <li>Make sure your backend API is running and reachable from the browser.</li>
             <li>Enter the API URL above (for example <code><?php echo esc_html(esirom_hub_default_api_url()); ?></code>).</li>
-            <li>Create pages with the slugs <code>login</code>, <code>register</code>, <code>reset-password</code>, <code>dashboard</code>, <code>workflow</code>, <code>overview</code>, <code>content-calendar</code>, <code>messages</code>, <code>ads</code>, <code>ai-studio</code>, <code>inventory</code>, <code>progress</code>, <code>password-vault</code>, <code>website-projects</code> and <code>admin</code>, each assigned to the matching Hub template.</li>
+            <li>Create pages with the slugs <code>login</code>, <code>register</code>, <code>reset-password</code>, <code>dashboard</code>, <code>workflow</code>, <code>overview</code>, <code>content-calendar</code>, <code>messages</code>, <code>ads</code>, <code>ai-studio</code>, <code>brand-info</code>, <code>inventory</code>, <code>progress</code>, <code>password-vault</code>, <code>website-projects</code> and <code>admin</code>, each assigned to the matching Hub template.</li>
             <li>Set the login page as the static front page so the Hub opens at the site root.</li>
         </ol>
         

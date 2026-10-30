@@ -5,6 +5,13 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.72] - 2026-10-30
+
+### Added
+- **AI Studio brand knowledge hierarchy**: Company → Brands → Products/SKUs (name, SKU code, description, key claims, sizes/variants, cut-out images). Every change is versioned with history and an activity log. Status: draft → awaiting client approval → client approved; images and captions use only client-approved versions, and unapproved items show an "Awaiting client approval" badge.
+- **Brand info page** (`/brand-info/`) for clients to review, approve, request changes or edit their own company's details (client edits are approved on save). Hidden from clients until the backend switch `AI_KNOWLEDGE_CLIENT_ACCESS=on`.
+- AI Studio now picks company → brand → product; the image allowance stays per company. Old single brand-profile and product tabs are replaced by the Brand knowledge tab.
+
 ## [2.3.71] - 2026-10-30
 
 ### Added
