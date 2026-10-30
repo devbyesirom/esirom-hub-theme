@@ -5,6 +5,13 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.80] - 2026-10-30
+
+### Added
+- AI Studio Hero mode (now the default): bold, ad-style key visuals built around the real product, with the label checked and restored from the real photo. Hero styles: Splash explosion, Orchard hero, Fiery / dramatic, Playful 3D.
+- Headline, subline, footer tag, text style and brand logo options, set in real fonts (never drawn by the AI), plus "Suggest headlines" in the brand voice.
+- Mode switch Hero / Simple. Simple keeps the previous background-plus-placement flow.
+
 ## [2.3.79] - 2026-10-30
 
 ### Changed
