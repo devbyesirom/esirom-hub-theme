@@ -305,7 +305,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <label class="sr-only" for="ais-format">Format</label>
                                 <select id="ais-format" x-model="form.aspectRatio" class="ais-pill ais-pill--select" data-pill="format"><option value="1:1">Square 1:1</option><option value="4:5">Portrait 4:5</option><option value="9:16">Story 9:16</option><option value="16:9">Wide 16:9</option></select>
                                 <label class="sr-only" for="ais-pos">Position</label>
-                                <select id="ais-pos" x-model="form.placement" class="ais-pill ais-pill--select" data-pill="position"><option value="centre">Centre</option><option value="left">Left</option><option value="right">Right</option></select>
+                                <select id="ais-pos" x-model="form.placement" class="ais-pill ais-pill--select" data-pill="position"><option value="auto">Auto (fit scene)</option><option value="centre">Centre</option><option value="left">Left</option><option value="right">Right</option></select>
                                 <label class="sr-only" for="ais-prev">Previews</label>
                                 <select id="ais-prev" x-model.number="form.previews" class="ais-pill ais-pill--select" data-pill="previews"><option :value="1">1 preview</option><option :value="2">2 previews</option><option :value="3">3 previews</option></select>
                                 <template x-if="brandTemplates().length">
@@ -430,7 +430,7 @@ function aiStudioApp() {
         budget: { usage: { finished: 0, costUsd: 0 }, allowance: { total: 0 }, reasons: [], canGenerate: false },
         budgetForm: { monthlyImageAllowance: '' },
         examples: [], usage: null,
-        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'centre', previews: 3, freestyle: false },
+        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'auto', previews: 3, freestyle: false },
         freestyleLimits: null,
         generations: [], historyLoaded: false,
         newProduct: { name: '' },
@@ -487,7 +487,7 @@ function aiStudioApp() {
         useTemplate(i) { this.form.templateIndex = String(i); this.$nextTick(() => this.$refs.scene && this.$refs.scene.focus()); },
         autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 192) + 'px'; },
         formatLabel(r) { return ({ '1:1': 'Square 1:1', '4:5': 'Portrait 4:5', '9:16': 'Story 9:16', '16:9': 'Wide 16:9' })[r] || r; },
-        placementLabel(p) { return ({ centre: 'Centre', left: 'Left', right: 'Right' })[p] || p; },
+        placementLabel(p) { return ({ auto: 'Auto placement', centre: 'Centre', left: 'Left', right: 'Right' })[p] || p; },
         aspectClass(r) { return ({ '1:1': 'aspect-square', '4:5': 'aspect-[4/5]', '9:16': 'aspect-[9/16]', '16:9': 'aspect-video' })[r] || 'aspect-square'; },
         galleryCols(g) { const n = g.gen ? g.gen.previews.length : g.previews; return n >= 3 ? 'grid-cols-2 sm:grid-cols-3' : n === 2 ? 'grid-cols-2' : 'grid-cols-1 max-w-sm'; },
         chosenUrl(g) { return g.gen && g.gen.chosenIndex !== null && g.gen.previews[g.gen.chosenIndex] ? g.gen.previews[g.gen.chosenIndex].url : ''; },
@@ -495,7 +495,7 @@ function aiStudioApp() {
         ringDash(used, total) { const c = 2 * Math.PI * 15; const f = total ? Math.min(1, (used || 0) / total) : 0; return (c * f).toFixed(1) + ' ' + c.toFixed(1); },
         ringColour(used, total) { const f = total ? (used || 0) / total : 0; return f >= 1 ? 'stroke-red-500' : f >= 0.8 ? 'stroke-amber-500' : 'stroke-indigo-500'; },
         newEntry(o) {
-            return Object.assign({ key: 'g' + Date.now() + Math.random().toString(36).slice(2, 6), prompt: '', productName: '', aspectRatio: '1:1', placement: 'centre', previews: 3,
+            return Object.assign({ key: 'g' + Date.now() + Math.random().toString(36).slice(2, 6), prompt: '', productName: '', aspectRatio: '1:1', placement: 'auto', previews: 3,
                 loading: false, error: null, gen: null, choosing: false, sending: false, sent: false, brandId: null, productId: null, freestyle: false, banking: false, banked: false, body: null, errorAt: '',
                 cap: { loading: false, error: null, gen: null, edits: [], flags: [], approvedIndex: null } }, o);
         },
