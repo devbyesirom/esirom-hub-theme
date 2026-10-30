@@ -5,6 +5,11 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.79] - 2026-10-30
+
+### Changed
+- AI Studio: Position now defaults to "Auto (fit scene)", so the product is placed to suit each scene and previews use different spots. Centre, Left and Right remain as manual overrides.
+
 ## [2.3.78] - 2026-10-30
 
 ### Fixed
