@@ -65,7 +65,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div class="min-w-0">
                     <h1 class="hub-page-title">Messages</h1>
-                    <p class="hub-page-subtitle">Facebook Messenger &amp; Instagram DMs</p>
+                    <p class="hub-page-subtitle">DMs and post comments · Facebook &amp; Instagram</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="relative" x-data="{ open: false }">
@@ -84,10 +84,34 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                     <?php esirom_hub_account_menu(); ?>
                 </div>
             </div>
-            <div class="hub-segmented mt-3" role="tablist">
-                <button type="button" role="tab" @click="platformFilter = 'all'; filterThreads()" :aria-selected="platformFilter === 'all'" class="hub-segmented__item" :class="platformFilter === 'all' ? 'is-active' : ''">All</button>
-                <button type="button" role="tab" @click="platformFilter = 'facebook'; filterThreads()" :aria-selected="platformFilter === 'facebook'" class="hub-segmented__item" :class="platformFilter === 'facebook' ? 'is-active' : ''">Messenger</button>
-                <button type="button" role="tab" @click="platformFilter = 'instagram'; filterThreads()" :aria-selected="platformFilter === 'instagram'" class="hub-segmented__item" :class="platformFilter === 'instagram' ? 'is-active' : ''">Instagram</button>
+            <div class="flex flex-wrap items-center gap-2 mt-3" data-inbox-filters>
+                <div class="hub-segmented" role="tablist" aria-label="Channel">
+                    <template x-for="o in [['all','All channels'],['facebook','Facebook'],['instagram','Instagram']]" :key="o[0]">
+                        <button type="button" role="tab" @click="f.channel = o[0]; filterThreads()" :aria-selected="f.channel === o[0]" class="hub-segmented__item" :class="f.channel === o[0] ? 'is-active' : ''" x-text="o[1]"></button>
+                    </template>
+                </div>
+                <div class="hub-segmented" role="tablist" aria-label="Type">
+                    <template x-for="o in [['all','All'],['dm','DMs'],['comment','Comments']]" :key="o[0]">
+                        <button type="button" role="tab" @click="f.type = o[0]; filterThreads()" :aria-selected="f.type === o[0]" class="hub-segmented__item" :class="f.type === o[0] ? 'is-active' : ''">
+                            <span x-text="o[1]"></span><span class="ml-1 opacity-60" x-text="countOf(o[0])"></span>
+                        </button>
+                    </template>
+                </div>
+                <div class="hub-segmented" role="tablist" aria-label="Status">
+                    <template x-for="o in [['open','Open'],['done','Done'],['all','All']]" :key="o[0]">
+                        <button type="button" role="tab" @click="f.status = o[0]; filterThreads()" :aria-selected="f.status === o[0]" class="hub-segmented__item" :class="f.status === o[0] ? 'is-active' : ''" x-text="o[1]"></button>
+                    </template>
+                </div>
+                <label class="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 px-2">
+                    <input type="checkbox" x-model="f.unanswered" @change="filterThreads()" class="rounded"> Unanswered
+                </label>
+                <select x-model="f.assigned" @change="filterThreads()" class="text-xs rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1.5">
+                    <option value="">Anyone</option>
+                    <option value="me">Assigned to me</option>
+                    <option value="unassigned">Unassigned</option>
+                    <template x-for="u in assignees" :key="u._id"><option :value="u._id" x-text="u.firstName + ' ' + (u.lastName || '')"></option></template>
+                </select>
+                <button type="button" @click="loadMessages(true)" :disabled="loading" class="text-xs text-indigo-600 hover:underline ml-auto">Sync now</button>
             </div>
         </header>
 
@@ -96,24 +120,23 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                 Select a brand to view inbox threads.
             </div>
 
-            <template x-if="selectedClient && platforms">
-                <div class="grid sm:grid-cols-2 gap-3">
-                    <div class="rounded-xl border p-4" :class="platforms.facebook?.connected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'">
-                        <p class="text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Messenger</p>
-                        <p class="text-sm mt-1" x-text="platforms.facebook?.connected ? ('Connected · ' + (platforms.facebook.username || platforms.facebook.pageId)) : 'Not connected'"></p>
-                    </div>
-                    <div class="rounded-xl border p-4" :class="platforms.instagram?.connected ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'">
-                        <p class="text-xs font-bold uppercase tracking-wide text-pink-700 dark:text-pink-300">Instagram DMs</p>
-                        <p class="text-sm mt-1" x-text="platforms.instagram?.connected ? ('Connected · @' + (platforms.instagram.username || platforms.instagram.accountId)) : 'Not connected'"></p>
-                    </div>
-                </div>
-            </template>
+            <div x-show="selectedClient && perms && perms.connected === false" x-cloak class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-200">
+                This brand's Facebook Page is not connected, so DMs and comments can't load. Connect it in <a href="<?php echo esc_url($admin_url); ?>" class="underline font-medium">Admin → Social Media Connections</a>.
+            </div>
+            <div x-show="selectedClient && perms && perms.missing && perms.missing.length" x-cloak class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-200" data-perm-gaps>
+                <p class="font-semibold">Some inbox actions need extra Meta permissions</p>
+                <p class="text-xs mt-1">Missing on this brand's Page token: <span class="font-mono" x-text="(perms?.missing || []).join(', ')"></span>.</p>
+                <ul class="text-xs mt-1 list-disc pl-5">
+                    <li x-show="perms?.can && !perms.can.fbReply">Facebook: public replies, hide and delete are off until <code>pages_manage_engagement</code> is granted.</li>
+                    <li x-show="perms?.can && !perms.can.igRead">Instagram: comments can't load until <code>instagram_manage_comments</code> is granted.</li>
+                    <li x-show="perms?.can && !perms.can.fbPrivate">Private replies need <code>pages_messaging</code>.</li>
+                </ul>
+                <p class="text-xs mt-2">Grant them in the Meta app, then reconnect the brand in <a href="<?php echo esc_url($admin_url); ?>" class="underline font-medium">Admin → Social Media Connections</a>.</p>
+            </div>
 
-            <div x-show="errors && (errors.facebook || errors.instagram)" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-200">
-                <p class="font-semibold mb-1">Some inboxes could not be loaded</p>
-                <p x-show="errors?.facebook" class="text-xs mt-1"><strong>Messenger:</strong> <span x-text="errors?.facebook"></span></p>
-                <p x-show="errors?.instagram" class="text-xs mt-1"><strong>Instagram:</strong> <span x-text="errors?.instagram"></span></p>
-                <p class="text-xs mt-2 text-amber-700 dark:text-amber-300">Reconnect the brand in <a href="<?php echo esc_url($admin_url); ?>" class="underline font-medium">Admin → Social Media Connections</a> so the Page token includes Messenger and Instagram messaging permissions.</p>
+            <div x-show="errors && Object.keys(errors).length" x-cloak class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-200">
+                <p class="font-semibold mb-1">Some items could not be loaded</p>
+                <template x-for="(msg, k) in (errors || {})" :key="k"><p class="text-xs mt-1"><strong x-text="errorLabel(k) + ':'"></strong> <span x-text="msg"></span></p></template>
             </div>
 
             <div x-show="loading" class="flex justify-center py-16">
@@ -121,9 +144,9 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
             </div>
 
             <div x-show="!loading && selectedClient && filteredThreads.length === 0" x-cloak class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-10 text-center">
-                <p class="text-gray-600 dark:text-gray-400 text-sm">No conversations yet for this brand.</p>
-                <p class="text-xs text-gray-500 mt-2" x-show="platformFilter !== 'instagram'">Threads appear here once Messenger or Instagram messaging is connected and active.</p>
-                <div x-show="platformFilter === 'instagram'" class="text-xs text-gray-500 mt-3 space-y-2 max-w-md mx-auto text-left">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">Nothing here with these filters.</p>
+                <p class="text-xs text-gray-500 mt-2" x-show="f.channel !== 'instagram'">DMs and comments appear here once Messenger or Instagram messaging is connected and active.</p>
+                <div x-show="f.channel === 'instagram' && f.type === 'dm'" class="text-xs text-gray-500 mt-3 space-y-2 max-w-md mx-auto text-left">
                     <p>If Instagram DMs should appear here:</p>
                     <ul class="list-disc pl-5 space-y-1">
                         <li>In Instagram → Settings → Messages and story replies → turn on <strong>Connected tools</strong> / Allow access to messages.</li>
@@ -136,24 +159,37 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
             <div x-show="!loading && filteredThreads.length > 0" x-cloak class="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden flex flex-col md:flex-row min-h-[520px] max-h-[calc(100dvh-220px)]">
                 <!-- Thread list -->
                 <div class="md:w-80 lg:w-96 border-b md:border-b-0 md:border-r dark:border-gray-700 flex flex-col min-h-0" :class="activeThread && 'hidden md:flex'">
-                    <div class="px-4 py-3 border-b dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase tracking-wide">Inbox</div>
+                    <div class="px-4 py-3 border-b dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase tracking-wide flex justify-between"><span>Inbox</span><span x-text="filteredThreads.length + ' items'"></span></div>
                     <div class="flex-1 overflow-y-auto divide-y dark:divide-gray-700">
-                        <template x-for="thread in filteredThreads" :key="thread.id">
+                        <template x-for="thread in filteredThreads" :key="thread.key">
                             <button type="button" @click="openThread(thread)"
                                     class="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                                    :class="activeThread?.id === thread.id ? 'msg-thread-active' : ''">
-                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                                     :class="thread.platform === 'instagram' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-blue-600'"
-                                     x-text="(thread.name || '?').charAt(0).toUpperCase()"></div>
+                                    :class="activeThread?.key === thread.key ? 'msg-thread-active' : ''">
+                                <div class="relative flex-shrink-0">
+                                    <img x-show="thread.type === 'comment' && thread.post?.thumbnail" :src="thread.post?.thumbnail" alt="" class="w-9 h-9 rounded-lg object-cover">
+                                    <div x-show="!(thread.type === 'comment' && thread.post?.thumbnail)" class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                                         :class="thread.platform === 'instagram' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-blue-600'"
+                                         x-text="(thread.name || '?').charAt(0).toUpperCase()"></div>
+                                    <span x-show="thread.unanswered" class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-2 ring-white dark:ring-gray-800" title="Unanswered"></span>
+                                </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between gap-2">
                                         <p class="font-semibold text-sm truncate" x-text="thread.name"></p>
-                                        <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                              :class="thread.platform === 'instagram' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'"
-                                              x-text="thread.platform === 'instagram' ? 'IG' : 'FB'"></span>
+                                        <span class="flex gap-1 flex-shrink-0">
+                                            <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300" x-text="thread.type === 'comment' ? 'Comment' : 'DM'"></span>
+                                            <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full"
+                                                  :class="thread.platform === 'instagram' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'"
+                                                  x-text="thread.platform === 'instagram' ? 'IG' : 'FB'"></span>
+                                        </span>
                                     </div>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5" x-text="thread.snippet || 'No preview'"></p>
-                                    <p class="text-[10px] text-gray-400 mt-1" x-text="fmtTime(thread.updatedTime)"></p>
+                                    <p class="text-[10px] text-gray-400 mt-1">
+                                        <span x-text="fmtTime(thread.time)"></span>
+                                        <span x-show="thread.type === 'comment' && thread.post?.caption" x-text="' · on “' + (thread.post?.caption || '').slice(0, 40) + '…”'"></span>
+                                        <span x-show="thread.hidden" class="text-amber-600"> · hidden</span>
+                                        <span x-show="thread.status === 'done'" class="text-green-600"> · done</span>
+                                        <span x-show="thread.assignedTo" class="text-indigo-600" x-text="' · ' + assigneeName(thread.assignedTo)"></span>
+                                    </p>
                                 </div>
                             </button>
                         </template>
@@ -177,8 +213,13 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                      x-text="(activeThread.name || '?').charAt(0).toUpperCase()"></div>
                                 <div class="min-w-0 flex-1">
                                     <p class="font-semibold truncate" x-text="activeThread.name"></p>
-                                    <p class="text-xs text-gray-500" x-text="activeThread.platform === 'instagram' ? 'Instagram DM' : 'Messenger'"></p>
+                                    <p class="text-xs text-gray-500" x-text="(activeThread.platform === 'instagram' ? 'Instagram ' : 'Facebook ') + (activeThread.type === 'comment' ? 'comment' : 'DM')"></p>
                                 </div>
+                                <select @change="assign($event.target.value)" class="text-xs rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 max-w-[9rem]" title="Assign" data-assign>
+                                    <option value="" :selected="!activeThread.assignedTo">Unassigned</option>
+                                    <template x-for="u in assignees" :key="u._id"><option :value="u._id" :selected="String(activeThread.assignedTo || '') === u._id" x-text="u.firstName + ' ' + (u.lastName || '')"></option></template>
+                                </select>
+                                <button type="button" @click="toggleDone()" class="text-xs px-2 py-1 rounded-lg border" :class="activeThread.status === 'done' ? 'border-gray-300 text-gray-600' : 'border-green-300 text-green-700 hover:bg-green-50'" x-text="activeThread.status === 'done' ? 'Reopen' : '✓ Mark done'"></button>
                                 <button type="button" @click="loadThreadMessages()" class="text-xs text-indigo-600 hover:underline" :disabled="threadLoading">Refresh</button>
                             </div>
 
@@ -187,6 +228,24 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                             </div>
 
                             <div x-show="threadError && !threadLoading" class="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200" x-text="threadError"></div>
+
+                            <template x-if="activeThread.type === 'comment' && comment">
+                                <div class="mx-4 mt-3 rounded-xl border dark:border-gray-700 p-3 flex gap-3 items-start bg-gray-50 dark:bg-gray-900/40" data-post-context>
+                                    <img x-show="comment.postThumbnail" :src="comment.postThumbnail" alt="" class="w-16 h-16 rounded-lg object-cover flex-shrink-0">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-[10px] uppercase font-bold text-gray-400">Comment on post · <span x-text="fmtTime(comment.postTime)"></span></p>
+                                        <p class="text-xs text-gray-700 dark:text-gray-300 line-clamp-3" x-text="comment.postCaption || '(no caption)'"></p>
+                                        <a x-show="comment.postPermalink" :href="comment.postPermalink" target="_blank" rel="noopener" class="text-xs text-indigo-600 hover:underline">Open post ↗</a>
+                                    </div>
+                                    <div class="flex flex-col gap-1 flex-shrink-0">
+                                        <button type="button" @click="hideComment(!comment.hidden)" :disabled="modBusy || comment.canHide === false || (perms?.can && !(comment.platform === 'instagram' ? perms.can.igModerate : perms.can.fbModerate))"
+                                                class="text-xs px-2 py-1 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 disabled:opacity-40" x-text="comment.hidden ? 'Unhide' : 'Hide'"></button>
+                                        <button type="button" @click="deleteComment()" :disabled="modBusy || comment.canDelete === false || (perms?.can && !(comment.platform === 'instagram' ? perms.can.igModerate : perms.can.fbModerate))"
+                                                class="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-40">Delete</button>
+                                    </div>
+                                </div>
+                            </template>
+                            <p x-show="modError" class="mx-4 mt-2 text-xs text-red-600" x-text="modError"></p>
 
                             <div x-show="!threadLoading" class="flex-1 overflow-y-auto p-4 space-y-3" id="msg-scroll-area">
                                 <template x-for="msg in threadMessages" :key="msg.id">
@@ -234,6 +293,15 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                         <input type="checkbox" x-model="ai.acknowledged"> A person has checked this reply for a sensitive message
                                     </label>
                                 </div>
+                                <div x-show="activeThread.type === 'comment'" class="flex items-center gap-2 mb-2 text-xs" data-reply-mode>
+                                    <span class="text-gray-500">Reply</span>
+                                    <div class="hub-segmented">
+                                        <button type="button" class="hub-segmented__item" :class="replyMode === 'public' ? 'is-active' : ''" @click="replyMode = 'public'">Publicly on the post</button>
+                                        <button type="button" class="hub-segmented__item" :class="replyMode === 'private' ? 'is-active' : ''" :disabled="comment?.privateReplySent || comment?.canReplyPrivately === false" @click="replyMode = 'private'">Privately (DM)</button>
+                                    </div>
+                                    <span x-show="replyMode === 'private'" class="text-[10px] text-gray-400">One private reply per comment, within 7 days.</span>
+                                    <span x-show="comment?.privateReplySent" class="text-[10px] text-green-600">Private reply sent.</span>
+                                </div>
                                 <div class="flex gap-2 items-end">
                                     <textarea x-model="replyText" rows="2" placeholder="Type a reply…"
                                               @keydown.meta.enter="sendReply()" @keydown.ctrl.enter="sendReply()"
@@ -244,7 +312,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                         <span x-show="sending">…</span>
                                     </button>
                                 </div>
-                                <p class="text-[10px] text-gray-400 mt-2">Replies must be sent within Meta’s 24-hour messaging window. Cmd/Ctrl+Enter to send.</p>
+                                <p class="text-[10px] text-gray-400 mt-2" x-text="activeThread.type === 'comment' ? (replyMode === 'public' ? 'Public replies appear under the comment on the post. Cmd/Ctrl+Enter to send.' : 'Sends one private message to the commenter. Cmd/Ctrl+Enter to send.') : 'Replies must be sent within Meta’s 24-hour messaging window. Cmd/Ctrl+Enter to send.'"></p>
                                 <p x-show="sendError" class="text-xs text-red-600 mt-1" x-text="sendError"></p>
                             </div>
                         </div>
@@ -292,7 +360,13 @@ function messagesApp() {
         filteredThreads: [],
         platforms: {},
         errors: null,
-        platformFilter: 'all',
+        f: { channel: 'all', type: 'all', status: 'open', unanswered: false, assigned: '' },
+        perms: null,
+        assignees: [],
+        comment: null,
+        replyMode: 'public',
+        modBusy: false,
+        modError: null,
         activeThread: null,
         threadMessages: [],
         threadLoading: false,
@@ -343,7 +417,7 @@ function messagesApp() {
                 const r = await fetch(`${API_URL}/ai-studio/brands/${this.selectedClient}/replies`, {
                     method: 'POST', headers: this.headers(),
                     body: JSON.stringify({
-                        itemType: 'dm', platform: this.activeThread.platform, threadId: this.activeThread.id,
+                        itemType: this.activeThread.type === 'comment' ? 'comment' : 'dm', platform: this.activeThread.platform, threadId: this.activeThread.id,
                         incomingText: incoming, brandId: this.ai.brandId || undefined,
                         thread: (this.threadMessages || []).slice(-10).map(m => ({ text: m.text || '', isPage: Boolean(m.isPage) }))
                     })
@@ -424,41 +498,86 @@ function messagesApp() {
             this.activeThread = null;
             this.threadMessages = [];
             this.resetAi();
-            await this.loadAiBrands();
+            await Promise.all([this.loadAiBrands(), this.loadInboxMeta()]);
             await this.loadMessages();
         },
 
-        async loadMessages() {
+        async loadMessages(refresh = false) {
             if (!this.selectedClient) return;
             this.loading = true;
             this.errors = null;
             try {
-                const res = await fetch(`${API_URL}/social-media/messages/${this.selectedClient}`, { headers: this.headers() });
+                const res = await fetch(`${API_URL}/inbox/${this.selectedClient}?status=all${refresh ? '&refresh=1' : ''}`, { headers: this.headers() });
                 const data = await res.json();
                 if (data.success) {
-                    this.platforms = data.data.platforms || {};
-                    this.threads = data.data.threads || [];
-                    this.errors = data.data.errors;
+                    this.threads = data.items || [];
+                    this.errors = data.errors;
                     this.filterThreads();
+                    if (this.activeThread) {
+                        const fresh = this.threads.find(t => t.key === this.activeThread.key);
+                        if (fresh) Object.assign(this.activeThread, fresh);
+                    }
+                } else {
+                    this.errors = { inbox: data.message || 'Could not load the inbox' };
                 }
+            } catch (e) {
+                this.errors = { inbox: 'Could not load the inbox' };
             } finally {
                 this.loading = false;
             }
         },
 
+        async loadInboxMeta() {
+            this.perms = null; this.assignees = [];
+            if (!this.selectedClient) return;
+            const [p, a] = await Promise.all([
+                fetch(`${API_URL}/inbox/${this.selectedClient}/permissions`, { headers: this.headers() }).then(r => r.json()).catch(() => null),
+                fetch(`${API_URL}/inbox/${this.selectedClient}/assignees`, { headers: this.headers() }).then(r => r.json()).catch(() => null)
+            ]);
+            if (p && p.success) this.perms = p;
+            if (a && a.success) this.assignees = a.users || [];
+        },
+
+        matches(t, ignoreType = false) {
+            const f = this.f; const me = this.user?._id || this.user?.id;
+            if (f.channel !== 'all' && t.platform !== f.channel) return false;
+            if (!ignoreType && f.type !== 'all' && t.type !== f.type) return false;
+            if (f.status !== 'all' && t.status !== f.status) return false;
+            if (f.unanswered && !t.unanswered) return false;
+            if (f.assigned === 'me' && String(t.assignedTo || '') !== String(me)) return false;
+            if (f.assigned === 'unassigned' && t.assignedTo) return false;
+            if (f.assigned && !['me', 'unassigned'].includes(f.assigned) && String(t.assignedTo || '') !== f.assigned) return false;
+            return true;
+        },
+
+        countOf(type) {
+            const n = this.threads.filter(t => this.matches(t, true) && (type === 'all' || t.type === type)).length;
+            return n ? n : '';
+        },
+
         filterThreads() {
-            this.filteredThreads = this.platformFilter === 'all'
-                ? this.threads
-                : this.threads.filter(t => t.platform === this.platformFilter);
-            if (this.activeThread && !this.filteredThreads.some(t => t.id === this.activeThread.id)) {
+            this.filteredThreads = this.threads.filter(t => this.matches(t));
+            if (this.activeThread && !this.filteredThreads.some(t => t.key === this.activeThread.key)) {
                 this.closeThread();
             }
+        },
+
+        errorLabel(k) {
+            return ({ facebook_dm: 'Messenger', instagram_dm: 'Instagram DMs', facebook_comments: 'Facebook comments', instagram_comments: 'Instagram comments', inbox: 'Inbox' })[k] || k;
+        },
+
+        assigneeName(id) {
+            const u = this.assignees.find(x => x._id === String(id));
+            return u ? `${u.firstName} ${(u.lastName || '').charAt(0)}.`.trim() : 'Assigned';
         },
 
         openThread(thread) {
             this.activeThread = thread;
             this.resetAi();
             this.replyText = '';
+            this.replyMode = 'public';
+            this.comment = null;
+            this.modError = null;
             this.sendError = null;
             this.threadError = null;
             this.loadThreadMessages();
@@ -467,6 +586,7 @@ function messagesApp() {
         closeThread() {
             this.activeThread = null;
             this.threadMessages = [];
+            this.comment = null;
             this.replyText = '';
             this.threadError = null;
             this.sendError = null;
@@ -477,24 +597,34 @@ function messagesApp() {
             this.threadLoading = true;
             this.threadError = null;
             try {
-                const params = new URLSearchParams();
-                if (this.activeThread.recipientId) params.set('recipientId', this.activeThread.recipientId);
-                const res = await fetch(
-                    `${API_URL}/social-media/messages/${this.selectedClient}/threads/${encodeURIComponent(this.activeThread.id)}?${params}`,
-                    { headers: this.headers() }
-                );
-                const data = await res.json();
-                if (data.success) {
-                    this.threadMessages = data.data.messages || [];
-                    if (data.data.error) this.threadError = data.data.error;
-                    this.$nextTick(() => {
-                        const el = document.getElementById('msg-scroll-area');
-                        if (el) el.scrollTop = el.scrollHeight;
-                    });
+                if (this.activeThread.type === 'comment') {
+                    const res = await fetch(`${API_URL}/inbox/${this.selectedClient}/comments/${encodeURIComponent(this.activeThread.id)}`, { headers: this.headers() });
+                    const data = await res.json();
+                    if (!data.success) { this.threadError = data.message || 'Could not load comment'; this.threadMessages = []; return; }
+                    this.comment = data.comment;
+                    const c = data.comment;
+                    this.threadMessages = [{ id: c.externalId, text: c.text, isPage: false, fromName: c.authorName, createdTime: c.createdTime }]
+                        .concat((c.replies || []).map(r => ({ id: r.externalId, text: r.text, isPage: Boolean(r.fromPage), fromName: r.authorName, createdTime: r.createdTime })));
                 } else {
-                    this.threadError = data.message || 'Could not load messages';
-                    this.threadMessages = [];
+                    const params = new URLSearchParams();
+                    if (this.activeThread.recipientId) params.set('recipientId', this.activeThread.recipientId);
+                    const res = await fetch(
+                        `${API_URL}/social-media/messages/${this.selectedClient}/threads/${encodeURIComponent(this.activeThread.id)}?${params}`,
+                        { headers: this.headers() }
+                    );
+                    const data = await res.json();
+                    if (data.success) {
+                        this.threadMessages = data.data.messages || [];
+                        if (data.data.error) this.threadError = data.data.error;
+                    } else {
+                        this.threadError = data.message || 'Could not load messages';
+                        this.threadMessages = [];
+                    }
                 }
+                this.$nextTick(() => {
+                    const el = document.getElementById('msg-scroll-area');
+                    if (el) el.scrollTop = el.scrollHeight;
+                });
             } catch (e) {
                 this.threadError = 'Failed to load conversation';
                 this.threadMessages = [];
@@ -503,35 +633,84 @@ function messagesApp() {
             }
         },
 
+        async setState(body) {
+            const res = await fetch(`${API_URL}/inbox/${this.selectedClient}/state`, {
+                method: 'PATCH', headers: this.headers(), body: JSON.stringify({ key: this.activeThread.key, ...body })
+            });
+            const d = await res.json();
+            if (!d.success) { this.sendError = d.message || 'Could not update'; return null; }
+            return d.state;
+        },
+
+        async toggleDone() {
+            const done = this.activeThread.status !== 'done';
+            const st = await this.setState({ status: done ? 'done' : 'open', lastActivity: this.activeThread.time });
+            if (!st) return;
+            this.activeThread.status = done ? 'done' : 'open';
+            const t = this.threads.find(x => x.key === this.activeThread.key); if (t) t.status = this.activeThread.status;
+            this.filterThreads();
+        },
+
+        async assign(userId) {
+            const st = await this.setState({ assignedTo: userId || null });
+            if (!st) return;
+            this.activeThread.assignedTo = userId || null;
+            const t = this.threads.find(x => x.key === this.activeThread.key); if (t) t.assignedTo = this.activeThread.assignedTo;
+            this.filterThreads();
+        },
+
+        async hideComment(hidden) {
+            this.modBusy = true; this.modError = null;
+            try {
+                const res = await fetch(`${API_URL}/inbox/${this.selectedClient}/comments/${encodeURIComponent(this.comment.externalId)}/hide`, { method: 'POST', headers: this.headers(), body: JSON.stringify({ hidden }) });
+                const d = await res.json();
+                if (!d.success) { this.modError = d.message; return; }
+                this.comment.hidden = hidden; this.activeThread.hidden = hidden;
+            } finally { this.modBusy = false; }
+        },
+
+        async deleteComment() {
+            if (!confirm('Delete this comment from the post? This cannot be undone.')) return;
+            this.modBusy = true; this.modError = null;
+            try {
+                const res = await fetch(`${API_URL}/inbox/${this.selectedClient}/comments/${encodeURIComponent(this.comment.externalId)}`, { method: 'DELETE', headers: this.headers() });
+                const d = await res.json();
+                if (!d.success) { this.modError = d.message; return; }
+                const key = this.activeThread.key;
+                this.threads = this.threads.filter(t => t.key !== key);
+                this.closeThread(); this.filterThreads();
+            } finally { this.modBusy = false; }
+        },
+
         async sendReply() {
             if (!this.activeThread || !this.replyText.trim() || this.sending) return;
-            if (!this.activeThread.recipientId) {
+            const isComment = this.activeThread.type === 'comment';
+            if (!isComment && !this.activeThread.recipientId) {
                 this.sendError = 'Cannot reply — missing recipient ID. Refresh the inbox and try again.';
                 return;
             }
             this.sending = true;
             this.sendError = null;
+            const ai = {
+                aiGenerationId: this.ai.chosen !== null ? this.ai.generationId : undefined,
+                suggestionIndex: this.ai.chosen !== null ? this.ai.chosen : undefined,
+                sensitiveAcknowledged: this.ai.acknowledged
+            };
             try {
-                const res = await fetch(`${API_URL}/social-media/messages/${this.selectedClient}/reply`, {
-                    method: 'POST',
-                    headers: this.headers(),
-                    body: JSON.stringify({
-                        recipientId: this.activeThread.recipientId,
-                        text: this.replyText.trim(),
-                        platform: this.activeThread.platform,
-                        threadId: this.activeThread.id,
-                        incomingText: this.lastIncoming(),
-                        aiGenerationId: this.ai.chosen !== null ? this.ai.generationId : undefined,
-                        suggestionIndex: this.ai.chosen !== null ? this.ai.chosen : undefined,
-                        sensitiveAcknowledged: this.ai.acknowledged
-                    })
-                });
+                const url = isComment
+                    ? `${API_URL}/inbox/${this.selectedClient}/comments/${encodeURIComponent(this.activeThread.id)}/reply`
+                    : `${API_URL}/social-media/messages/${this.selectedClient}/reply`;
+                const body = isComment
+                    ? { text: this.replyText.trim(), mode: this.replyMode, ...ai }
+                    : { recipientId: this.activeThread.recipientId, text: this.replyText.trim(), platform: this.activeThread.platform, threadId: this.activeThread.id, incomingText: this.lastIncoming(), ...ai };
+                const res = await fetch(url, { method: 'POST', headers: this.headers(), body: JSON.stringify(body) });
                 const data = await res.json();
                 if (data.success) {
                     this.replyText = '';
                     this.resetAi();
+                    this.activeThread.unanswered = false;
+                    const t = this.threads.find(x => x.key === this.activeThread.key); if (t) t.unanswered = false;
                     await this.loadThreadMessages();
-                    await this.loadMessages();
                 } else {
                     this.sendError = data.message || 'Failed to send reply';
                 }
