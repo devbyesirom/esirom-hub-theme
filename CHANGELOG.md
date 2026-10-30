@@ -5,6 +5,12 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.76] - 2026-10-30
+
+### Added
+- AI Studio Freestyle mode (staff and admins only): generate with draft or no brand info, with or without a product. Capped at 3 finished pieces per person per month (admins can change each person's cap in Usage & budgets). Own counter ring in the header. Outputs are labelled "Freestyle, not client-approved info" in the feed, logs and review.
+- "Add to Content Bank" on finished image and caption pairs (brand reps and admins). Creates a Content Bank item pending client approval. Nothing is posted or emailed; clients get an in-portal notification only.
+
 ## [2.3.75] - 2026-10-30
 ### Changed
 - AI Studio Create is now a conversational canvas. Each generation appears as a message in a scrollable feed: your prompt, then 1-3 previews side by side.
