@@ -5,6 +5,11 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.78] - 2026-10-30
+
+### Fixed
+- AI Studio: a failed generation now shows a plain-English, wrapped error with the time of the attempt and a "Try again" button. Raw provider messages (e.g. "credits depleted") no longer linger looking like a live status.
+
 ## [2.3.77] - 2026-10-30
 
 ### Fixed
