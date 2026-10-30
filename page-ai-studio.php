@@ -158,7 +158,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <div class="max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-br-md text-white px-4 py-2.5 shadow-sm" :class="g.freestyle ? 'bg-amber-600' : 'bg-indigo-600'">
                                     <p x-show="g.freestyle" class="text-[10px] font-bold uppercase tracking-wide mb-0.5">Freestyle, not client-approved info</p>
                                     <p class="text-sm whitespace-pre-wrap break-words" x-text="g.prompt"></p>
-                                    <p class="text-[11px] opacity-80 mt-1" x-text="[g.productName, formatLabel(g.aspectRatio), placementLabel(g.placement), g.previews + (g.previews === 1 ? ' preview' : ' previews')].filter(Boolean).join(' · ')"></p>
+                                    <p class="text-[11px] opacity-80 mt-1" x-text="[g.productName, formatLabel(g.aspectRatio), (g.mode === 'hero' ? 'Hero' : placementLabel(g.placement)), g.previews + (g.previews === 1 ? ' preview' : ' previews')].filter(Boolean).join(' · ')"></p>
                                 </div>
                             </div>
 
@@ -194,7 +194,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                                     <div class="flex items-center justify-center p-3 text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20" :class="aspectClass(g.aspectRatio)" x-text="'Blocked: ' + (p.blockReason || 'product check failed')"></div>
                                                 </template>
                                                 <figcaption class="px-2.5 py-2 flex items-center justify-between gap-2">
-                                                    <span class="text-[11px]" :class="!p.productCheck ? 'text-gray-500' : (p.productCheck.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600')" x-text="!p.productCheck ? 'Scene only, no product' : (p.productCheck.passed ? '✓ Product unaltered' : 'Product check failed')"></span>
+                                                    <span class="text-[11px]" :class="!p.productCheck ? 'text-gray-500' : (p.productCheck.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600')" x-text="!p.productCheck ? 'Scene only, no product' : (p.productCheck.passed ? (p.mode === 'hero' ? '✓ Label verified' + (p.productCheck.repaired ? ' (restored from real photo)' : '') : '✓ Product unaltered') : 'Product check failed')"></span>
                                                     <button x-show="!p.blocked" type="button" class="text-xs font-semibold px-2.5 py-1 rounded-full" :class="g.gen.chosenIndex === i ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-500/20'" @click="choose(g, i)" :disabled="g.choosing || g.sent" x-text="g.gen.chosenIndex === i ? 'Chosen' : 'Choose'"></button>
                                                 </figcaption>
                                             </figure>
@@ -302,15 +302,35 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                         </div>
                                     </div>
                                 </div>
+                                <div class="inline-flex rounded-full border border-gray-200 dark:border-gray-600 p-0.5" role="group" aria-label="Mode" data-pill="mode">
+                                    <button type="button" @click="form.mode = 'hero'" :aria-pressed="form.mode === 'hero'" :class="form.mode === 'hero' ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300'" class="px-3 py-1 rounded-full text-xs font-semibold">Hero</button>
+                                    <button type="button" @click="form.mode = 'simple'" :aria-pressed="form.mode === 'simple'" :class="form.mode === 'simple' ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300'" class="px-3 py-1 rounded-full text-xs font-semibold">Simple</button>
+                                </div>
+                                <label class="sr-only" for="ais-hero-tpl">Hero style</label>
+                                <select id="ais-hero-tpl" x-show="form.mode === 'hero'" x-model="form.heroTemplate" class="ais-pill ais-pill--select" data-pill="hero-template"><option value="splash">Splash explosion</option><option value="orchard">Orchard hero</option><option value="fiery">Fiery / dramatic</option><option value="playful">Playful 3D</option></select>
                                 <label class="sr-only" for="ais-format">Format</label>
                                 <select id="ais-format" x-model="form.aspectRatio" class="ais-pill ais-pill--select" data-pill="format"><option value="1:1">Square 1:1</option><option value="4:5">Portrait 4:5</option><option value="9:16">Story 9:16</option><option value="16:9">Wide 16:9</option></select>
                                 <label class="sr-only" for="ais-pos">Position</label>
-                                <select id="ais-pos" x-model="form.placement" class="ais-pill ais-pill--select" data-pill="position"><option value="auto">Auto (fit scene)</option><option value="centre">Centre</option><option value="left">Left</option><option value="right">Right</option></select>
+                                <select id="ais-pos" x-show="form.mode === 'simple'" x-model="form.placement" class="ais-pill ais-pill--select" data-pill="position"><option value="auto">Auto (fit scene)</option><option value="centre">Centre</option><option value="left">Left</option><option value="right">Right</option></select>
                                 <label class="sr-only" for="ais-prev">Previews</label>
                                 <select id="ais-prev" x-model.number="form.previews" class="ais-pill ais-pill--select" data-pill="previews"><option :value="1">1 preview</option><option :value="2">2 previews</option><option :value="3">3 previews</option></select>
-                                <template x-if="brandTemplates().length">
+                                <button type="button" x-show="form.mode === 'hero'" @click="textOpen = !textOpen" :aria-expanded="textOpen" class="ais-pill" data-pill="text"><span x-text="form.headline ? 'Text: ' + form.headline.slice(0, 18) + (form.headline.length > 18 ? '…' : '') : 'Add headline'"></span></button>
+                                <template x-if="brandTemplates().length && form.mode === 'simple'">
                                     <select x-model="form.templateIndex" class="ais-pill ais-pill--select" aria-label="Scene template"><option value="">No template</option><template x-for="(t, i) in brandTemplates()" :key="i"><option :value="i" x-text="t.name"></option></template></select>
                                 </template>
+                            </div>
+                            <!-- Headline / branding (Hero) -->
+                            <div x-show="form.mode === 'hero' && textOpen" x-cloak class="mx-3 mt-2 rounded-xl border border-gray-200 dark:border-gray-700 p-3 grid gap-2 sm:grid-cols-2" data-text-panel>
+                                <label class="text-xs font-medium sm:col-span-2">Headline <span class="text-gray-400 font-normal">(set in real fonts, never drawn by the AI)</span>
+                                    <input x-model="form.headline" maxlength="80" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm" placeholder="e.g. Freshness that hits different" data-headline></label>
+                                <label class="text-xs font-medium">Subline<input x-model="form.subline" maxlength="120" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm"></label>
+                                <label class="text-xs font-medium">Footer tag<input x-model="form.footer" maxlength="80" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm" placeholder="e.g. Mabu Coco • Eat Good Ja"></label>
+                                <label class="text-xs font-medium">Style<select x-model="form.textPreset" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm"><option value="bold3d">Bold 3D red</option><option value="fresh">Fresh 3D green</option><option value="candy">Candy pink</option><option value="clean">Clean white</option></select></label>
+                                <label class="text-xs font-medium flex items-end gap-2 pb-1.5"><input type="checkbox" x-model="form.logo" class="rounded"> Add brand logo</label>
+                                <div class="sm:col-span-2 flex flex-wrap items-center gap-1.5">
+                                    <button type="button" @click="suggestHeadlines()" :disabled="headlineIdeas.loading || !brand" class="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 disabled:opacity-50" data-headline-ideas x-text="headlineIdeas.loading ? 'Thinking…' : 'Suggest headlines'"></button>
+                                    <template x-for="h in headlineIdeas.items" :key="h"><button type="button" @click="form.headline = h" class="text-xs px-2.5 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800" x-text="h"></button></template>
+                                </div>
                             </div>
                             <!-- Input -->
                             <div class="relative px-3 pb-2.5 pt-1.5">
@@ -327,7 +347,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 </button>
                             </div>
                         </form>
-                        <p class="mt-1.5 text-center text-[11px] text-gray-500 dark:text-gray-400">The AI only creates the background. Your real product photo is placed on top and checked pixel by pixel, so packaging, colours and text never change.</p>
+                        <p class="mt-1.5 text-center text-[11px] text-gray-500 dark:text-gray-400" x-text="form.mode === 'hero' ? 'Hero: the AI builds the scene around your real product, then the label is checked and restored from your real photo. Headlines are set in real fonts.' : 'The AI only creates the background. Your real product photo is placed on top and checked pixel by pixel, so packaging, colours and text never change.'"></p>
                     </div>
                 </div>
             </section>
@@ -430,7 +450,8 @@ function aiStudioApp() {
         budget: { usage: { finished: 0, costUsd: 0 }, allowance: { total: 0 }, reasons: [], canGenerate: false },
         budgetForm: { monthlyImageAllowance: '' },
         examples: [], usage: null,
-        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'auto', previews: 3, freestyle: false },
+        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'auto', previews: 3, freestyle: false, mode: 'hero', heroTemplate: 'splash', headline: '', subline: '', footer: '', textPreset: 'bold3d', logo: false },
+        textOpen: false, headlineIdeas: { loading: false, items: [] },
         freestyleLimits: null,
         generations: [], historyLoaded: false,
         newProduct: { name: '' },
@@ -454,8 +475,15 @@ function aiStudioApp() {
             return Boolean(this.brand && this.form.brandId && this.selectedBrand() && this.selectedBrand().approved && this.selectedProductHasImage());
         },
         activeReasons() { return (this.form.freestyle ? this.budget.freestyleReasons : this.budget.reasons) || []; },
+        async suggestHeadlines() {
+            if (!this.brand) return; this.headlineIdeas.loading = true;
+            try {
+                const d = await this.api(`/brands/${this.brand._id}/headlines`, { method: 'POST', body: JSON.stringify({ brandId: this.form.brandId, productId: this.form.productId, brief: this.form.scene }) });
+                this.headlineIdeas.items = d.headlines || []; if (d.subline && !this.form.subline) this.form.subline = d.subline;
+            } catch (e) { this.showToast(e.message, 'error'); } finally { this.headlineIdeas.loading = false; }
+        },
         canSubmit() {
-            const t = this.form.templateIndex !== '' && this.form.templateIndex !== null && this.form.templateIndex !== undefined;
+            const t = this.form.mode === 'hero' || (this.form.templateIndex !== '' && this.form.templateIndex !== null && this.form.templateIndex !== undefined);
             return this.readyToGenerate() && this.status.configured && !this.activeReasons().length && !this.busy.image && (t || (this.form.scene || '').trim().length >= 5);
         },
         toggleFreestyle() {
@@ -471,8 +499,9 @@ function aiStudioApp() {
             if (this.form.freestyle) {
                 if (!this.brand) return 'Select a company to begin';
                 if (this.freestyleLeft() <= 0) return "You've used all your freestyle pieces this month";
-                return 'Describe the background scene...';
+                return this.form.mode === 'hero' ? 'Optional: add creative direction (or just hit generate)…' : 'Describe the background scene...';
             }
+            if (this.form.mode === 'hero' && this.readyToGenerate()) return 'Optional: add creative direction (or just hit generate)…';
             return this.readyToGenerate() ? 'Describe the background scene...' : 'Select a client-approved brand to begin';
         },
         canAddToBank() { return ['admin', 'brand_rep'].includes(this.user && this.user.role); },
@@ -584,7 +613,7 @@ function aiStudioApp() {
             if (!this.canSubmit()) return;
             const tpl = this.form.templateIndex !== '' ? this.brandTemplates()[parseInt(this.form.templateIndex, 10)] : null;
             const promptText = [tpl ? tpl.name : '', (this.form.scene || '').trim()].filter(Boolean).join(': ');
-            const entry = this.newEntry({ prompt: promptText, productName: this.productName(), aspectRatio: this.form.aspectRatio, placement: this.form.placement,
+            const entry = this.newEntry({ prompt: promptText, productName: this.productName(), aspectRatio: this.form.aspectRatio, placement: this.form.placement, mode: this.form.mode,
                 previews: Math.max(1, Math.min(3, this.form.previews || 3)), loading: true, brandId: this.form.brandId, productId: this.form.productId, freestyle: this.form.freestyle });
             this.generations.push(entry);
             const g = this.generations[this.generations.length - 1];
