@@ -158,7 +158,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <div class="max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-br-md text-white px-4 py-2.5 shadow-sm" :class="g.freestyle ? 'bg-amber-600' : 'bg-indigo-600'">
                                     <p x-show="g.freestyle" class="text-[10px] font-bold uppercase tracking-wide mb-0.5">Freestyle, not client-approved info</p>
                                     <p class="text-sm whitespace-pre-wrap break-words" x-text="g.prompt"></p>
-                                    <p class="text-[11px] opacity-80 mt-1" x-text="[g.productName, formatLabel(g.aspectRatio), (g.mode === 'hero' ? 'Hero' : placementLabel(g.placement)), g.previews + (g.previews === 1 ? ' preview' : ' previews')].filter(Boolean).join(' · ')"></p>
+                                    <p class="text-[11px] opacity-80 mt-1" x-text="[g.productName, formatLabel(g.aspectRatio), (g.mode === 'hero' ? 'Hero' : placementLabel(g.placement)), orientationLabel(g.orientation), g.previews + (g.previews === 1 ? ' preview' : ' previews')].filter(Boolean).join(' · ')"></p>
                                 </div>
                             </div>
 
@@ -312,6 +312,8 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <select id="ais-format" x-model="form.aspectRatio" class="ais-pill ais-pill--select" data-pill="format"><option value="1:1">Square 1:1</option><option value="4:5">Portrait 4:5</option><option value="9:16">Story 9:16</option><option value="16:9">Wide 16:9</option></select>
                                 <label class="sr-only" for="ais-pos">Position</label>
                                 <select id="ais-pos" x-show="form.mode === 'simple'" x-model="form.placement" class="ais-pill ais-pill--select" data-pill="position"><option value="auto">Auto (fit scene)</option><option value="centre">Centre</option><option value="left">Left</option><option value="right">Right</option></select>
+                                <label class="sr-only" for="ais-orient">Orientation</label>
+                                <select id="ais-orient" x-model="form.orientation" class="ais-pill ais-pill--select" data-pill="orientation" title="How the product is angled in the image"><option value="upright">Upright</option><option value="tilted_left">Tilted Left</option><option value="tilted_right">Tilted Right</option><option value="floating">Floating</option></select>
                                 <label class="sr-only" for="ais-prev">Previews</label>
                                 <select id="ais-prev" x-model.number="form.previews" class="ais-pill ais-pill--select" data-pill="previews"><option :value="1">1 preview</option><option :value="2">2 previews</option><option :value="3">3 previews</option></select>
                                 <button type="button" x-show="form.mode === 'hero'" @click="textOpen = !textOpen" :aria-expanded="textOpen" class="ais-pill" data-pill="text"><span x-text="form.headline ? 'Text: ' + form.headline.slice(0, 18) + (form.headline.length > 18 ? '…' : '') : 'Add headline'"></span></button>
@@ -450,7 +452,7 @@ function aiStudioApp() {
         budget: { usage: { finished: 0, costUsd: 0 }, allowance: { total: 0 }, reasons: [], canGenerate: false },
         budgetForm: { monthlyImageAllowance: '' },
         examples: [], usage: null,
-        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'auto', previews: 3, freestyle: false, mode: 'hero', heroTemplate: 'splash', headline: '', subline: '', footer: '', textPreset: 'bold3d', logo: false },
+        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'auto', orientation: 'upright', previews: 3, freestyle: false, mode: 'hero', heroTemplate: 'splash', headline: '', subline: '', footer: '', textPreset: 'bold3d', logo: false },
         textOpen: false, headlineIdeas: { loading: false, items: [] },
         freestyleLimits: null,
         generations: [], historyLoaded: false,
@@ -538,7 +540,7 @@ function aiStudioApp() {
                 const imgs = rows.filter(r => r.kind === 'image' && (r.previews || []).some(p => !p.blocked)).slice(0, 10).reverse();
                 this.generations = imgs.map(r => {
                     const c = caps.find(x => String(x.imageGenerationId) === String(r._id));
-                    const e = this.newEntry({ key: r._id, prompt: r.userBrief, productName: '', aspectRatio: r.aspectRatio || '1:1', previews: r.previewsRequested || r.previews.length,
+                    const e = this.newEntry({ key: r._id, prompt: r.userBrief, productName: '', aspectRatio: r.aspectRatio || '1:1', orientation: r.orientation || 'upright', previews: r.previewsRequested || r.previews.length,
                         gen: r, sent: Boolean(r.conceptId), banked: Boolean(r.contentBankConceptId), freestyle: Boolean(r.freestyle), brandId: r.brandItemId, productId: r.productId, history: true });
                     const prod = this.kTree.brands.flatMap(b => b.products || []).find(p => p._id === String(r.productId));
                     e.productName = prod ? this.kData(prod).name : '';
@@ -613,7 +615,7 @@ function aiStudioApp() {
             if (!this.canSubmit()) return;
             const tpl = this.form.templateIndex !== '' ? this.brandTemplates()[parseInt(this.form.templateIndex, 10)] : null;
             const promptText = [tpl ? tpl.name : '', (this.form.scene || '').trim()].filter(Boolean).join(': ');
-            const entry = this.newEntry({ prompt: promptText, productName: this.productName(), aspectRatio: this.form.aspectRatio, placement: this.form.placement, mode: this.form.mode,
+            const entry = this.newEntry({ prompt: promptText, productName: this.productName(), aspectRatio: this.form.aspectRatio, placement: this.form.placement, orientation: this.form.orientation, mode: this.form.mode,
                 previews: Math.max(1, Math.min(3, this.form.previews || 3)), loading: true, brandId: this.form.brandId, productId: this.form.productId, freestyle: this.form.freestyle });
             this.generations.push(entry);
             const g = this.generations[this.generations.length - 1];
@@ -628,6 +630,7 @@ function aiStudioApp() {
             } catch (e) { g.error = this.friendlyError(e.message); g.errorAt = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); await this.refreshBrand().catch(() => {}); }
             finally { g.loading = false; this.busy.image = false; this.scrollFeed(); }
         },
+        orientationLabel(o) { return ({ tilted_left: 'Tilted left', tilted_right: 'Tilted right', floating: 'Floating' })[o] || ''; },
         friendlyError(m) {
             m = String(m || 'Something went wrong.');
             if (/prepayment credits|credits are depleted|billing|RESOURCE_EXHAUSTED|quota/i.test(m)) return 'Google Gemini refused the request because the AI credits had run out or the quota was hit. If credits have been added since, try again.';
