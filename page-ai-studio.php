@@ -170,7 +170,11 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <div class="flex-1 min-w-0 space-y-3">
                                     <p x-show="g.freestyle && !g.loading" class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-full px-2.5 py-0.5" data-freestyle-label>⚠ Freestyle, not client-approved info</p>
                                     <p x-show="g.loading" class="text-xs text-gray-500" role="status">Creating scenes and placing the real product photo… this can take up to a minute.</p>
-                                    <p x-show="g.error" class="text-sm text-red-600 dark:text-red-400" x-text="g.error"></p>
+                                    <div x-show="g.error" class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-700 dark:text-red-300 break-words" role="alert" data-gen-error>
+                                        <p x-text="g.error"></p>
+                                        <p class="mt-1 text-xs text-red-600/80 dark:text-red-300/80">This message is from the attempt at <span x-text="g.errorAt"></span>. It won't update by itself.</p>
+                                        <button type="button" x-show="g.body" @click="retry(g)" :disabled="busy.image" class="mt-2 text-xs font-semibold px-3 py-1 rounded-full bg-white dark:bg-gray-800 border border-red-300 dark:border-red-700 hover:bg-red-100 disabled:opacity-50" data-retry>Try again</button>
+                                    </div>
 
                                     <!-- Gallery -->
                                     <div class="grid gap-3" :class="galleryCols(g)">
@@ -492,7 +496,7 @@ function aiStudioApp() {
         ringColour(used, total) { const f = total ? (used || 0) / total : 0; return f >= 1 ? 'stroke-red-500' : f >= 0.8 ? 'stroke-amber-500' : 'stroke-indigo-500'; },
         newEntry(o) {
             return Object.assign({ key: 'g' + Date.now() + Math.random().toString(36).slice(2, 6), prompt: '', productName: '', aspectRatio: '1:1', placement: 'centre', previews: 3,
-                loading: false, error: null, gen: null, choosing: false, sending: false, sent: false, brandId: null, productId: null, freestyle: false, banking: false, banked: false,
+                loading: false, error: null, gen: null, choosing: false, sending: false, sent: false, brandId: null, productId: null, freestyle: false, banking: false, banked: false, body: null, errorAt: '',
                 cap: { loading: false, error: null, gen: null, edits: [], flags: [], approvedIndex: null } }, o);
         },
         scrollFeed() { this.$nextTick(() => { const el = document.getElementById('ais-feed'); if (el) el.lastElementChild && el.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' }); }); },
@@ -584,7 +588,7 @@ function aiStudioApp() {
                 previews: Math.max(1, Math.min(3, this.form.previews || 3)), loading: true, brandId: this.form.brandId, productId: this.form.productId, freestyle: this.form.freestyle });
             this.generations.push(entry);
             const g = this.generations[this.generations.length - 1];
-            const body = { ...this.form };
+            const body = { ...this.form }; g.body = body;
             this.form.scene = ''; if (this.$refs.scene) this.$refs.scene.style.height = 'auto';
             this.busy.image = true; this.scrollFeed();
             try {
@@ -592,8 +596,20 @@ function aiStudioApp() {
                 g.gen = d.generation; this.budget = d.budget;
                 const blocked = d.generation.previews.filter(p => p.blocked).length;
                 if (blocked) this.showToast(`${blocked} preview(s) were blocked by the product check; the rest are ready.`, 'error');
-            } catch (e) { g.error = e.message; await this.refreshBrand().catch(() => {}); }
+            } catch (e) { g.error = this.friendlyError(e.message); g.errorAt = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); await this.refreshBrand().catch(() => {}); }
             finally { g.loading = false; this.busy.image = false; this.scrollFeed(); }
+        },
+        friendlyError(m) {
+            m = String(m || 'Something went wrong.');
+            if (/prepayment credits|credits are depleted|billing|RESOURCE_EXHAUSTED|quota/i.test(m)) return 'Google Gemini refused the request because the AI credits had run out or the quota was hit. If credits have been added since, try again.';
+            return m.length > 300 ? m.slice(0, 300) + '…' : m;
+        },
+        async retry(g) {
+            if (this.busy.image || !g.body) return;
+            const i = this.generations.indexOf(g); if (i > -1) this.generations.splice(i, 1);
+            const keep = { ...this.form }; Object.assign(this.form, g.body);
+            await this.generateImages();
+            Object.assign(this.form, { ...keep, scene: '' });
         },
         async choose(g, i) {
             if (!g.gen || g.choosing || g.sent || g.gen.chosenIndex === i) return;
