@@ -81,6 +81,13 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                             </svg>
                             <div class="leading-tight"><p class="text-xs font-semibold tabular-nums" x-text="(budget.userToday || 0) + '/' + (budget.staffDailyCap || 0)"></p><p class="text-[10px] text-gray-500">today</p></div>
                         </div>
+                        <div class="flex items-center gap-1.5" :title="'Your freestyle pieces this month: ' + ((budget.freestyle && budget.freestyle.used) || 0) + ' of ' + ((budget.freestyle && budget.freestyle.cap) || 0)" data-freestyle-ring>
+                            <svg class="w-7 h-7 -rotate-90" viewBox="0 0 36 36" role="img" :aria-label="'Freestyle pieces this month ' + ((budget.freestyle && budget.freestyle.used) || 0) + ' of ' + ((budget.freestyle && budget.freestyle.cap) || 0)">
+                                <circle cx="18" cy="18" r="15" fill="none" stroke-width="4" class="stroke-gray-200 dark:stroke-gray-700"></circle>
+                                <circle cx="18" cy="18" r="15" fill="none" stroke-width="4" stroke-linecap="round" :class="(budget.freestyle && budget.freestyle.left === 0) ? 'stroke-red-500' : 'stroke-amber-500'" :stroke-dasharray="ringDash(budget.freestyle && budget.freestyle.used, budget.freestyle && budget.freestyle.cap)"></circle>
+                            </svg>
+                            <div class="leading-tight"><p class="text-xs font-semibold tabular-nums" x-text="((budget.freestyle && budget.freestyle.used) || 0) + '/' + ((budget.freestyle && budget.freestyle.cap) || 0)"></p><p class="text-[10px] text-gray-500">freestyle</p></div>
+                        </div>
                         <div class="hidden sm:block leading-tight" :title="'Previews left this month: ' + budget.previewsLeft + ' of ' + budget.previewCap">
                             <p class="text-xs font-semibold tabular-nums" x-text="(budget.previewsLeft ?? 0)"></p><p class="text-[10px] text-gray-500">previews left</p>
                         </div>
@@ -148,7 +155,8 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                         <article class="space-y-3 scroll-mb-48 scroll-mt-40" :aria-label="'Generation ' + (gi + 1)">
                             <!-- Prompt (user message) -->
                             <div class="flex justify-end">
-                                <div class="max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-br-md bg-indigo-600 text-white px-4 py-2.5 shadow-sm">
+                                <div class="max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-br-md text-white px-4 py-2.5 shadow-sm" :class="g.freestyle ? 'bg-amber-600' : 'bg-indigo-600'">
+                                    <p x-show="g.freestyle" class="text-[10px] font-bold uppercase tracking-wide mb-0.5">Freestyle, not client-approved info</p>
                                     <p class="text-sm whitespace-pre-wrap break-words" x-text="g.prompt"></p>
                                     <p class="text-[11px] opacity-80 mt-1" x-text="[g.productName, formatLabel(g.aspectRatio), placementLabel(g.placement), g.previews + (g.previews === 1 ? ' preview' : ' previews')].filter(Boolean).join(' · ')"></p>
                                 </div>
@@ -160,6 +168,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2z"/></svg>
                                 </div>
                                 <div class="flex-1 min-w-0 space-y-3">
+                                    <p x-show="g.freestyle && !g.loading" class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-full px-2.5 py-0.5" data-freestyle-label>⚠ Freestyle, not client-approved info</p>
                                     <p x-show="g.loading" class="text-xs text-gray-500" role="status">Creating scenes and placing the real product photo… this can take up to a minute.</p>
                                     <p x-show="g.error" class="text-sm text-red-600 dark:text-red-400" x-text="g.error"></p>
 
@@ -181,7 +190,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                                     <div class="flex items-center justify-center p-3 text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20" :class="aspectClass(g.aspectRatio)" x-text="'Blocked: ' + (p.blockReason || 'product check failed')"></div>
                                                 </template>
                                                 <figcaption class="px-2.5 py-2 flex items-center justify-between gap-2">
-                                                    <span class="text-[11px]" :class="p.productCheck && p.productCheck.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'" x-text="p.productCheck && p.productCheck.passed ? '✓ Product unaltered' : 'Product check failed'"></span>
+                                                    <span class="text-[11px]" :class="!p.productCheck ? 'text-gray-500' : (p.productCheck.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600')" x-text="!p.productCheck ? 'Scene only, no product' : (p.productCheck.passed ? '✓ Product unaltered' : 'Product check failed')"></span>
                                                     <button x-show="!p.blocked" type="button" class="text-xs font-semibold px-2.5 py-1 rounded-full" :class="g.gen.chosenIndex === i ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-500/20'" @click="choose(g, i)" :disabled="g.choosing || g.sent" x-text="g.gen.chosenIndex === i ? 'Chosen' : 'Choose'"></button>
                                                 </figcaption>
                                             </figure>
@@ -217,8 +226,12 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                     <div x-show="g.gen && g.gen.chosenIndex !== null && g.cap.approvedIndex !== null" x-transition class="rounded-2xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/70 dark:bg-indigo-500/10 p-3 flex gap-3 items-center">
                                         <img :src="chosenUrl(g)" alt="Chosen image" class="w-16 h-16 rounded-lg object-cover flex-shrink-0">
                                         <p class="text-xs text-gray-700 dark:text-gray-200 line-clamp-3 flex-1 min-w-0" x-text="g.cap.approvedIndex !== null ? g.cap.edits[g.cap.approvedIndex] : ''"></p>
-                                        <button type="button" x-show="!g.sent" class="hub-btn hub-btn--primary hub-btn--sm flex-shrink-0" :disabled="g.sending" @click="sendToReview(g)"><span x-text="g.sending ? 'Sending…' : 'Send to review'"></span></button>
-                                        <span x-show="g.sent" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex-shrink-0">✓ In Workflow for review</span>
+                                        <div class="flex flex-col sm:flex-row gap-1.5 flex-shrink-0 items-stretch sm:items-center">
+                                            <button type="button" x-show="canAddToBank() && !g.banked" class="hub-btn hub-btn--soft hub-btn--sm" :disabled="g.banking" @click="addToContentBank(g)" data-add-bank><span x-text="g.banking ? 'Adding…' : 'Add to Content Bank'"></span></button>
+                                            <span x-show="g.banked" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">✓ In Content Bank, pending client approval</span>
+                                            <button type="button" x-show="!g.sent" class="hub-btn hub-btn--primary hub-btn--sm" :disabled="g.sending" @click="sendToReview(g)"><span x-text="g.sending ? 'Sending…' : 'Send to review'"></span></button>
+                                            <span x-show="g.sent" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">✓ In Workflow for review</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -229,11 +242,20 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                 <!-- Sticky prompt bar -->
                 <div class="ais-bar sticky z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-2 pb-3 bg-gradient-to-t from-gray-50 via-gray-50/95 to-gray-50/0 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900/0">
                     <div class="max-w-4xl mx-auto">
-                        <p x-show="brand && !budget.canGenerate && (budget.reasons || []).length" class="mb-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-1.5" x-text="(budget.reasons || [])[0] ? budget.reasons[0].message : ''" role="status"></p>
+                        <p x-show="brand && activeReasons().length" class="mb-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-1.5" x-text="activeReasons()[0] ? activeReasons()[0].message : ''" role="status"></p>
                         <p x-show="!status.configured" class="mb-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-1.5" data-testid="not-configured">Generation is off until the Gemini API key and credits are in place. You can still set up brand knowledge.</p>
+                        <p x-show="form.freestyle" class="mb-2 text-xs text-amber-900 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5" role="status" data-freestyle-note>
+                            <strong>Freestyle:</strong> uses draft or no brand info, so outputs are labelled "Freestyle, not client-approved info". Counts towards your own monthly freestyle limit, not the brand's images.
+                        </p>
                         <form @submit.prevent="generateImages()" class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20">
                             <!-- Pills -->
                             <div class="flex flex-wrap items-center gap-1.5 px-3 pt-2.5">
+                                <button type="button" class="ais-pill" :class="form.freestyle ? 'ais-pill--freestyle' : ''" @click="toggleFreestyle()" :aria-pressed="form.freestyle" data-pill="freestyle"
+                                        :title="'Freestyle: generate without client-approved info. ' + freestyleLeft() + ' of ' + ((budget.freestyle && budget.freestyle.cap) || 0) + ' left this month.'">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 16.536 9 17l.464-3.536z"/></svg>
+                                    <span>Freestyle</span>
+                                    <span class="text-[10px] font-normal opacity-80" x-text="freestyleLeft() + ' left'"></span>
+                                </button>
                                 <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                                     <button type="button" class="ais-pill" :class="readyToGenerate() ? '' : 'ais-pill--attention'" @click="open = !open" :aria-expanded="open" aria-haspopup="true" data-pill="brand">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5a1.99 1.99 0 011.41.59l7 7a2 2 0 010 2.82l-7 7a2 2 0 01-2.82 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
@@ -248,10 +270,11 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                         </select>
                                         <p class="px-2 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Brand</p>
                                         <div class="space-y-0.5">
+                                            <button type="button" x-show="form.freestyle" class="w-full text-left px-2 py-1.5 rounded-lg" :class="!form.brandId ? 'bg-amber-50 dark:bg-amber-500/10 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-700'" @click="form.brandId = ''; form.productId = ''; form.templateIndex = ''">No brand info</button>
                                             <template x-for="b in kTree.brands" :key="b._id">
-                                                <button type="button" class="w-full text-left px-2 py-1.5 rounded-lg flex justify-between gap-2" :class="form.brandId === b._id ? 'bg-indigo-50 dark:bg-indigo-500/10 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-700'" :disabled="!b.approved" @click="form.brandId = b._id; form.templateIndex = ''; pickFirstProduct()">
+                                                <button type="button" class="w-full text-left px-2 py-1.5 rounded-lg flex justify-between gap-2" :class="form.brandId === b._id ? 'bg-indigo-50 dark:bg-indigo-500/10 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-700'" :disabled="!b.approved && !form.freestyle" @click="form.brandId = b._id; form.templateIndex = ''; if (form.freestyle) { form.productId = '' } else { pickFirstProduct() }">
                                                     <span x-text="b.approved ? b.approved.name : kData(b).name"></span>
-                                                    <span x-show="!b.approved" class="text-[10px] text-amber-700 dark:text-amber-300">Awaiting client approval</span>
+                                                    <span x-show="!b.approved" class="text-[10px] text-amber-700 dark:text-amber-300" x-text="form.freestyle ? 'Draft info' : 'Awaiting client approval'"></span>
                                                 </button>
                                             </template>
                                             <p x-show="brand && !kTree.brands.length" class="px-2 text-xs text-gray-500">No brands yet. Add them in <button type="button" class="underline" @click="tab = 'knowledge'; open = false">Brand knowledge</button>.</p>
@@ -259,10 +282,14 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                         <div x-show="form.brandId">
                                             <p class="px-2 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Product</p>
                                             <div class="grid grid-cols-3 gap-1.5">
+                                                <button type="button" x-show="form.freestyle" class="rounded-lg border p-1 text-[11px] text-left" :class="!form.productId ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-gray-200 dark:border-gray-700'" @click="form.productId = ''; open = false">
+                                                    <div class="h-12 flex items-center justify-center text-[10px] text-gray-400 text-center">Scene only</div>
+                                                    <span class="block truncate mt-1">No product</span>
+                                                </button>
                                                 <template x-for="p in brandProducts()" :key="p._id">
-                                                    <button type="button" class="rounded-lg border p-1 text-[11px] text-left disabled:opacity-50" :class="form.productId === p._id ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-gray-200 dark:border-gray-700'" :disabled="!(p.approved && (p.approved.images || []).length)" @click="form.productId = p._id; form.imageIndex = 0; open = false" :title="!p.approved ? 'Awaiting client approval' : (!(p.approved.images || []).length ? 'No approved cut-out' : '')">
-                                                        <img x-show="((p.approved || {}).images || []).length" :src="(((p.approved || {}).images || [])[0] || {}).url" alt="" class="h-12 w-full object-contain checker rounded">
-                                                        <div x-show="!((p.approved || {}).images || []).length" class="h-12 flex items-center justify-center text-[10px] text-gray-400 text-center" x-text="p.approved ? 'No cut-out' : 'Awaiting approval'"></div>
+                                                    <button type="button" class="rounded-lg border p-1 text-[11px] text-left disabled:opacity-50" :class="form.productId === p._id ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-gray-200 dark:border-gray-700'" :disabled="!productUsable(p)" @click="form.productId = p._id; form.imageIndex = 0; open = false" :title="!p.approved ? 'Awaiting client approval' : (!(p.approved.images || []).length ? 'No approved cut-out' : '')">
+                                                        <img x-show="(productData(p).images || []).length" :src="((productData(p).images || [])[0] || {}).url" alt="" class="h-12 w-full object-contain checker rounded">
+                                                        <div x-show="!(productData(p).images || []).length" class="h-12 flex items-center justify-center text-[10px] text-gray-400 text-center" x-text="(p.approved || form.freestyle) ? 'No cut-out' : 'Awaiting approval'"></div>
                                                         <span class="block truncate mt-1" x-text="kData(p).name"></span>
                                                     </button>
                                                 </template>
@@ -286,7 +313,7 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
                                 <label for="ais-scene" class="sr-only">Scene description</label>
                                 <textarea id="ais-scene" x-ref="scene" x-model="form.scene" rows="1" maxlength="800"
                                           :disabled="!readyToGenerate()"
-                                          :placeholder="readyToGenerate() ? 'Describe the background scene...' : 'Select a client-approved brand to begin'"
+                                          :placeholder="promptPlaceholder()"
                                           @input="autosize($event.target)"
                                           @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); generateImages(); }"
                                           class="block w-full resize-none bg-transparent pr-14 py-2 text-[15px] leading-6 max-h-48 focus:outline-none disabled:cursor-not-allowed placeholder:text-gray-400"></textarea>
@@ -311,6 +338,17 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
 
                 <!-- USAGE (admin) -->
                 <div x-show="tab === 'usage'" class="space-y-4">
+                    <div class="hub-card p-4 space-y-3" x-show="status.isAdmin && freestyleLimits" data-freestyle-limits>
+                        <h2 class="font-semibold">Freestyle limits (per person, per month)</h2>
+                        <p class="text-xs text-gray-500" x-text="'Freestyle pieces skip client-approved info and are labelled as such. Default: ' + (freestyleLimits ? freestyleLimits.defaultCap : 3) + ' finished pieces a month. Leave blank to use the default.'"></p>
+                        <table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-500"><th>Person</th><th>Used this month</th><th>Monthly limit</th><th></th></tr></thead>
+                            <tbody><template x-for="u in (freestyleLimits ? freestyleLimits.users : [])" :key="u.userId"><tr class="border-t border-gray-100 dark:border-gray-700">
+                                <td class="py-1.5" x-text="u.name + (u.role === 'admin' ? ' (admin)' : '')"></td>
+                                <td x-text="u.used + ' / ' + u.cap"></td>
+                                <td><input type="number" min="0" max="100" class="hub-input w-20 py-1" :placeholder="String(freestyleLimits.defaultCap)" x-init="u.capInput = u.custom ? u.cap : ''" x-model="u.capInput" :aria-label="'Freestyle limit for ' + u.name"></td>
+                                <td><button type="button" class="hub-btn hub-btn--soft hub-btn--sm" @click="saveFreestyleCap(u)">Save</button></td>
+                            </tr></template></tbody></table>
+                    </div>
                     <div class="hub-card p-4 space-y-3" x-show="status.isAdmin">
                         <h2 class="font-semibold" x-text="'Image budget for ' + brand.name + ' (shared by all its brands)'"></h2>
                         <div class="flex flex-wrap gap-3 items-end">
@@ -344,6 +382,8 @@ $admin_url = esc_url(esirom_hub_page_url('admin'));
 .ais-pill--attention{border-color:rgb(165 180 252);background:rgb(238 242 255);color:rgb(67 56 202)}
 .dark .ais-pill{border-color:rgb(55 65 81);background:rgb(31 41 55);color:rgb(229 231 235)}
 .dark .ais-pill--attention{border-color:rgb(99 102 241 / .5);background:rgb(99 102 241 / .15);color:rgb(199 210 254)}
+.ais-pill--freestyle{border-color:rgb(245 158 11);background:rgb(255 251 235);color:rgb(146 64 14)}
+.dark .ais-pill--freestyle{border-color:rgb(245 158 11 / .6);background:rgb(245 158 11 / .15);color:rgb(253 230 138)}
 .ais-shimmer{background:linear-gradient(90deg,rgb(229 231 235) 0%,rgb(243 244 246) 40%,rgb(229 231 235) 80%);background-size:200% 100%;animation:ais-shimmer 1.4s ease-in-out infinite}
 .dark .ais-shimmer{background:linear-gradient(90deg,rgb(31 41 55) 0%,rgb(55 65 81) 40%,rgb(31 41 55) 80%);background-size:200% 100%}
 @keyframes ais-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
@@ -386,7 +426,8 @@ function aiStudioApp() {
         budget: { usage: { finished: 0, costUsd: 0 }, allowance: { total: 0 }, reasons: [], canGenerate: false },
         budgetForm: { monthlyImageAllowance: '' },
         examples: [], usage: null,
-        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'centre', previews: 3 },
+        form: { brandId: '', productId: '', imageIndex: 0, templateIndex: '', scene: '', aspectRatio: '1:1', placement: 'centre', previews: 3, freestyle: false },
+        freestyleLimits: null,
         generations: [], historyLoaded: false,
         newProduct: { name: '' },
         busy: {}, toast: { show: false, message: '', type: 'success' },
@@ -399,17 +440,43 @@ function aiStudioApp() {
         brandProducts() { const b = this.kTree.brands.find(x => x._id === this.form.brandId); return b ? b.products : []; },
         selectedBrand() { return this.kTree.brands.find(x => x._id === this.form.brandId) || null; },
         selectedProduct() { return this.brandProducts().find(p => p._id === this.form.productId) || null; },
-        selectedProductHasImage() { const p = this.selectedProduct(); return Boolean(p && p.approved && (p.approved.images || []).length); },
-        brandTemplates() { const b = this.selectedBrand(); return (b && b.approved && b.approved.sceneTemplates) || []; },
-        readyToGenerate() { return Boolean(this.brand && this.form.brandId && this.selectedBrand() && this.selectedBrand().approved && this.selectedProductHasImage()); },
+        productData(p) { return p ? (this.form.freestyle ? (p.approved || p.draft || {}) : (p.approved || {})) : {}; },
+        productUsable(p) { return Boolean(p && (this.form.freestyle ? true : p.approved) && (this.productData(p).images || []).length); },
+        selectedProductHasImage() { return this.productUsable(this.selectedProduct()); },
+        brandTemplates() { const b = this.selectedBrand(); const d = b ? (this.form.freestyle ? (b.approved || b.draft) : b.approved) : null; return (d && d.sceneTemplates) || []; },
+        freestyleLeft() { return (this.budget.freestyle && this.budget.freestyle.left) || 0; },
+        readyToGenerate() {
+            if (this.form.freestyle) return Boolean(this.brand && this.freestyleLeft() > 0 && (!this.form.productId || this.selectedProductHasImage()));
+            return Boolean(this.brand && this.form.brandId && this.selectedBrand() && this.selectedBrand().approved && this.selectedProductHasImage());
+        },
+        activeReasons() { return (this.form.freestyle ? this.budget.freestyleReasons : this.budget.reasons) || []; },
         canSubmit() {
             const t = this.form.templateIndex !== '' && this.form.templateIndex !== null && this.form.templateIndex !== undefined;
-            return this.readyToGenerate() && this.status.configured && this.budget.canGenerate && !this.busy.image && (t || (this.form.scene || '').trim().length >= 5);
+            return this.readyToGenerate() && this.status.configured && !this.activeReasons().length && !this.busy.image && (t || (this.form.scene || '').trim().length >= 5);
         },
+        toggleFreestyle() {
+            this.form.freestyle = !this.form.freestyle;
+            if (!this.form.freestyle) {
+                const b = this.selectedBrand();
+                if (!b || !b.approved) { const ab = this.kTree.brands.find(x => x.approved); this.form.brandId = ab ? ab._id : ''; }
+                this.form.templateIndex = '';
+                this.pickFirstProduct();
+            }
+        },
+        promptPlaceholder() {
+            if (this.form.freestyle) {
+                if (!this.brand) return 'Select a company to begin';
+                if (this.freestyleLeft() <= 0) return "You've used all your freestyle pieces this month";
+                return 'Describe the background scene...';
+            }
+            return this.readyToGenerate() ? 'Describe the background scene...' : 'Select a client-approved brand to begin';
+        },
+        canAddToBank() { return ['admin', 'brand_rep'].includes(this.user && this.user.role); },
         productName() { const p = this.selectedProduct(); return p ? this.kData(p).name : ''; },
         brandPillLabel() {
             if (!this.brand) return 'Select company';
             const b = this.selectedBrand(); const p = this.selectedProduct();
+            if (this.form.freestyle) return [this.brand.name, b ? this.kData(b).name : 'no brand info', p ? this.kData(p).name : 'no product'].join(' › ');
             if (!b) return this.brand.name + ' › choose brand';
             return [b.approved ? b.approved.name : this.kData(b).name, p ? this.kData(p).name : 'choose product'].join(' › ');
         },
@@ -425,7 +492,7 @@ function aiStudioApp() {
         ringColour(used, total) { const f = total ? (used || 0) / total : 0; return f >= 1 ? 'stroke-red-500' : f >= 0.8 ? 'stroke-amber-500' : 'stroke-indigo-500'; },
         newEntry(o) {
             return Object.assign({ key: 'g' + Date.now() + Math.random().toString(36).slice(2, 6), prompt: '', productName: '', aspectRatio: '1:1', placement: 'centre', previews: 3,
-                loading: false, error: null, gen: null, choosing: false, sending: false, sent: false, brandId: null, productId: null,
+                loading: false, error: null, gen: null, choosing: false, sending: false, sent: false, brandId: null, productId: null, freestyle: false, banking: false, banked: false,
                 cap: { loading: false, error: null, gen: null, edits: [], flags: [], approvedIndex: null } }, o);
         },
         scrollFeed() { this.$nextTick(() => { const el = document.getElementById('ais-feed'); if (el) el.lastElementChild && el.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' }); }); },
@@ -439,7 +506,7 @@ function aiStudioApp() {
                 this.generations = imgs.map(r => {
                     const c = caps.find(x => String(x.imageGenerationId) === String(r._id));
                     const e = this.newEntry({ key: r._id, prompt: r.userBrief, productName: '', aspectRatio: r.aspectRatio || '1:1', previews: r.previewsRequested || r.previews.length,
-                        gen: r, sent: Boolean(r.conceptId), brandId: r.brandItemId, productId: r.productId, history: true });
+                        gen: r, sent: Boolean(r.conceptId), banked: Boolean(r.contentBankConceptId), freestyle: Boolean(r.freestyle), brandId: r.brandItemId, productId: r.productId, history: true });
                     const prod = this.kTree.brands.flatMap(b => b.products || []).find(p => p._id === String(r.productId));
                     e.productName = prod ? this.kData(prod).name : '';
                     if (c) {
@@ -514,7 +581,7 @@ function aiStudioApp() {
             const tpl = this.form.templateIndex !== '' ? this.brandTemplates()[parseInt(this.form.templateIndex, 10)] : null;
             const promptText = [tpl ? tpl.name : '', (this.form.scene || '').trim()].filter(Boolean).join(': ');
             const entry = this.newEntry({ prompt: promptText, productName: this.productName(), aspectRatio: this.form.aspectRatio, placement: this.form.placement,
-                previews: Math.max(1, Math.min(3, this.form.previews || 3)), loading: true, brandId: this.form.brandId, productId: this.form.productId });
+                previews: Math.max(1, Math.min(3, this.form.previews || 3)), loading: true, brandId: this.form.brandId, productId: this.form.productId, freestyle: this.form.freestyle });
             this.generations.push(entry);
             const g = this.generations[this.generations.length - 1];
             const body = { ...this.form };
@@ -543,7 +610,7 @@ function aiStudioApp() {
             g.cap.loading = true; g.cap.error = null; this.scrollFeed();
             try {
                 const brief = `Post featuring ${g.productName || 'the product'}. Scene: ${g.prompt || 'product photo'}`.slice(0, 1500);
-                const d = await this.api(`/brands/${this.brand._id}/captions`, { method: 'POST', body: JSON.stringify({ brief, brandId: g.brandId || this.form.brandId, productId: g.productId || undefined, imageGenerationId: g.gen._id }) });
+                const d = await this.api(`/brands/${this.brand._id}/captions`, { method: 'POST', body: JSON.stringify({ brief, brandId: g.brandId || (g.freestyle ? undefined : this.form.brandId), productId: g.productId || undefined, imageGenerationId: g.gen._id, freestyle: g.freestyle }) });
                 g.cap.gen = d.generation; g.cap.edits = [...d.generation.captionOptions]; g.cap.flags = d.flags || []; g.cap.approvedIndex = null;
             } catch (e) { g.cap.error = e.message; }
             finally { g.cap.loading = false; this.scrollFeed(); }
@@ -562,11 +629,24 @@ function aiStudioApp() {
             } catch (e) { this.showToast(e.message, 'error'); }
             finally { g.sending = false; }
         },
+        async addToContentBank(g) {
+            g.banking = true;
+            try {
+                await this.api(`/generations/${g.gen._id}/add-to-content-bank`, { method: 'POST', body: JSON.stringify({ captionGenerationId: g.cap.gen ? g.cap.gen._id : undefined }) });
+                g.banked = true; this.showToast('Added to the Content Bank as pending client approval. Nothing has been posted or emailed.');
+            } catch (e) { this.showToast(e.message, 'error'); }
+            finally { g.banking = false; }
+        },
+        async loadFreestyleLimits() { if (!this.status.isAdmin) return; try { this.freestyleLimits = await this.api('/freestyle/limits'); } catch (e) { this.showToast(e.message, 'error'); } },
+        async saveFreestyleCap(u) {
+            try { await this.api(`/freestyle/limits/${u.userId}`, { method: 'PUT', body: JSON.stringify({ cap: u.capInput === '' || u.capInput === undefined ? null : Number(u.capInput) }) }); this.showToast('Freestyle limit saved.'); await this.loadFreestyleLimits(); if (this.brand) await this.refreshBrand(); }
+            catch (e) { this.showToast(e.message, 'error'); }
+        },
         async saveBudget(body) {
             try { const d = await this.api(`/brands/${this.brand._id}/budget`, { method: 'PUT', body: JSON.stringify(body) }); this.budget = d.budget; this.showToast('Budget updated.'); this.loadUsage(); }
             catch (e) { this.showToast(e.message, 'error'); }
         },
-        async loadUsage() { if (!this.status.isAdmin) return; try { this.usage = await this.api('/usage'); } catch (e) { this.showToast(e.message, 'error'); } },
+        async loadUsage() { if (!this.status.isAdmin) return; try { this.usage = await this.api('/usage'); } catch (e) { this.showToast(e.message, 'error'); } this.loadFreestyleLimits(); },
         logout() { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = LOGIN_URL; }
     };
 }
