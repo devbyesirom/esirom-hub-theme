@@ -5,6 +5,11 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.71] - 2026-10-30
+
+### Added
+- **AI Studio (beta, admins first)** at `/ai-studio/`: product-safe AI scenes (Gemini, 2K) with the real product cut-out composited on top and a pixel check that blocks altered products; on-voice caption suggestions (3 options) learned from approved Content Bank captions and top-performing synced posts, with human approval; brand profiles (company, products, voice, do/don't words, hashtags, emoji use) editable by staff; product library; monthly image allowance from the client's posts-per-month allocation, admin top-up and pause, per-person daily cap; admin usage and estimated-cost dashboard. Finished work is sent to Workflow for review; nothing is posted automatically. Needs backend `feat/ai-studio` and `GEMINI_API_KEY`.
+
 ## [2.3.66] - 2026-10-29
 
 ### Fixed

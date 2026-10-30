@@ -22,6 +22,7 @@ $hub_dashboard_url = esc_url(esirom_hub_page_url('dashboard'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
 $hub_messages_url = esc_url(esirom_hub_page_url('messages'));
 $hub_ads_url = esc_url(esirom_hub_page_url('ads'));
+$hub_ai_studio_url = esc_url(esirom_hub_page_url('ai-studio'));
 $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
@@ -49,7 +50,7 @@ $hub_current = function ($key) use ($hub_tab_is_active) {
 
 $hub_more_active = in_array($hub_mobile_active, [
     'overview', 'messages', 'event_coverage', 'password_vault', 'website_projects',
-    'inventory', 'ads', 'admin', 'content_calendar'
+    'inventory', 'ads', 'ai_studio', 'admin', 'content_calendar'
 ], true);
 
 $hub_more_tab_class = 'hub-tab' . ($hub_more_active ? ' is-active' : '');
@@ -208,6 +209,7 @@ $hub_icon = function ($name) use ($hub_icons) {
                 <a href="<?php echo $hub_website_projects_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('website'); ?> Website Projects</a>
                 <a href="<?php echo $hub_inventory_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('inventory'); ?> Inventory</a>
                 <a href="<?php echo $hub_ads_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('ads'); ?> Ads</a>
+                <a x-show="user?.role === 'admin'" href="<?php echo $hub_ai_studio_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('ads'); ?> AI Studio</a>
                 <a x-show="user?.role === 'admin' && viewMode === 'admin'" href="<?php echo $hub_admin_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('admin'); ?> Admin Panel</a>
             </div>
         </div>

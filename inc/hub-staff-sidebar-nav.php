@@ -4,7 +4,7 @@
  * Grouped into collapsible sections to save vertical space.
  *
  * Expects:
- *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|messages|ads|progress|inventory|website_projects
+ *   $hub_nav_active   string  workflow|overview|password_vault|insights|reports|event_coverage|published_posts|content_calendar|messages|ads|ai_studio|progress|inventory|website_projects
  *   $hub_nav_context  string  site|dashboard
  *   $hub_nav_alpine_labels bool
  */
@@ -23,6 +23,7 @@ $hub_overview_url = esc_url(esirom_hub_page_url('overview'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
 $hub_messages_url = esc_url(esirom_hub_page_url('messages'));
 $hub_ads_url = esc_url(esirom_hub_page_url('ads'));
+$hub_ai_studio_url = esc_url(esirom_hub_page_url('ai-studio'));
 $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
@@ -133,9 +134,9 @@ $hub_view_class = function ($view) {
     </div>
 
     <!-- ── Social Media ───────────────────────────────────────────────────── -->
-    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_social', ['published_posts', 'content_calendar', 'messages', 'ads']); ?> }"
+    <div x-data="{ open: <?php echo $hub_group_init_open('hubNav_social', ['published_posts', 'content_calendar', 'messages', 'ads', 'ai_studio']); ?> }"
          x-init="$watch('open', v => localStorage.setItem('hubNav_social', v ? '1' : '0'))">
-        <button type="button" @click="open = !open" :aria-expanded="open" class="<?php echo esc_attr($hub_group_header_class(['published_posts', 'content_calendar', 'messages', 'ads'])); ?>">
+        <button type="button" @click="open = !open" :aria-expanded="open" class="<?php echo esc_attr($hub_group_header_class(['published_posts', 'content_calendar', 'messages', 'ads', 'ai_studio'])); ?>">
             <span<?php echo $hub_label_attrs; ?>>Social Media</span>
             <svg class="w-3 h-3 transition-transform flex-shrink-0" :class="open ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
@@ -162,6 +163,11 @@ $hub_view_class = function ($view) {
             <a href="<?php echo $hub_ads_url; ?>" class="<?php echo esc_attr($hub_sub_class('ads')); ?>"<?php echo $hub_current('ads'); ?>>
                 <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L15 6.75m-3-3v11.25m9-5.25H9"/></svg>
                 <span class="nav-text"<?php echo $hub_label_attrs; ?>>Ads</span>
+            </a>
+            <?php /* AI Studio: feature-flagged, admins first (backend AI_STUDIO_ENABLED). */ ?>
+            <a x-show="user?.role === 'admin'" x-cloak href="<?php echo $hub_ai_studio_url; ?>" class="<?php echo esc_attr($hub_sub_class('ai_studio')); ?>"<?php echo $hub_current('ai_studio'); ?>>
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+                <span class="nav-text"<?php echo $hub_label_attrs; ?>>AI Studio</span>
             </a>
         </div>
     </div>
