@@ -5,6 +5,17 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.74] - 2026-10-30
+### Added
+- Messages is now a unified inbox: Facebook and Instagram post comments sit alongside Messenger and Instagram DMs.
+- Comments show the post thumbnail, caption and link, plus the reply thread.
+- Reply to a comment publicly on the post or privately by DM (Meta allows one private reply per comment, within 7 days).
+- Hide, unhide or delete comments when the brand's Meta permissions allow it.
+- Mark any item done (it reopens if new activity arrives) or assign it to a team member.
+- Filter by channel, type (DMs or comments), open or done, unanswered, and assignee.
+- AI suggested replies now work on comments too, under the same rules: never sent automatically, sensitive items flagged and confirmed, every reply logged.
+- A banner lists any Meta permissions missing from the brand's Page token.
+
 ## [2.3.73] - 2026-10-30
 ### Added
 - Inbox: "Suggest replies" gives 3 AI reply options for a DM, using the client-approved brand profile and voice plus replies your team actually sent. Staff click one to put it in the reply box, edit, then press Send — nothing is sent automatically.
