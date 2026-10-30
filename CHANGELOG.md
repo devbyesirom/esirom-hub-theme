@@ -5,6 +5,16 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.75] - 2026-10-30
+### Changed
+- AI Studio Create is now a conversational canvas. Each generation appears as a message in a scrollable feed: your prompt, then 1-3 previews side by side.
+- Choosing a preview reveals 3 captions straight underneath. "Send to review" sits on the final image and caption pair.
+- A sticky prompt bar has pill pickers for Company › Brand › Product (client-approved only), Format, Position, Previews and Scene template, with a spark Generate button inside the input. Press Enter to generate and Shift+Enter for a new line.
+- If no client-approved brand and product is selected, the input is disabled and its placeholder reads "Select a client-approved brand to begin".
+- The budget cards are replaced by compact header indicators: image and daily-request rings, previews left, and estimated cost.
+- Shimmer skeletons show while images and captions are generated. The brand's recent generations reload from the log, so you can scroll back.
+- Backend endpoints, caps, the product check and approval rules are unchanged.
+
 ## [2.3.74] - 2026-10-30
 ### Added
 - Messages is now a unified inbox: Facebook and Instagram post comments sit alongside Messenger and Instagram DMs.
