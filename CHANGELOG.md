@@ -5,6 +5,12 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.82] - 2026-11-10
+
+### Added
+- Workflow: **Direct Upload** button beside New Concept (Dashboard header and Concepts tab). Staff who can create concepts can upload finished content (images, or a YouTube link for video and reels) with a caption, pick the brand, platforms and an optional post date, and send it straight to the client for approval. It skips the concept, production and internal review stages, lands in the Content Bank as awaiting client approval and sends the usual "New content ready for review" notification and email to that brand's client users.
+- "Direct upload" badges on Content Bank cards, the Content Bank detail view ("Direct upload by …") and the Feed (staff only).
+
 ## [2.3.80] - 2026-10-30
 
 ### Added
