@@ -5,6 +5,12 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.83] - 2026-11-10
+
+### Changed
+- Workflow: one upload flow. The Content Bank's "Upload Pre-Approved Content" button is replaced by **Direct Upload**, which now has a "Client has already approved this" tick box. Ticked, the item is saved as Client Approved and no review email is sent to the client. Unticked, it goes to the client for review as before.
+- Pipeline card "Approved Internally" renamed to **Awaiting Client**, along with the matching status filter options (the stored status is unchanged).
+
 ## [2.3.82] - 2026-11-10
 
 ### Added
