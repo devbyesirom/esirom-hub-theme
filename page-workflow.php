@@ -380,7 +380,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <h2 class="text-lg font-bold text-gray-900 dark:text-white" x-text="'Good ' + getGreeting() + ', ' + (user.firstName || 'there')"></h2>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5" x-text="currentDate"></p>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <button @click="loadInitialData()" title="Refresh data" class="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             </button>
@@ -388,9 +388,13 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                                 Customise
                             </button>
-                            <button @click="openConceptModal()" class="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-indigo-200 dark:shadow-none">
+                            <button @click="openConceptModal()" class="flex items-center gap-2 whitespace-nowrap px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-indigo-200 dark:shadow-none">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 New Concept
+                            </button>
+                            <button x-show="viewMode !== 'client' && (user.role === 'admin' || user.role === 'brand_rep')" @click="openDirectUploadModal()" title="Upload finished content with a caption and send it straight to the client for approval" class="flex items-center gap-2 whitespace-nowrap px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-emerald-200 dark:shadow-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Direct Upload
                             </button>
                         </div>
                     </div>
@@ -614,10 +618,16 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 Clear Efficiency Filter
                             </button>
                         </div>
-                        <button @click="openConceptModal()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center space-x-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>New Concept</span>
-                        </button>
+                        <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                            <button @click="openConceptModal()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                <span>New Concept</span>
+                            </button>
+                            <button x-show="viewMode !== 'client' && (user.role === 'admin' || user.role === 'brand_rep')" @click="openDirectUploadModal()" title="Upload finished content with a caption and send it straight to the client for approval" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                <span>Direct Upload</span>
+                            </button>
+                        </div>
                     </div>
                     <div x-show="efficiencyAssigneeFilter" class="mb-4 px-4 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 text-sm text-indigo-700 dark:text-indigo-300">
                         Showing concepts assigned in <span class="font-semibold" x-text="new Date(efficiencyYear, efficiencyMonth - 1, 1).toLocaleString('en-GB', { month: 'long', year: 'numeric' })"></span> for this team member.
@@ -996,8 +1006,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                         </div>
                                     </template>
                                     <!-- Approval Status Badge -->
-                                    <div class="absolute top-3 right-3">
+                                    <div class="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                                         <span :class="getClientApprovalClass(item.clientApprovalStatus)" class="px-3 py-1 text-xs font-semibold rounded-full shadow-lg" x-text="formatClientApprovalStatus(item.clientApprovalStatus)"></span>
+                                        <span x-show="item.isDirectUpload && viewMode !== 'client'" class="px-2.5 py-1 text-xs font-semibold rounded-full shadow-lg bg-emerald-600 text-white" :title="'Direct upload by ' + directUploaderName(item)">Direct upload</span>
                                     </div>
                                     <!-- Scheduled Badge -->
                                     <template x-if="item.scheduledPostDate">
@@ -1452,6 +1463,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                                 <div class="flex items-center gap-2 mb-1">
                                                     <svg class="w-4 h-4" :class="getFeedColor(item.type)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getFeedIcon(item.type)"></path></svg>
                                                     <span class="text-xs font-medium px-2 py-0.5 rounded-full" :class="item.type === 'client_feedback' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'" x-text="getFeedLabel(item.type)"></span>
+                                                    <span x-show="item.isDirectUpload && viewMode !== 'client'" class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Direct upload</span>
                                                     <span class="text-xs text-gray-400" x-text="formatDateTime(item.createdAt)"></span>
                                                 </div>
                                                 <h4 class="font-semibold text-gray-900 dark:text-white text-sm" x-text="item.conceptTitle"></h4>
@@ -2911,6 +2923,106 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             </div>
         </div>
 
+        <!-- Direct Upload Modal: finished content straight to client approval -->
+        <div x-show="showDirectUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="if (!directUploadSubmitting) showDirectUploadModal = false">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div x-show="showDirectUploadModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="if (!directUploadSubmitting) showDirectUploadModal = false"></div>
+                <div x-show="showDirectUploadModal" x-transition class="relative inline-block w-full max-w-2xl overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-gray-800 rounded-2xl shadow-xl sm:my-8 sm:align-middle">
+                    <div class="px-6 py-4 border-b dark:border-gray-700">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Direct Upload</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Finished content that doesn't need the team? Upload it with a caption and send it straight to the client for approval.</p>
+                            </div>
+                            <button type="button" @click="showDirectUploadModal = false" :disabled="directUploadSubmitting" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <form @submit.prevent="submitDirectUpload()" class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brand *</label>
+                            <select x-model="directUploadForm.clientId" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Select a brand</option>
+                                <template x-for="client in clients" :key="client._id">
+                                    <option :value="client._id" x-text="client.brandName || client.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title <span class="font-normal text-gray-400">(optional)</span></label>
+                            <input x-model="directUploadForm.title" type="text" maxlength="120" placeholder="Leave blank to use the first line of the caption" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Caption *</label>
+                            <textarea x-model="directUploadForm.caption" rows="4" required placeholder="The caption that will be posted with this content…" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Platforms</label>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="p in directUploadPlatforms" :key="p.value">
+                                    <button type="button" @click="toggleDirectUploadPlatform(p.value)" :class="directUploadForm.platforms.includes(p.value) ? 'border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200 ring-1 ring-emerald-500' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'" class="px-3 py-1.5 rounded-lg border text-sm transition-all" x-text="p.label"></button>
+                                </template>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content type *</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <template x-for="t in directUploadTypes" :key="t.value">
+                                    <button type="button" @click="directUploadForm.contentType = t.value" :class="directUploadForm.contentType === t.value ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 ring-2 ring-emerald-500' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'" class="p-2.5 rounded-lg border text-left transition-all">
+                                        <span class="block text-sm font-semibold text-gray-900 dark:text-white" x-text="t.label"></span>
+                                        <span class="block text-xs text-gray-500 mt-0.5" x-text="t.hint"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <div x-show="!directUploadIsVideo()">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Images * <span class="font-normal text-gray-400">(up to 10, in posting order)</span></label>
+                            <label class="flex flex-col items-center justify-center w-full px-4 py-5 border-2 border-dashed rounded-xl cursor-pointer border-gray-300 dark:border-gray-600 hover:border-emerald-400 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors" :class="directUploadDragOver ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : ''" @dragover.prevent="directUploadDragOver = true" @dragleave.prevent="directUploadDragOver = false" @drop.prevent="directUploadDragOver = false; addDirectUploadFiles($event.dataTransfer.files)">
+                                <svg class="w-7 h-7 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Click to choose images or drop them here</span>
+                                <span class="text-xs text-gray-400 mt-0.5">PNG, JPG or WEBP, 15 MB max each</span>
+                                <input id="directUploadFiles" type="file" multiple accept="image/*" class="hidden" @change="addDirectUploadFiles($event.target.files); $event.target.value = ''" />
+                            </label>
+                            <div x-show="directUploadForm.files.length" class="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-3">
+                                <template x-for="(f, idx) in directUploadForm.files" :key="f.key">
+                                    <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 group">
+                                        <img :src="f.preview" class="w-full h-full object-cover" :alt="f.file.name">
+                                        <span class="absolute bottom-1 left-1 px-1.5 text-[10px] font-semibold bg-black/60 text-white rounded" x-text="idx + 1"></span>
+                                        <button type="button" @click="removeDirectUploadFile(idx)" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="Remove image">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div x-show="directUploadIsVideo()">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube link *</label>
+                            <input x-model="directUploadForm.youtubeLink" type="url" placeholder="https://youtube.com/watch?v=… or https://youtu.be/…" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <p class="text-xs text-gray-500 mt-1">Videos and reels are shared through an unlisted YouTube link, as with the rest of the Content Bank.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Planned post date <span class="font-normal text-gray-400">(optional)</span></label>
+                            <input x-model="directUploadForm.scheduledPostDate" type="date" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <p class="text-xs text-gray-500 mt-1">Also used as the client's approval deadline. If left blank, the deadline is 3 days from today.</p>
+                        </div>
+                        <div class="flex gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-900 dark:text-emerald-200">
+                            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>This skips the concept, production and internal review stages. It goes into the Content Bank as awaiting client approval, and the brand's client users get the usual "New content ready for review" email straight away.</span>
+                        </div>
+                        <button type="submit" class="hidden"></button>
+                    </form>
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-end gap-3">
+                        <button type="button" @click="showDirectUploadModal = false" :disabled="directUploadSubmitting" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500">Cancel</button>
+                        <button type="button" @click="submitDirectUpload()" :disabled="directUploadSubmitting" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-60 flex items-center gap-2">
+                            <svg x-show="directUploadSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                            <span x-text="directUploadSubmitting ? 'Sending…' : 'Send to Client for Approval'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Content Bank Detail Modal -->
         <div x-show="showContentBankDetail" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showContentBankDetail = false">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
@@ -2925,6 +3037,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             </div>
                             <div class="flex items-center gap-3">
                                 <span :class="getClientApprovalClass(selectedContentBankItem?.clientApprovalStatus)" class="px-3 py-1 text-sm rounded-full" x-text="formatClientApprovalStatus(selectedContentBankItem?.clientApprovalStatus)"></span>
+                                <span x-show="selectedContentBankItem?.isDirectUpload && viewMode !== 'client'" class="px-3 py-1 text-sm rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" x-text="'Direct upload by ' + directUploaderName(selectedContentBankItem)"></span>
                                 <button @click="showContentBankDetail = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
@@ -3399,6 +3512,23 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 conceptDragOver: false,
                 contentBankDragOver: false,
                 showManualUploadModal: false,
+                showDirectUploadModal: false,
+                directUploadSubmitting: false,
+                directUploadDragOver: false,
+                directUploadForm: { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', files: [] },
+                directUploadPlatforms: [
+                    { value: 'instagram', label: 'Instagram' },
+                    { value: 'facebook', label: 'Facebook' },
+                    { value: 'linkedin', label: 'LinkedIn' },
+                    { value: 'youtube', label: 'YouTube' },
+                    { value: 'x', label: 'X' }
+                ],
+                directUploadTypes: [
+                    { value: 'graphic', label: 'Image', hint: 'Single image' },
+                    { value: 'carousel', label: 'Carousel', hint: 'Several images' },
+                    { value: 'story', label: 'Story', hint: 'Image story' },
+                    { value: 'reel', label: 'Video / Reel', hint: 'YouTube link' }
+                ],
                 manualUploadForm: {
                     clientId: '',
                     title: '',
@@ -5513,6 +5643,103 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     } catch (error) {
                         console.error('Manual upload error:', error);
                         this.showToast('Failed to upload content', 'error');
+                    }
+                },
+
+                openDirectUploadModal() {
+                    if (!(this.user.role === 'admin' || this.user.role === 'brand_rep')) return;
+                    this.resetDirectUploadForm();
+                    this.showDirectUploadModal = true;
+                },
+
+                resetDirectUploadForm() {
+                    (this.directUploadForm.files || []).forEach((f) => { try { URL.revokeObjectURL(f.preview); } catch (e) {} });
+                    this.directUploadForm = { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', files: [] };
+                    this.directUploadDragOver = false;
+                },
+
+                directUploadIsVideo() {
+                    return ['reel', 'video'].includes(this.directUploadForm.contentType);
+                },
+
+                toggleDirectUploadPlatform(value) {
+                    const list = this.directUploadForm.platforms;
+                    const i = list.indexOf(value);
+                    if (i >= 0) { if (list.length > 1) list.splice(i, 1); } else { list.push(value); }
+                },
+
+                addDirectUploadFiles(fileList) {
+                    const incoming = Array.from(fileList || []);
+                    let skipped = 0;
+                    for (const file of incoming) {
+                        if (!file.type || !file.type.startsWith('image/')) { skipped++; continue; }
+                        if (file.size > 15 * 1024 * 1024) { this.showToast(`"${file.name}" is over 15 MB`, 'error'); continue; }
+                        if (this.directUploadForm.files.length >= 10) { this.showToast('You can upload up to 10 images', 'error'); break; }
+                        this.directUploadForm.files.push({ key: `${Date.now()}-${Math.random()}`, file, preview: URL.createObjectURL(file) });
+                    }
+                    if (skipped) this.showToast('Only images can be uploaded. Use Video / Reel with a YouTube link for videos.', 'error');
+                    if (this.directUploadForm.files.length > 1 && this.directUploadForm.contentType === 'graphic') this.directUploadForm.contentType = 'carousel';
+                },
+
+                removeDirectUploadFile(idx) {
+                    const [removed] = this.directUploadForm.files.splice(idx, 1);
+                    if (removed) { try { URL.revokeObjectURL(removed.preview); } catch (e) {} }
+                },
+
+                directUploaderName(item) {
+                    const u = item?.directUploadedBy && typeof item.directUploadedBy === 'object' ? item.directUploadedBy : item?.createdBy;
+                    const name = [u?.firstName, u?.lastName].filter(Boolean).join(' ').trim();
+                    return name || 'a team member';
+                },
+
+                async submitDirectUpload() {
+                    if (this.directUploadSubmitting) return;
+                    const f = this.directUploadForm;
+                    const isVideo = this.directUploadIsVideo();
+                    if (!f.clientId) { this.showToast('Please choose a brand', 'error'); return; }
+                    if (!f.caption.trim()) { this.showToast('Please add a caption', 'error'); return; }
+                    if (isVideo && !f.youtubeLink.trim()) { this.showToast('Please paste the YouTube link for the video', 'error'); return; }
+                    if (!isVideo && !f.files.length) { this.showToast('Please add at least one image', 'error'); return; }
+
+                    const formData = new FormData();
+                    formData.append('clientId', f.clientId);
+                    formData.append('title', f.title.trim());
+                    formData.append('caption', f.caption.trim());
+                    formData.append('platform', f.platforms.join(','));
+                    formData.append('mediaType', isVideo ? 'video' : 'image');
+                    formData.append('contentType', f.contentType);
+                    if (f.scheduledPostDate) formData.append('scheduledPostDate', f.scheduledPostDate);
+                    if (isVideo) formData.append('youtubeLink', f.youtubeLink.trim());
+                    else f.files.forEach((x) => formData.append('files', x.file, x.file.name));
+
+                    this.directUploadSubmitting = true;
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${API_URL}/content-bank/direct-upload`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok || !data.success) {
+                            this.showToast(data.message || 'Failed to send the upload', 'error', 5000);
+                            return;
+                        }
+                        const brand = data.concept?.clientId?.brandName || data.concept?.clientId?.name || 'the client';
+                        if (data.clientsNotified > 0) {
+                            this.showToast(`Sent to ${brand} for approval`, 'success', 4000);
+                        } else {
+                            this.showToast(`Added to the Content Bank for ${brand}, but this brand has no client logins yet, so nobody was emailed`, 'warning', 7000);
+                        }
+                        this.showDirectUploadModal = false;
+                        this.resetDirectUploadForm();
+                        await this.loadInitialData();
+                        if (this.activeTab === 'contentBank') await this.loadContentBank();
+                    } catch (error) {
+                        console.error('Direct upload error:', error);
+                        this.showToast('Failed to send the upload', 'error');
+                    } finally {
+                        this.directUploadSubmitting = false;
                     }
                 },
 
