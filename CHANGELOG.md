@@ -5,6 +5,14 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.84] - 2026-11-10
+
+### Added
+- Clients: **Share Content for Posting**. A button on the client Dashboard (header, and at the top on mobile) and in the Content Bank lets clients share photos or a video they have already approved, for example from an event, internal content or supplier content. They add a caption, platforms, content type, up to 10 photos or one video, an optional preferred post date and an optional note to the team. It is saved as Client Approved (counted on the Client Approved card) with the client recorded as submitter and approver, and the brand's reps (or admins if the brand has no rep) are notified in the Hub and by email that it is ready to schedule and post. The client sees an on-screen confirmation only.
+- "Client upload" badges for staff on Content Bank cards, the detail view and the Feed; the detail view shows who shared it, the preferred post date and the note.
+- Video file uploads (MP4 or MOV, including iPhone HEVC videos, up to 100 MB) in both Share Content for Posting and staff Direct Upload, with a progress bar. Videos upload straight from the browser to Cloudinary in chunks and play in the Content Bank cards and detail view. A YouTube link remains an optional alternative.
+- Photos: iPhone HEIC photos are accepted (converted to JPEG) and very large photos are resized in the browser before upload.
+
 ## [2.3.83] - 2026-11-10
 
 ### Changed

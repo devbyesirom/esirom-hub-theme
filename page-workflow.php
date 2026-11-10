@@ -971,6 +971,10 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             <span>Direct Upload</span>
                         </button>
+                        <button x-show="viewMode === 'client'" @click="openDirectUploadModal('client')" title="Share photos or a video you've already approved, and our team will schedule and post it" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span>Share Content for Posting</span>
+                        </button>
                     </div>
 
                     <!-- Gallery Grid -->
@@ -982,7 +986,17 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     <template x-if="getDesignPreview(item)">
                                         <img :src="getDesignPreview(item)" :alt="item.title" class="w-full h-full object-cover" />
                                     </template>
-                                    <template x-if="!getDesignPreview(item) && isVideoConcept(item) && item.youtubeLink">
+                                    <template x-if="!getDesignPreview(item) && getContentBankVideo(item)">
+                                        <div class="absolute inset-0 bg-black">
+                                            <img x-show="getContentBankVideo(item).posterUrl" :src="getContentBankVideo(item).posterUrl || ''" :alt="item.title" class="w-full h-full object-cover" loading="lazy" />
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                <div class="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center shadow-lg">
+                                                    <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!getDesignPreview(item) && !getContentBankVideo(item) && isVideoConcept(item) && item.youtubeLink">
                                         <div class="absolute inset-0">
                                             <img :src="getYoutubeThumbnail(item.youtubeLink)" :alt="item.title" class="w-full h-full object-cover" />
                                             <div class="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -998,7 +1012,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                             <span x-text="getDesignPreviews(item).length"></span>
                                         </div>
                                     </template>
-                                    <template x-if="!getDesignPreview(item) && !(isVideoConcept(item) && item.youtubeLink)">
+                                    <template x-if="!getDesignPreview(item) && !getContentBankVideo(item) && !(isVideoConcept(item) && item.youtubeLink)">
                                         <div class="flex items-center justify-center h-full">
                                             <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -1009,6 +1023,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     <div class="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                                         <span :class="getClientApprovalClass(item.clientApprovalStatus)" class="px-3 py-1 text-xs font-semibold rounded-full shadow-lg" x-text="formatClientApprovalStatus(item.clientApprovalStatus)"></span>
                                         <span x-show="item.isDirectUpload && viewMode !== 'client'" class="px-2.5 py-1 text-xs font-semibold rounded-full shadow-lg bg-emerald-600 text-white" :title="'Direct upload by ' + directUploaderName(item)">Direct upload</span>
+                                        <span x-show="item.isClientUpload && viewMode !== 'client'" class="px-2.5 py-1 text-xs font-semibold rounded-full shadow-lg bg-sky-600 text-white" :title="'Shared for posting by ' + directUploaderName(item)">Client upload</span>
                                     </div>
                                     <!-- Scheduled Badge -->
                                     <template x-if="item.scheduledPostDate">
@@ -1464,6 +1479,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                                     <svg class="w-4 h-4" :class="getFeedColor(item.type)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getFeedIcon(item.type)"></path></svg>
                                                     <span class="text-xs font-medium px-2 py-0.5 rounded-full" :class="item.type === 'client_feedback' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'" x-text="getFeedLabel(item.type)"></span>
                                                     <span x-show="item.isDirectUpload && viewMode !== 'client'" class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Direct upload</span>
+                                                    <span x-show="item.isClientUpload && viewMode !== 'client'" class="text-xs font-medium px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300">Client upload</span>
                                                     <span class="text-xs text-gray-400" x-text="formatDateTime(item.createdAt)"></span>
                                                 </div>
                                                 <h4 class="font-semibold text-gray-900 dark:text-white text-sm" x-text="item.conceptTitle"></h4>
@@ -2844,27 +2860,31 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         </div>
 
         <!-- Direct Upload Modal: finished content straight to client approval -->
-        <div x-show="showDirectUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="if (!directUploadSubmitting) showDirectUploadModal = false">
+        <div x-show="showDirectUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="if (showDirectUploadModal) closeDirectUploadModal()">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-                <div x-show="showDirectUploadModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="if (!directUploadSubmitting) showDirectUploadModal = false"></div>
+                <div x-show="showDirectUploadModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeDirectUploadModal()"></div>
                 <div x-show="showDirectUploadModal" x-transition class="relative inline-block w-full max-w-2xl overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-gray-800 rounded-2xl shadow-xl sm:my-8 sm:align-middle">
                     <div class="px-6 py-4 border-b dark:border-gray-700">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Direct Upload</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Finished content that doesn't need the team? Upload it with a caption and send it straight to the client for approval, or add it as already approved.</p>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white" x-text="directUploadMode === 'client' ? 'Share Content for Posting' : 'Direct Upload'"></h3>
+                                <p x-show="directUploadMode !== 'client'" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Finished content that doesn't need the team? Upload it with a caption and send it straight to the client for approval, or add it as already approved.</p>
+                                <p x-show="directUploadMode === 'client'" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Got photos or a video you've already approved, such as from an event or a supplier? Share them with a caption and our team will schedule and post them for you.</p>
                             </div>
-                            <button type="button" @click="showDirectUploadModal = false" :disabled="directUploadSubmitting" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close">
+                            <button type="button" @click="closeDirectUploadModal()" :disabled="directUploadSubmitting" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                     </div>
                     <form @submit.prevent="submitDirectUpload()" class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                        <div>
+                        <div x-show="directUploadMode === 'client' && shareBrandOptions().length === 1" class="text-sm text-gray-700 dark:text-gray-300">
+                            Sharing for <span class="font-semibold" x-text="shareBrandOptions()[0]?.brandName || shareBrandOptions()[0]?.name"></span>
+                        </div>
+                        <div x-show="directUploadMode !== 'client' || shareBrandOptions().length > 1">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Brand *</label>
                             <select x-model="directUploadForm.clientId" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">Select a brand</option>
-                                <template x-for="client in clients" :key="client._id">
+                                <template x-for="client in (directUploadMode === 'client' ? shareBrandOptions() : clients)" :key="client._id">
                                     <option :value="client._id" x-text="client.brandName || client.name"></option>
                                 </template>
                             </select>
@@ -2875,7 +2895,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Caption *</label>
-                            <textarea x-model="directUploadForm.caption" rows="4" required placeholder="The caption that will be posted with this content…" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            <textarea x-model="directUploadForm.caption" rows="4" required :placeholder="directUploadMode === 'client' ? 'The caption you would like posted with this content…' : 'The caption that will be posted with this content…'" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Platforms</label>
@@ -2900,14 +2920,19 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Images * <span class="font-normal text-gray-400">(up to 10, in posting order)</span></label>
                             <label class="flex flex-col items-center justify-center w-full px-4 py-5 border-2 border-dashed rounded-xl cursor-pointer border-gray-300 dark:border-gray-600 hover:border-emerald-400 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors" :class="directUploadDragOver ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : ''" @dragover.prevent="directUploadDragOver = true" @dragleave.prevent="directUploadDragOver = false" @drop.prevent="directUploadDragOver = false; addDirectUploadFiles($event.dataTransfer.files)">
                                 <svg class="w-7 h-7 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                <span class="text-sm text-gray-600 dark:text-gray-300">Click to choose images or drop them here</span>
-                                <span class="text-xs text-gray-400 mt-0.5">PNG, JPG or WEBP, 15 MB max each</span>
-                                <input id="directUploadFiles" type="file" multiple accept="image/*" class="hidden" @change="addDirectUploadFiles($event.target.files); $event.target.value = ''" />
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Tap to choose photos, or drop them here</span>
+                                <span class="text-xs text-gray-400 mt-0.5 text-center">JPG, PNG, WEBP or iPhone photos (HEIC). Large photos are resized automatically.</span>
+                                <input id="directUploadFiles" type="file" multiple accept="image/*,.heic,.heif" class="hidden" @change="addDirectUploadFiles($event.target.files); $event.target.value = ''" />
                             </label>
+                            <p x-show="directUploadPreparing" class="text-xs text-gray-500 mt-2">Preparing photos…</p>
                             <div x-show="directUploadForm.files.length" class="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-3">
                                 <template x-for="(f, idx) in directUploadForm.files" :key="f.key">
                                     <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 group">
-                                        <img :src="f.preview" class="w-full h-full object-cover" :alt="f.file.name">
+                                        <img x-show="f.preview" :src="f.preview || ''" class="w-full h-full object-cover" :alt="f.file.name">
+                                        <div x-show="!f.preview" class="w-full h-full flex flex-col items-center justify-center text-center p-1 text-gray-500 dark:text-gray-300">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            <span class="text-[10px] mt-1 break-all line-clamp-2" x-text="f.file.name"></span>
+                                        </div>
                                         <span class="absolute bottom-1 left-1 px-1.5 text-[10px] font-semibold bg-black/60 text-white rounded" x-text="idx + 1"></span>
                                         <button type="button" @click="removeDirectUploadFile(idx)" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="Remove image">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -2917,33 +2942,78 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             </div>
                         </div>
                         <div x-show="directUploadIsVideo()">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube link *</label>
-                            <input x-model="directUploadForm.youtubeLink" type="url" placeholder="https://youtube.com/watch?v=… or https://youtu.be/…" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                            <p class="text-xs text-gray-500 mt-1">Videos and reels are shared through an unlisted YouTube link, as with the rest of the Content Bank.</p>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Video *</label>
+                                <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                                    <button type="button" @click="directUploadForm.videoSource = 'file'" :class="directUploadForm.videoSource === 'file' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300'" class="px-2.5 py-1">Upload file</button>
+                                    <button type="button" @click="directUploadForm.videoSource = 'youtube'" :class="directUploadForm.videoSource === 'youtube' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300'" class="px-2.5 py-1">YouTube link</button>
+                                </div>
+                            </div>
+                            <div x-show="directUploadForm.videoSource === 'file'">
+                                <label x-show="!directUploadVideo.file" class="flex flex-col items-center justify-center w-full px-4 py-5 border-2 border-dashed rounded-xl cursor-pointer border-gray-300 dark:border-gray-600 hover:border-emerald-400 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors" @dragover.prevent @drop.prevent="chooseDirectUploadVideo($event.dataTransfer.files[0])">
+                                    <svg class="w-7 h-7 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Tap to choose a video</span>
+                                    <span class="text-xs text-gray-400 mt-0.5 text-center" x-text="'MP4 or MOV (including iPhone videos), up to ' + videoMaxMb + ' MB'"></span>
+                                    <input id="directUploadVideoFile" type="file" accept="video/mp4,video/quicktime,video/x-m4v,.mp4,.mov,.m4v" class="hidden" @change="chooseDirectUploadVideo($event.target.files[0]); $event.target.value = ''" />
+                                </label>
+                                <div x-show="directUploadVideo.file" class="p-3 rounded-xl border border-gray-200 dark:border-gray-600">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="directUploadVideo.name"></p>
+                                            <p class="text-xs text-gray-500" x-text="formatFileSize(directUploadVideo.size) + (directUploadVideo.status === 'uploading' ? ' · Uploading ' + directUploadVideo.progress + '%' : directUploadVideo.status === 'done' ? ' · Uploaded' : directUploadVideo.status === 'error' ? ' · Upload failed' : '')"></p>
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <button type="button" x-show="directUploadVideo.status === 'error'" @click="startDirectUploadVideo()" class="text-xs px-2 py-1 rounded bg-emerald-600 text-white">Retry</button>
+                                            <button type="button" @click="removeDirectUploadVideo()" :disabled="directUploadSubmitting" class="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200" x-text="directUploadVideo.status === 'uploading' ? 'Cancel' : 'Remove'"></button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden" role="progressbar" :aria-valuenow="directUploadVideo.progress" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="h-full rounded-full transition-all duration-200" :class="directUploadVideo.status === 'error' ? 'bg-red-500' : 'bg-emerald-500'" :style="'width:' + directUploadVideo.progress + '%'"></div>
+                                    </div>
+                                    <p x-show="directUploadVideo.error" class="text-xs text-red-600 mt-1" x-text="directUploadVideo.error"></p>
+                                    <p x-show="directUploadVideo.status === 'uploading'" class="text-xs text-gray-500 mt-1">Please keep this page open until the upload finishes.</p>
+                                </div>
+                            </div>
+                            <div x-show="directUploadForm.videoSource === 'youtube'">
+                                <input x-model="directUploadForm.youtubeLink" type="url" placeholder="https://youtube.com/watch?v=… or https://youtu.be/…" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                <p class="text-xs text-gray-500 mt-1">Optional alternative: paste an unlisted YouTube link instead of uploading the file.</p>
+                            </div>
                         </div>
-                        <div>
+                        <div x-show="directUploadMode === 'client'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preferred post date <span class="font-normal text-gray-400">(optional)</span></label>
+                            <input x-model="directUploadForm.preferredPostDate" type="date" :min="todayIso()" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                        </div>
+                        <div x-show="directUploadMode === 'client'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Note to the team <span class="font-normal text-gray-400">(optional)</span></label>
+                            <textarea x-model="directUploadForm.note" rows="2" maxlength="2000" placeholder="Anything we should know, e.g. accounts to tag or a time to post" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
+                        <div x-show="directUploadMode === 'client'" class="flex gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-900 dark:text-emerald-200">
+                            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>This is saved as approved by you and goes straight to our team, who will schedule and post it. We may lightly tidy the caption for each platform.</span>
+                        </div>
+                        <div x-show="directUploadMode !== 'client'">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Planned post date <span class="font-normal text-gray-400">(optional)</span></label>
                             <input x-model="directUploadForm.scheduledPostDate" type="date" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                             <p x-show="!directUploadForm.clientAlreadyApproved" class="text-xs text-gray-500 mt-1">Also used as the client's approval deadline. If left blank, the deadline is 3 days from today.</p>
                         </div>
-                        <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <label x-show="directUploadMode !== 'client'" class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <input type="checkbox" x-model="directUploadForm.clientAlreadyApproved" class="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
                             <span>
                                 <span class="block text-sm font-medium text-gray-900 dark:text-white">Client has already approved this</span>
                                 <span class="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">Saves it straight to the Content Bank as Client Approved. No review email is sent to the client.</span>
                             </span>
                         </label>
-                        <div x-show="!directUploadForm.clientAlreadyApproved" class="flex gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-900 dark:text-emerald-200">
+                        <div x-show="directUploadMode !== 'client' && !directUploadForm.clientAlreadyApproved" class="flex gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-900 dark:text-emerald-200">
                             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <span>This skips the concept, production and internal review stages. It goes into the Content Bank as awaiting client approval, and the brand's client users get the usual "New content ready for review" email straight away.</span>
                         </div>
                         <button type="submit" class="hidden"></button>
                     </form>
-                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-end gap-3">
-                        <button type="button" @click="showDirectUploadModal = false" :disabled="directUploadSubmitting" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500">Cancel</button>
-                        <button type="button" @click="submitDirectUpload()" :disabled="directUploadSubmitting" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-60 flex items-center gap-2">
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex flex-wrap justify-end gap-3">
+                        <button type="button" @click="closeDirectUploadModal()" :disabled="directUploadSubmitting" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500">Cancel</button>
+                        <button type="button" @click="submitDirectUpload()" :disabled="directUploadSubmitting || directUploadPreparing || directUploadVideo.status === 'uploading'" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-60 flex items-center gap-2">
                             <svg x-show="directUploadSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                            <span x-text="directUploadSubmitting ? 'Saving…' : (directUploadForm.clientAlreadyApproved ? 'Add to Content Bank' : 'Send to Client for Approval')"></span>
+                            <span x-text="directUploadSubmitting ? 'Saving…' : directUploadVideo.status === 'uploading' ? 'Uploading video…' : directUploadMode === 'client' ? 'Share for Posting' : (directUploadForm.clientAlreadyApproved ? 'Add to Content Bank' : 'Send to Client for Approval')"></span>
                         </button>
                     </div>
                 </div>
@@ -2965,6 +3035,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             <div class="flex items-center gap-3">
                                 <span :class="getClientApprovalClass(selectedContentBankItem?.clientApprovalStatus)" class="px-3 py-1 text-sm rounded-full" x-text="formatClientApprovalStatus(selectedContentBankItem?.clientApprovalStatus)"></span>
                                 <span x-show="selectedContentBankItem?.isDirectUpload && viewMode !== 'client'" class="px-3 py-1 text-sm rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" x-text="'Direct upload by ' + directUploaderName(selectedContentBankItem)"></span>
+                                <span x-show="selectedContentBankItem?.isClientUpload && viewMode !== 'client'" class="px-3 py-1 text-sm rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300">Client upload</span>
                                 <button @click="showContentBankDetail = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
@@ -2977,6 +3048,28 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Image/Media Preview -->
                             <div>
+                                <template x-if="selectedContentBankItem?.isClientUpload">
+                                    <div class="mb-4 p-3 rounded-lg bg-sky-50 dark:bg-sky-900/20 text-sm text-sky-900 dark:text-sky-100 space-y-1">
+                                        <p><span class="font-semibold" x-text="viewMode === 'client' ? 'Shared for posting' : 'Shared for posting by ' + directUploaderName(selectedContentBankItem)"></span><span x-show="selectedContentBankItem?.clientUploadedAt" x-text="' on ' + formatDate(selectedContentBankItem?.clientUploadedAt)"></span></p>
+                                        <p x-show="selectedContentBankItem?.preferredPostDate"><span class="font-medium">Preferred post date:</span> <span x-text="formatDate(selectedContentBankItem?.preferredPostDate)"></span></p>
+                                        <p x-show="selectedContentBankItem?.clientNote" class="whitespace-pre-line"><span class="font-medium">Note:</span> <span x-text="selectedContentBankItem?.clientNote"></span></p>
+                                    </div>
+                                </template>
+                                <template x-if="getContentBankVideo(selectedContentBankItem)">
+                                    <div class="mb-4">
+                                        <video :key="getContentBankVideo(selectedContentBankItem).url" controls playsinline preload="metadata" :poster="getContentBankVideo(selectedContentBankItem).posterUrl || ''" class="w-full max-h-[60vh] rounded-lg bg-black">
+                                            <source :src="getContentBankVideo(selectedContentBankItem).url" type="video/mp4">
+                                            <template x-if="getContentBankVideo(selectedContentBankItem).sourceUrl && getContentBankVideo(selectedContentBankItem).sourceUrl !== getContentBankVideo(selectedContentBankItem).url">
+                                                <source :src="getContentBankVideo(selectedContentBankItem).sourceUrl">
+                                            </template>
+                                        </video>
+                                        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm">
+                                            <a :href="getContentBankVideo(selectedContentBankItem).url" target="_blank" rel="noopener noreferrer" class="text-emerald-700 dark:text-emerald-400 hover:underline">Open video</a>
+                                            <a x-show="getContentBankVideo(selectedContentBankItem).sourceUrl" :href="getContentBankVideo(selectedContentBankItem).sourceUrl || '#'" target="_blank" rel="noopener noreferrer" class="text-gray-600 dark:text-gray-300 hover:underline">Original file</a>
+                                            <span class="text-xs text-gray-500">If it doesn't play straight away, it may still be processing. Try again in a minute.</span>
+                                        </div>
+                                    </div>
+                                </template>
                                 <template x-if="isVideoConcept(selectedContentBankItem) && selectedContentBankItem?.youtubeLink">
                                     <div>
                                     <div class="aspect-video rounded-lg overflow-hidden bg-black">
@@ -3039,7 +3132,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                         </div>
                                     </div>
                                 </template>
-                                <template x-if="getDesignPreviews(selectedContentBankItem).length === 0 && !(isVideoConcept(selectedContentBankItem) && selectedContentBankItem?.youtubeLink)">
+                                <template x-if="getDesignPreviews(selectedContentBankItem).length === 0 && !getContentBankVideo(selectedContentBankItem) && !(isVideoConcept(selectedContentBankItem) && selectedContentBankItem?.youtubeLink)">
                                     <div class="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                         <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -3441,7 +3534,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 showDirectUploadModal: false,
                 directUploadSubmitting: false,
                 directUploadDragOver: false,
-                directUploadForm: { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', clientAlreadyApproved: false, files: [] },
+                directUploadMode: 'staff',
+                directUploadPreparing: false,
+                directUploadVideo: { file: null, name: '', size: 0, progress: 0, status: 'idle', publicId: '', error: '' },
+                videoMaxMb: 100,
+                directUploadForm: { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', videoSource: 'file', scheduledPostDate: '', preferredPostDate: '', note: '', clientAlreadyApproved: false, files: [] },
                 directUploadPlatforms: [
                     { value: 'instagram', label: 'Instagram' },
                     { value: 'facebook', label: 'Facebook' },
@@ -3453,7 +3550,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     { value: 'graphic', label: 'Image', hint: 'Single image' },
                     { value: 'carousel', label: 'Carousel', hint: 'Several images' },
                     { value: 'story', label: 'Story', hint: 'Image story' },
-                    { value: 'reel', label: 'Video / Reel', hint: 'YouTube link' }
+                    { value: 'reel', label: 'Video / Reel', hint: 'Video file or YouTube link' }
                 ],
                 selectedViewClient: null,
 
@@ -3537,6 +3634,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         }
                         if (this.viewMode === 'client' && this.activeTab !== 'feed' && this.activeTab !== 'contentBank') {
                             this.activeTab = 'contentBank';
+                        }
+                        if (sp.get('share') === '1' && this.viewMode === 'client') {
+                            this.activeTab = 'contentBank';
+                            this.openDirectUploadModal('client');
+                            try { const u2 = new URL(window.location.href); u2.searchParams.delete('share'); history.replaceState(history.state, '', u2.pathname + u2.search); } catch (e) {}
                         }
                     } catch (e) { console.error('Hub deep link error', e); }
                 },
@@ -5226,10 +5328,10 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     if (!Array.isArray(attachments) || attachments.length === 0) return [];
                     return attachments.filter(a => {
                         const isDesignKind = a?.kind === 'design';
+                        // Images only: videos are played by getContentBankVideo()
                         const isImage = (a?.mimetype || '').startsWith('image/');
-                        const isVideo = (a?.mimetype || '').startsWith('video/');
                         const notReference = a?.kind !== 'reference';
-                        return (isImage || isVideo) && (isDesignKind || notReference);
+                        return isImage && (isDesignKind || notReference);
                     }).sort((left, right) => {
                         const leftOrder = Number.isFinite(left?.sortOrder) ? left.sortOrder : Number.MAX_SAFE_INTEGER;
                         const rightOrder = Number.isFinite(right?.sortOrder) ? right.sortOrder : Number.MAX_SAFE_INTEGER;
@@ -5240,6 +5342,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 getDesignPreviews(item) {
                     return this.getContentBankMedia(item).map(a => a?.url || '').filter(Boolean);
+                },
+
+                // First uploaded video file (Cloudinary H.264 MP4 rendition + original)
+                getContentBankVideo(item) {
+                    const attachments = Array.isArray(item?.attachments) ? item.attachments : [];
+                    return attachments.find(a => (a?.mimetype || '').startsWith('video/') && a?.url && a?.kind !== 'reference') || null;
                 },
 
                 getDesignPreview(item) {
@@ -5497,16 +5605,67 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     }
                 },
 
-                openDirectUploadModal() {
-                    if (!(this.user.role === 'admin' || this.user.role === 'brand_rep')) return;
+                // ── Direct Upload (staff) and Share Content for Posting (client) ──
+                // One modal, two modes. Images go through the Hub API; a video file is
+                // uploaded by the browser straight to Cloudinary in chunks (never via
+                // WordPress or the API), then referenced by its public id on submit.
+                openDirectUploadModal(mode = 'staff') {
+                    if (mode === 'client') {
+                        if (this.viewMode !== 'client') return;
+                    } else if (!(this.user.role === 'admin' || this.user.role === 'brand_rep') || this.viewMode === 'client') {
+                        return;
+                    }
                     this.resetDirectUploadForm();
+                    this.directUploadMode = mode;
+                    if (mode === 'client') {
+                        const brands = this.shareBrandOptions();
+                        if (brands.length === 1) this.directUploadForm.clientId = brands[0]._id;
+                    }
                     this.showDirectUploadModal = true;
                 },
 
+                closeDirectUploadModal() {
+                    if (this.directUploadSubmitting) return;
+                    if (this.directUploadVideo.status === 'uploading' && !confirm('Your video is still uploading. Cancel the upload and close?')) return;
+                    this.showDirectUploadModal = false;
+                    this.resetDirectUploadForm();
+                },
+
+                // Brands a client (or a super admin viewing as a client) may share to
+                shareBrandOptions() {
+                    const list = Array.isArray(this.clients) ? this.clients : [];
+                    if (this.user?.role !== 'client' && this.selectedViewClient) {
+                        return list.filter(c => String(c._id) === String(this.selectedViewClient));
+                    }
+                    return list;
+                },
+
+                viewAsQuery() {
+                    if (!this.viewMode || this.viewMode === 'admin' || this.user?.role === 'client') return '';
+                    let q = `viewAs=${encodeURIComponent(this.viewMode)}`;
+                    if (this.viewMode === 'client' && this.selectedViewClient) q += `&viewAsClientId=${encodeURIComponent(this.selectedViewClient)}`;
+                    return q;
+                },
+
+                todayIso() {
+                    const d = new Date();
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                },
+
+                formatFileSize(bytes) {
+                    const n = Number(bytes) || 0;
+                    if (n >= 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+                    if (n >= 1024) return Math.round(n / 1024) + ' KB';
+                    return n + ' B';
+                },
+
                 resetDirectUploadForm() {
-                    (this.directUploadForm.files || []).forEach((f) => { try { URL.revokeObjectURL(f.preview); } catch (e) {} });
-                    this.directUploadForm = { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', clientAlreadyApproved: false, files: [] };
+                    (this.directUploadForm.files || []).forEach((f) => { try { if (f.preview) URL.revokeObjectURL(f.preview); } catch (e) {} });
+                    this.abortDirectUploadVideo();
+                    this.directUploadForm = { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', videoSource: 'file', scheduledPostDate: '', preferredPostDate: '', note: '', clientAlreadyApproved: false, files: [] };
+                    this.directUploadVideo = { file: null, name: '', size: 0, progress: 0, status: 'idle', publicId: '', error: '' };
                     this.directUploadDragOver = false;
+                    this.directUploadPreparing = false;
                 },
 
                 directUploadIsVideo() {
@@ -5519,38 +5678,224 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     if (i >= 0) { if (list.length > 1) list.splice(i, 1); } else { list.push(value); }
                 },
 
-                addDirectUploadFiles(fileList) {
-                    const incoming = Array.from(fileList || []);
-                    let skipped = 0;
-                    for (const file of incoming) {
-                        if (!file.type || !file.type.startsWith('image/')) { skipped++; continue; }
-                        if (file.size > 15 * 1024 * 1024) { this.showToast(`"${file.name}" is over 15 MB`, 'error'); continue; }
-                        if (this.directUploadForm.files.length >= 10) { this.showToast('You can upload up to 10 images', 'error'); break; }
-                        this.directUploadForm.files.push({ key: `${Date.now()}-${Math.random()}`, file, preview: URL.createObjectURL(file) });
+                isHeicFile(file) {
+                    return /\.(heic|heif)$/i.test(file?.name || '') || /image\/hei[cf]/i.test(file?.type || '');
+                },
+
+                // Decode an image file in the browser. Resolves null if it can't
+                // (e.g. HEIC outside Safari).
+                loadImageElement(file) {
+                    return new Promise((resolve) => {
+                        const url = URL.createObjectURL(file);
+                        const img = new Image();
+                        img.onload = () => resolve({ img, url });
+                        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+                        img.src = url;
+                    });
+                },
+
+                // Resize very large photos and convert HEIC to JPEG where the browser can
+                // decode it (Safari). Anything left as HEIC is converted by the server.
+                async prepareDirectUploadImage(file) {
+                    const MAX_SIDE = 2560;
+                    const heic = this.isHeicFile(file);
+                    if ((file.type || '') === 'image/gif') return { file, preview: URL.createObjectURL(file) };
+                    const loaded = await this.loadImageElement(file);
+                    if (!loaded) {
+                        if (heic) return { file, preview: null };
+                        return { error: `"${file.name}" couldn't be read as an image` };
                     }
-                    if (skipped) this.showToast('Only images can be uploaded. Use Video / Reel with a YouTube link for videos.', 'error');
+                    const { img, url } = loaded;
+                    const w = img.naturalWidth, h = img.naturalHeight;
+                    const needsResize = Math.max(w, h) > MAX_SIDE || file.size > 8 * 1024 * 1024;
+                    if (!heic && !needsResize) return { file, preview: url };
+                    try {
+                        const scale = Math.min(1, MAX_SIDE / Math.max(w, h));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(w * scale));
+                        canvas.height = Math.max(1, Math.round(h * scale));
+                        const ctx = canvas.getContext('2d');
+                        const keepPng = (file.type || '') === 'image/png';
+                        if (!keepPng) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const type = keepPng ? 'image/png' : 'image/jpeg';
+                        const blob = await new Promise((r) => canvas.toBlob(r, type, 0.9));
+                        URL.revokeObjectURL(url);
+                        if (!blob) throw new Error('encode failed');
+                        const name = file.name.replace(/\.(heic|heif|jpe?g|png|webp)$/i, '') + (keepPng ? '.png' : '.jpg');
+                        const out = new File([blob], name, { type, lastModified: Date.now() });
+                        return { file: out, preview: URL.createObjectURL(out) };
+                    } catch (e) {
+                        return { file, preview: url };
+                    }
+                },
+
+                async addDirectUploadFiles(fileList) {
+                    const incoming = Array.from(fileList || []);
+                    if (!incoming.length) return;
+                    const videos = incoming.filter(f => (f.type || '').startsWith('video/') || /\.(mp4|mov|m4v)$/i.test(f.name || ''));
+                    if (videos.length) {
+                        this.showToast('To share a video, choose Video or Reel as the content type and upload it there.', 'error', 5000);
+                    }
+                    let skipped = 0;
+                    this.directUploadPreparing = true;
+                    try {
+                        for (const original of incoming) {
+                            if (videos.includes(original)) continue;
+                            const isImage = (original.type || '').startsWith('image/') || this.isHeicFile(original);
+                            if (!isImage) { skipped++; continue; }
+                            if (this.directUploadForm.files.length >= 10) { this.showToast('You can upload up to 10 images', 'error'); break; }
+                            const prepared = await this.prepareDirectUploadImage(original);
+                            if (prepared.error) { this.showToast(prepared.error, 'error', 5000); continue; }
+                            if (prepared.file.size > 25 * 1024 * 1024) {
+                                this.showToast(`"${original.name}" is too large (over 25 MB). Please choose a smaller photo.`, 'error', 6000);
+                                if (prepared.preview) URL.revokeObjectURL(prepared.preview);
+                                continue;
+                            }
+                            this.directUploadForm.files.push({ key: `${Date.now()}-${Math.random()}`, file: prepared.file, preview: prepared.preview });
+                        }
+                    } finally {
+                        this.directUploadPreparing = false;
+                    }
+                    if (skipped) this.showToast('Only photos can be added here', 'error');
                     if (this.directUploadForm.files.length > 1 && this.directUploadForm.contentType === 'graphic') this.directUploadForm.contentType = 'carousel';
                 },
 
                 removeDirectUploadFile(idx) {
                     const [removed] = this.directUploadForm.files.splice(idx, 1);
-                    if (removed) { try { URL.revokeObjectURL(removed.preview); } catch (e) {} }
+                    if (removed && removed.preview) { try { URL.revokeObjectURL(removed.preview); } catch (e) {} }
+                },
+
+                chooseDirectUploadVideo(file) {
+                    if (!file) return;
+                    const okType = /\.(mp4|mov|m4v)$/i.test(file.name || '') || ['video/mp4', 'video/quicktime', 'video/x-m4v'].includes(file.type);
+                    if (!okType) { this.showToast('Please choose an MP4 or MOV video', 'error', 5000); return; }
+                    if (file.size > this.videoMaxMb * 1024 * 1024) {
+                        this.showToast(`That video is ${this.formatFileSize(file.size)}. The limit is ${this.videoMaxMb} MB, so please trim it or export a smaller version.`, 'error', 7000);
+                        return;
+                    }
+                    this.abortDirectUploadVideo();
+                    this.directUploadVideo = { file, name: file.name, size: file.size, progress: 0, status: 'idle', publicId: '', error: '' };
+                    this.startDirectUploadVideo();
+                },
+
+                abortDirectUploadVideo() {
+                    const xhr = window.__hubDirectUploadXhr;
+                    window.__hubDirectUploadAborted = true;
+                    if (xhr) { try { xhr.abort(); } catch (e) {} }
+                    window.__hubDirectUploadXhr = null;
+                },
+
+                removeDirectUploadVideo() {
+                    this.abortDirectUploadVideo();
+                    this.directUploadVideo = { file: null, name: '', size: 0, progress: 0, status: 'idle', publicId: '', error: '' };
+                },
+
+                // Signed, chunked upload straight to Cloudinary with progress
+                async startDirectUploadVideo() {
+                    const v = this.directUploadVideo;
+                    const file = v.file;
+                    if (!file) return;
+                    v.status = 'uploading'; v.progress = 0; v.error = ''; v.publicId = '';
+                    window.__hubDirectUploadAborted = false;
+                    const token = localStorage.getItem('token');
+                    try {
+                        const vq = this.viewAsQuery();
+                        const sigRes = await fetch(`${API_URL}/content-bank/video-upload-signature${vq ? '?' + vq : ''}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                        const sig = await sigRes.json().catch(() => ({}));
+                        if (!sigRes.ok || !sig.success) throw new Error(sig.message || 'Video uploads are not available right now');
+                        if (sig.maxMb) this.videoMaxMb = sig.maxMb;
+                        if (file.size > this.videoMaxMb * 1024 * 1024) throw new Error(`The limit is ${this.videoMaxMb} MB`);
+                        const chunkSize = sig.chunkSize || 20 * 1024 * 1024;
+                        const uploadId = `hub-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+                        let start = 0;
+                        let result = null;
+                        while (start < file.size) {
+                            if (window.__hubDirectUploadAborted || this.directUploadVideo.file !== file) return;
+                            const end = Math.min(start + chunkSize, file.size);
+                            let attempt = 0;
+                            for (;;) {
+                                try {
+                                    result = await this.sendVideoChunk(sig, file, start, end, uploadId);
+                                    break;
+                                } catch (err) {
+                                    if (err && err.aborted) return;
+                                    attempt++;
+                                    if (attempt >= 3 || (err && err.fatal)) throw err;
+                                    await new Promise(r => setTimeout(r, 1500 * attempt));
+                                }
+                            }
+                            start = end;
+                            this.directUploadVideo.progress = Math.round((start / file.size) * 100);
+                        }
+                        if (!result || !result.public_id) throw new Error('The upload did not complete');
+                        if (this.directUploadVideo.file !== file) return;
+                        this.directUploadVideo.publicId = result.public_id;
+                        this.directUploadVideo.progress = 100;
+                        this.directUploadVideo.status = 'done';
+                    } catch (error) {
+                        if (this.directUploadVideo.file !== file) return;
+                        console.error('Video upload error:', error);
+                        this.directUploadVideo.status = 'error';
+                        this.directUploadVideo.error = (error && error.message) ? error.message : 'The video failed to upload. Check your connection and tap Retry.';
+                    } finally {
+                        window.__hubDirectUploadXhr = null;
+                    }
+                },
+
+                sendVideoChunk(sig, file, start, end, uploadId) {
+                    return new Promise((resolve, reject) => {
+                        const fd = new FormData();
+                        Object.entries(sig.params || {}).forEach(([k, val]) => fd.append(k, val));
+                        fd.append('api_key', sig.apiKey);
+                        fd.append('signature', sig.signature);
+                        fd.append('file', file.slice(start, end), file.name);
+                        const xhr = new XMLHttpRequest();
+                        window.__hubDirectUploadXhr = xhr;
+                        xhr.open('POST', sig.uploadUrl);
+                        xhr.setRequestHeader('X-Unique-Upload-Id', uploadId);
+                        xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${file.size}`);
+                        xhr.upload.onprogress = (e) => {
+                            if (!e.lengthComputable || this.directUploadVideo.file !== file) return;
+                            const done = start + Math.min(e.loaded, end - start);
+                            this.directUploadVideo.progress = Math.min(99, Math.round((done / file.size) * 100));
+                        };
+                        xhr.onload = () => {
+                            let body = {};
+                            try { body = JSON.parse(xhr.responseText || '{}'); } catch (e) {}
+                            if (xhr.status >= 200 && xhr.status < 300) { resolve(body); return; }
+                            const msg = body?.error?.message || `Upload failed (${xhr.status})`;
+                            const err = new Error(/format/i.test(msg) ? 'Please choose an MP4 or MOV video' : msg);
+                            err.fatal = xhr.status >= 400 && xhr.status < 500;
+                            reject(err);
+                        };
+                        xhr.onerror = () => reject(new Error('The video failed to upload. Check your connection and tap Retry.'));
+                        xhr.onabort = () => { const err = new Error('aborted'); err.aborted = true; reject(err); };
+                        xhr.send(fd);
+                    });
                 },
 
                 directUploaderName(item) {
-                    const u = item?.directUploadedBy && typeof item.directUploadedBy === 'object' ? item.directUploadedBy : item?.createdBy;
-                    const name = [u?.firstName, u?.lastName].filter(Boolean).join(' ').trim();
-                    return name || 'a team member';
+                    const pick = item?.clientUploadedBy && typeof item.clientUploadedBy === 'object' ? item.clientUploadedBy
+                        : item?.directUploadedBy && typeof item.directUploadedBy === 'object' ? item.directUploadedBy : item?.createdBy;
+                    const name = [pick?.firstName, pick?.lastName].filter(Boolean).join(' ').trim();
+                    return name || (item?.isClientUpload ? 'the client' : 'a team member');
                 },
 
                 async submitDirectUpload() {
                     if (this.directUploadSubmitting) return;
                     const f = this.directUploadForm;
+                    const v = this.directUploadVideo;
+                    const isClient = this.directUploadMode === 'client';
                     const isVideo = this.directUploadIsVideo();
+                    const useFile = isVideo && f.videoSource === 'file';
                     if (!f.clientId) { this.showToast('Please choose a brand', 'error'); return; }
                     if (!f.caption.trim()) { this.showToast('Please add a caption', 'error'); return; }
-                    if (isVideo && !f.youtubeLink.trim()) { this.showToast('Please paste the YouTube link for the video', 'error'); return; }
-                    if (!isVideo && !f.files.length) { this.showToast('Please add at least one image', 'error'); return; }
+                    if (this.directUploadPreparing) { this.showToast('Please wait while your photos are prepared', 'error'); return; }
+                    if (useFile && v.status === 'uploading') { this.showToast('Please wait for the video to finish uploading', 'error'); return; }
+                    if (useFile && v.status !== 'done') { this.showToast(v.status === 'error' ? 'The video upload failed. Tap Retry, or remove it and try again.' : 'Please choose a video to upload', 'error', 5000); return; }
+                    if (isVideo && !useFile && !f.youtubeLink.trim()) { this.showToast('Please paste the YouTube link, or switch to Upload file', 'error'); return; }
+                    if (!isVideo && !f.files.length) { this.showToast('Please add at least one photo', 'error'); return; }
 
                     const formData = new FormData();
                     formData.append('clientId', f.clientId);
@@ -5559,39 +5904,55 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     formData.append('platform', f.platforms.join(','));
                     formData.append('mediaType', isVideo ? 'video' : 'image');
                     formData.append('contentType', f.contentType);
-                    if (f.scheduledPostDate) formData.append('scheduledPostDate', f.scheduledPostDate);
-                    if (f.clientAlreadyApproved) formData.append('clientAlreadyApproved', 'true');
-                    if (isVideo) formData.append('youtubeLink', f.youtubeLink.trim());
-                    else f.files.forEach((x) => formData.append('files', x.file, x.file.name));
+                    if (isClient) {
+                        if (f.preferredPostDate) formData.append('preferredPostDate', f.preferredPostDate);
+                        if (f.note.trim()) formData.append('note', f.note.trim());
+                    } else {
+                        if (f.scheduledPostDate) formData.append('scheduledPostDate', f.scheduledPostDate);
+                        if (f.clientAlreadyApproved) formData.append('clientAlreadyApproved', 'true');
+                    }
+                    if (useFile) {
+                        formData.append('videoPublicId', v.publicId);
+                        formData.append('videoName', v.name);
+                    } else if (isVideo) {
+                        formData.append('youtubeLink', f.youtubeLink.trim());
+                    } else {
+                        f.files.forEach((x) => formData.append('files', x.file, x.file.name));
+                    }
 
                     this.directUploadSubmitting = true;
                     try {
                         const token = localStorage.getItem('token');
-                        const response = await fetch(`${API_URL}/content-bank/direct-upload`, {
+                        const vq = this.viewAsQuery();
+                        const endpoint = isClient ? 'client-upload' : 'direct-upload';
+                        const response = await fetch(`${API_URL}/content-bank/${endpoint}${vq ? '?' + vq : ''}`, {
                             method: 'POST',
                             headers: { 'Authorization': `Bearer ${token}` },
                             body: formData
                         });
                         const data = await response.json().catch(() => ({}));
                         if (!response.ok || !data.success) {
-                            this.showToast(data.message || 'Failed to send the upload', 'error', 5000);
+                            this.showToast(data.message || (response.status === 413 ? 'Those photos are too large together. Try fewer at a time.' : 'Failed to send the upload'), 'error', 6000);
                             return;
                         }
                         const brand = data.concept?.clientId?.brandName || data.concept?.clientId?.name || 'the client';
-                        if (f.clientAlreadyApproved) {
+                        if (isClient) {
+                            this.showToast('Thanks! Your content has been shared with our team, who will schedule and post it.', 'success', 6000);
+                        } else if (f.clientAlreadyApproved) {
                             this.showToast(`Added to the Content Bank for ${brand} as Client Approved`, 'success', 4000);
                         } else if (data.clientsNotified > 0) {
                             this.showToast(`Sent to ${brand} for approval`, 'success', 4000);
                         } else {
                             this.showToast(`Added to the Content Bank for ${brand}, but this brand has no client logins yet, so nobody was emailed`, 'warning', 7000);
                         }
+                        this.directUploadVideo.status = 'idle';
                         this.showDirectUploadModal = false;
                         this.resetDirectUploadForm();
                         await this.loadInitialData();
                         if (this.activeTab === 'contentBank') await this.loadContentBank();
                     } catch (error) {
                         console.error('Direct upload error:', error);
-                        this.showToast('Failed to send the upload', 'error');
+                        this.showToast('Failed to send the upload. Please check your connection and try again.', 'error', 5000);
                     } finally {
                         this.directUploadSubmitting = false;
                     }

@@ -150,6 +150,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     </div>
                 </div>
                 <div class="flex items-center gap-1">
+                    <a x-show="user.role === 'client' || viewMode === 'client'" x-cloak href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>?tab=contentBank&amp;share=1" class="hub-btn hub-btn--primary hub-btn--sm whitespace-nowrap mr-2" title="Share photos or a video you've already approved, and our team will schedule and post it">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <span>Share Content for Posting</span>
+                    </a>
                     <button type="button" @click="toggleTheme()" class="hub-btn hub-btn--ghost hub-btn--icon" aria-label="Toggle dark mode">
                         <svg x-show="theme === 'light'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         <svg x-show="theme === 'dark'" x-cloak class="text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -207,6 +211,11 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                     <!-- Dashboard Content -->
                     <div x-show="!loading && !dashboardError" class="hub-insights-shell space-y-6">
+                        <!-- Share Content for Posting (clients, mobile: the header is hidden on small screens) -->
+                        <a x-show="user.role === 'client' || viewMode === 'client'" x-cloak href="<?php echo esc_url(esirom_hub_page_url('workflow')); ?>?tab=contentBank&amp;share=1" class="md:hidden flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span>Share Content for Posting</span>
+                        </a>
                         <!-- Pending Approvals Alert (for clients) -->
                         <div x-show="user.role === 'client' && dashboardData.pendingPosts?.count > 0" class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                             <div class="flex items-center">
