@@ -436,13 +436,13 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                     <p class="text-xs text-gray-500 mt-1.5 font-medium">Review</p>
                                     <div class="wf-accentbar bg-amber-400"></div>
                                 </button>
-                                <!-- Approved Internally -->
+                                <!-- Awaiting Client (status in_content_bank) -->
                                 <button @click="filterByStatus('in_content_bank')" class="wf-stat-card group bg-white dark:bg-gray-800 rounded-2xl p-4 text-left border border-gray-100 dark:border-gray-700 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" :class="conceptStatusFilter === 'in_content_bank' ? 'ring-2 ring-purple-400 shadow-md' : ''">
                                     <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center mb-3">
                                         <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     </div>
                                     <p class="text-2xl font-extrabold text-purple-600 tabular-nums leading-none" x-text="dashboardStats.concepts?.in_content_bank || 0"></p>
-                                    <p class="text-xs text-gray-500 mt-1.5 font-medium">Approved Internally</p>
+                                    <p class="text-xs text-gray-500 mt-1.5 font-medium">Awaiting Client</p>
                                     <div class="wf-accentbar bg-purple-400"></div>
                                 </button>
                                 <!-- Client Approved -->
@@ -603,7 +603,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 <option value="in_progress">In Progress</option>
                                 <option value="needs_revision">Needs Revision</option>
                                 <option value="pending_review">Pending Review</option>
-                                <option value="in_content_bank">In Content Bank</option>
+                                <option value="in_content_bank">Awaiting Client</option>
                                 <option value="client_approved">Client Approved</option>
                                 <option value="posted">Posted</option>
                                 <option value="overdue">Overdue</option>
@@ -703,7 +703,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 <option value="in_progress">In Progress</option>
                                 <option value="needs_revision">Needs Revision</option>
                                 <option value="pending_review">Pending Review</option>
-                                <option value="in_content_bank">Approved</option>
+                                <option value="in_content_bank">Awaiting Client</option>
                                 <option value="client_approved">Client Approved</option>
                             </select>
                             <select x-model="taskPriorityFilter" @change="loadTasks()" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -967,9 +967,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 <span class="px-4 py-2 text-gray-700 dark:text-gray-300 font-medium" x-text="clients[0]?.brandName || clients[0]?.name"></span>
                             </template>
                         </div>
-                        <button x-show="user.role === 'admin' || user.role === 'brand_rep'" @click="openManualUploadModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Upload Pre-Approved Content</span>
+                        <button x-show="viewMode !== 'client' && (user.role === 'admin' || user.role === 'brand_rep')" @click="openDirectUploadModal()" title="Upload finished content with a caption. Send it to the client for approval, or tick that the client has already approved it" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span>Direct Upload</span>
                         </button>
                     </div>
 
@@ -2843,86 +2843,6 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
             </div>
         </div>
 
-        <!-- Manual Upload Modal -->
-        <div x-show="showManualUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showManualUploadModal = false">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-                <div x-show="showManualUploadModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="showManualUploadModal = false"></div>
-                <div x-show="showManualUploadModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-gray-800 rounded-lg shadow-xl sm:my-8 sm:align-middle">
-                    <div class="px-6 py-4 border-b dark:border-gray-700">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upload Pre-Approved Content</h3>
-                            <button @click="showManualUploadModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Client *</label>
-                            <select x-model="manualUploadForm.clientId" required class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="">Select a client</option>
-                                <template x-for="client in clients" :key="client._id">
-                                    <option :value="client._id" x-text="client.brandName || client.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
-                            <input x-model="manualUploadForm.title" type="text" required placeholder="Enter content title" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                            <textarea x-model="manualUploadForm.description" rows="3" placeholder="Enter content description" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Platform</label>
-                            <select x-model="manualUploadForm.platform" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="instagram">Instagram</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="linkedin">LinkedIn</option>
-                                <option value="youtube">YouTube</option>
-                                <option value="x">X (Twitter)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content Type *</label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button type="button" @click="manualUploadForm.mediaType = 'image'" :class="manualUploadForm.mediaType === 'image' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-500' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'" class="p-3 rounded-lg border text-left transition-all">
-                                    <span class="block text-sm font-semibold text-gray-900 dark:text-white">Image</span>
-                                    <span class="block text-xs text-gray-500 mt-0.5">Upload PNG/JPG files</span>
-                                </button>
-                                <button type="button" @click="manualUploadForm.mediaType = 'video'" :class="manualUploadForm.mediaType === 'video' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 ring-2 ring-red-500' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'" class="p-3 rounded-lg border text-left transition-all">
-                                    <span class="block text-sm font-semibold text-gray-900 dark:text-white">Video / Reel</span>
-                                    <span class="block text-xs text-gray-500 mt-0.5">Paste a YouTube link</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div x-show="manualUploadForm.mediaType === 'video'">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format</label>
-                            <select x-model="manualUploadForm.contentType" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="reel">Reel</option>
-                                <option value="video">Video</option>
-                            </select>
-                        </div>
-                        <div x-show="manualUploadForm.mediaType === 'image'">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload Images *</label>
-                            <input id="manualUploadFiles" type="file" multiple accept="image/*" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                            <p class="text-xs text-gray-500 mt-1">Images only — PNG, JPG, WEBP. For videos, switch to Video / Reel and use a YouTube link.</p>
-                        </div>
-                        <div x-show="manualUploadForm.mediaType === 'video'">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">YouTube / Video Link *</label>
-                            <input x-model="manualUploadForm.youtubeLink" type="url" placeholder="https://youtube.com/watch?v=... or youtu.be/..." class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                            <p class="text-xs text-gray-500 mt-1">Pre-approved reels and videos are linked via YouTube — no file upload needed.</p>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-end gap-3">
-                        <button @click="showManualUploadModal = false" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500">Cancel</button>
-                        <button @click="uploadManualContent()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Upload to Content Bank</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Direct Upload Modal: finished content straight to client approval -->
         <div x-show="showDirectUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="if (!directUploadSubmitting) showDirectUploadModal = false">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
@@ -2932,7 +2852,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Direct Upload</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Finished content that doesn't need the team? Upload it with a caption and send it straight to the client for approval.</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Finished content that doesn't need the team? Upload it with a caption and send it straight to the client for approval, or add it as already approved.</p>
                             </div>
                             <button type="button" @click="showDirectUploadModal = false" :disabled="directUploadSubmitting" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -3004,9 +2924,16 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Planned post date <span class="font-normal text-gray-400">(optional)</span></label>
                             <input x-model="directUploadForm.scheduledPostDate" type="date" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                            <p class="text-xs text-gray-500 mt-1">Also used as the client's approval deadline. If left blank, the deadline is 3 days from today.</p>
+                            <p x-show="!directUploadForm.clientAlreadyApproved" class="text-xs text-gray-500 mt-1">Also used as the client's approval deadline. If left blank, the deadline is 3 days from today.</p>
                         </div>
-                        <div class="flex gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-900 dark:text-emerald-200">
+                        <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <input type="checkbox" x-model="directUploadForm.clientAlreadyApproved" class="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                            <span>
+                                <span class="block text-sm font-medium text-gray-900 dark:text-white">Client has already approved this</span>
+                                <span class="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">Saves it straight to the Content Bank as Client Approved. No review email is sent to the client.</span>
+                            </span>
+                        </label>
+                        <div x-show="!directUploadForm.clientAlreadyApproved" class="flex gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-900 dark:text-emerald-200">
                             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <span>This skips the concept, production and internal review stages. It goes into the Content Bank as awaiting client approval, and the brand's client users get the usual "New content ready for review" email straight away.</span>
                         </div>
@@ -3016,7 +2943,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         <button type="button" @click="showDirectUploadModal = false" :disabled="directUploadSubmitting" class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500">Cancel</button>
                         <button type="button" @click="submitDirectUpload()" :disabled="directUploadSubmitting" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-60 flex items-center gap-2">
                             <svg x-show="directUploadSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                            <span x-text="directUploadSubmitting ? 'Sending…' : 'Send to Client for Approval'"></span>
+                            <span x-text="directUploadSubmitting ? 'Saving…' : (directUploadForm.clientAlreadyApproved ? 'Add to Content Bank' : 'Send to Client for Approval')"></span>
                         </button>
                     </div>
                 </div>
@@ -3511,11 +3438,10 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 conceptDragOver: false,
                 contentBankDragOver: false,
-                showManualUploadModal: false,
                 showDirectUploadModal: false,
                 directUploadSubmitting: false,
                 directUploadDragOver: false,
-                directUploadForm: { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', files: [] },
+                directUploadForm: { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', clientAlreadyApproved: false, files: [] },
                 directUploadPlatforms: [
                     { value: 'instagram', label: 'Instagram' },
                     { value: 'facebook', label: 'Facebook' },
@@ -3529,16 +3455,6 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     { value: 'story', label: 'Story', hint: 'Image story' },
                     { value: 'reel', label: 'Video / Reel', hint: 'YouTube link' }
                 ],
-                manualUploadForm: {
-                    clientId: '',
-                    title: '',
-                    description: '',
-                    platform: 'instagram',
-                    mediaType: 'image',
-                    contentType: 'reel',
-                    youtubeLink: '',
-                    files: []
-                },
                 selectedViewClient: null,
 
                 // Planner data
@@ -5581,71 +5497,6 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     }
                 },
 
-                async uploadManualContent() {
-                    if (!this.manualUploadForm.clientId || !this.manualUploadForm.title) {
-                        this.showToast('Please select a client and enter a title', 'error');
-                        return;
-                    }
-
-                    const token = localStorage.getItem('token');
-                    const isVideo = this.manualUploadForm.mediaType === 'video';
-                    const fileInput = document.getElementById('manualUploadFiles');
-
-                    if (isVideo) {
-                        if (!this.manualUploadForm.youtubeLink?.trim()) {
-                            this.showToast('Please enter a YouTube / video link', 'error');
-                            return;
-                        }
-                    } else {
-                        if (!fileInput?.files?.length) {
-                            this.showToast('Please select at least one image', 'error');
-                            return;
-                        }
-                        for (let i = 0; i < fileInput.files.length; i++) {
-                            if (!fileInput.files[i].type.startsWith('image/')) {
-                                this.showToast('Only image files are allowed. Use YouTube link for videos.', 'error');
-                                return;
-                            }
-                        }
-                    }
-
-                    const formData = new FormData();
-                    formData.append('clientId', this.manualUploadForm.clientId);
-                    formData.append('title', this.manualUploadForm.title);
-                    formData.append('description', this.manualUploadForm.description);
-                    formData.append('platform', this.manualUploadForm.platform);
-                    formData.append('mediaType', this.manualUploadForm.mediaType);
-                    formData.append('contentType', isVideo ? this.manualUploadForm.contentType : 'graphic');
-                    if (isVideo) {
-                        formData.append('youtubeLink', this.manualUploadForm.youtubeLink.trim());
-                    } else if (fileInput?.files) {
-                        for (let i = 0; i < fileInput.files.length; i++) {
-                            formData.append('files', fileInput.files[i]);
-                        }
-                    }
-
-                    try {
-                        const response = await fetch(`${API_URL}/content-bank/manual-upload`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-
-                        if (response.ok) {
-                            this.showToast('Content uploaded successfully to Content Bank!', 'success');
-                            this.showManualUploadModal = false;
-                            this.resetManualUploadForm();
-                            await this.loadContentBank();
-                        } else {
-                            const error = await response.json();
-                            this.showToast(error.message || 'Failed to upload content', 'error');
-                        }
-                    } catch (error) {
-                        console.error('Manual upload error:', error);
-                        this.showToast('Failed to upload content', 'error');
-                    }
-                },
-
                 openDirectUploadModal() {
                     if (!(this.user.role === 'admin' || this.user.role === 'brand_rep')) return;
                     this.resetDirectUploadForm();
@@ -5654,7 +5505,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
 
                 resetDirectUploadForm() {
                     (this.directUploadForm.files || []).forEach((f) => { try { URL.revokeObjectURL(f.preview); } catch (e) {} });
-                    this.directUploadForm = { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', files: [] };
+                    this.directUploadForm = { clientId: '', title: '', caption: '', platforms: ['instagram'], contentType: 'graphic', youtubeLink: '', scheduledPostDate: '', clientAlreadyApproved: false, files: [] };
                     this.directUploadDragOver = false;
                 },
 
@@ -5709,6 +5560,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     formData.append('mediaType', isVideo ? 'video' : 'image');
                     formData.append('contentType', f.contentType);
                     if (f.scheduledPostDate) formData.append('scheduledPostDate', f.scheduledPostDate);
+                    if (f.clientAlreadyApproved) formData.append('clientAlreadyApproved', 'true');
                     if (isVideo) formData.append('youtubeLink', f.youtubeLink.trim());
                     else f.files.forEach((x) => formData.append('files', x.file, x.file.name));
 
@@ -5726,7 +5578,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             return;
                         }
                         const brand = data.concept?.clientId?.brandName || data.concept?.clientId?.name || 'the client';
-                        if (data.clientsNotified > 0) {
+                        if (f.clientAlreadyApproved) {
+                            this.showToast(`Added to the Content Bank for ${brand} as Client Approved`, 'success', 4000);
+                        } else if (data.clientsNotified > 0) {
                             this.showToast(`Sent to ${brand} for approval`, 'success', 4000);
                         } else {
                             this.showToast(`Added to the Content Bank for ${brand}, but this brand has no client logins yet, so nobody was emailed`, 'warning', 7000);
@@ -5741,26 +5595,6 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     } finally {
                         this.directUploadSubmitting = false;
                     }
-                },
-
-                openManualUploadModal() {
-                    this.resetManualUploadForm();
-                    this.showManualUploadModal = true;
-                },
-
-                resetManualUploadForm() {
-                    this.manualUploadForm = {
-                        clientId: '',
-                        title: '',
-                        description: '',
-                        platform: 'instagram',
-                        mediaType: 'image',
-                        contentType: 'reel',
-                        youtubeLink: '',
-                        files: []
-                    };
-                    const fileInput = document.getElementById('manualUploadFiles');
-                    if (fileInput) fileInput.value = '';
                 },
 
                 assetCategoryLabel(value) {
