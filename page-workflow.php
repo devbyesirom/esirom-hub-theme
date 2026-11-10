@@ -3371,6 +3371,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         const LOGIN_URL = '<?php echo esc_url(esirom_hub_page_url('login')); ?>';
         const DASHBOARD_URL = '<?php echo esc_url(esirom_hub_page_url('dashboard')); ?>';
         const WORKFLOW_PAGE_PATH = <?php echo wp_json_encode($esirom_workflow_page_path, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        // Keep the "Share Content for Posting" deep link (e.g. from the announcement email)
+        // across a sign-in, so the form still opens after the client logs in.
+        try { if (new URLSearchParams(window.location.search).get('share') === '1') sessionStorage.setItem('hubPendingShare', '1'); } catch (e) {}
 
         function workflowApp() {
             return {
@@ -3635,7 +3638,9 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         if (this.viewMode === 'client' && this.activeTab !== 'feed' && this.activeTab !== 'contentBank') {
                             this.activeTab = 'contentBank';
                         }
-                        if (sp.get('share') === '1' && this.viewMode === 'client') {
+                        let pendingShare = false;
+                        try { pendingShare = sessionStorage.getItem('hubPendingShare') === '1'; sessionStorage.removeItem('hubPendingShare'); } catch (e) {}
+                        if ((sp.get('share') === '1' || pendingShare) && this.viewMode === 'client') {
                             this.activeTab = 'contentBank';
                             this.openDirectUploadModal('client');
                             try { const u2 = new URL(window.location.href); u2.searchParams.delete('share'); history.replaceState(history.state, '', u2.pathname + u2.search); } catch (e) {}
@@ -4916,6 +4921,15 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 body: JSON.stringify({ notificationIds: [notification._id] })
                             });
                         } catch (e) { console.error('Mark notification read error:', e); }
+                    }
+
+                    // Feature announcements: clients open Share Content for Posting, staff the Content Bank
+                    if (notification.type === 'feature_announcement') {
+                        this.activeTab = 'contentBank';
+                        this.setWorkflowQuery('contentBank', {});
+                        await this.loadContentBank();
+                        if (this.viewMode === 'client' && notification.metadata?.opens === 'share_for_posting') this.openDirectUploadModal('client');
+                        return;
                     }
 
                     const id = notification.relatedId;

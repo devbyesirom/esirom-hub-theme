@@ -5,6 +5,12 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.85] - 2026-11-10
+
+### Added
+- Bell: feature announcement notifications. Clicking one opens Share Content for Posting for clients, or the Content Bank for staff.
+- The "Share Content for Posting" link (`?tab=contentBank&share=1`) now survives signing in, so the form still opens after a client logs in from an email.
+
 ## [2.3.84] - 2026-11-10
 
 ### Added
