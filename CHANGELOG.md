@@ -5,6 +5,15 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.86] - 2026-11-12
+
+### Fixed
+- Insights now match Instagram's own professional dashboard. Headline numbers use Instagram account totals instead of adding up per-post reach, which left out stories, ads and older posts and counted the same person many times.
+- Monthly report and dashboard are labelled the way Instagram labels them: Views, Accounts reached, Interactions, and Interaction rate (interactions ÷ accounts reached).
+- "vs last month" compares the same measure for both months. If last month's Instagram totals can't be read, no comparison is shown instead of a misleading one.
+- Facebook is no longer folded into Accounts reached (Facebook has no unique-reach total for custom dates).
+- A note on the report explains the method, and flags when Accounts reached is approximate for months longer than 30 days (Instagram's API limit).
+
 ## [2.3.85] - 2026-11-10
 
 ### Added

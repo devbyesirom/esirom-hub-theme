@@ -39,8 +39,9 @@ const DASHBOARD_URL = '<?php echo esc_js(function_exists('esirom_hub_page_url') 
 .hero img{height:44px;border-radius:10px;background:#fff;padding:4px;margin-bottom:10px}
 .pill{display:inline-block;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:12px;margin:3px 0 3px 6px;text-transform:capitalize}
 h2{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin:34px 0 14px}
-.grid{display:grid;gap:16px}.k4{grid-template-columns:repeat(4,1fr)}.k2{grid-template-columns:1.3fr 1fr}.k3{grid-template-columns:repeat(3,1fr)}
-@media(max-width:820px){.k4{grid-template-columns:repeat(2,1fr)}.k2,.k3{grid-template-columns:1fr}.hero h1{font-size:26px}}
+.grid{display:grid;gap:16px}.k4{grid-template-columns:repeat(4,1fr)}.k5{grid-template-columns:repeat(5,1fr)}.k2{grid-template-columns:1.3fr 1fr}.k3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:1100px){.k5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:820px){.k4,.k5{grid-template-columns:repeat(2,1fr)}.k2,.k3{grid-template-columns:1fr}.hero h1{font-size:26px}}
 .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 22px}
 .kpi .v{font-size:30px;font-weight:700;letter-spacing:-.02em}.kpi .l{color:var(--mut);font-size:13px}
 .up{color:#059669;font-weight:600;font-size:13px}.dn{color:#dc2626;font-weight:600;font-size:13px}.na{color:var(--mut);font-size:12px}
@@ -63,7 +64,7 @@ table.pb{width:100%;border-collapse:collapse;font-size:14px}table.pb td,table.pb
   @page{size:A4;margin:12mm}
   body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .no-print{display:none!important}.wrap{padding:0;max-width:none}
-  .card,.hero{break-inside:avoid}.k4{grid-template-columns:repeat(4,1fr)}.k3{grid-template-columns:repeat(3,1fr)}.k2{grid-template-columns:1.3fr 1fr}
+  .card,.hero{break-inside:avoid}.k4{grid-template-columns:repeat(4,1fr)}.k5{grid-template-columns:repeat(5,1fr)}.k3{grid-template-columns:repeat(3,1fr)}.k2{grid-template-columns:1.3fr 1fr}
 }
 </style>
 </head>
@@ -138,13 +139,17 @@ table.pb{width:100%;border-collapse:collapse;font-size:14px}table.pb td,table.pb
     </div>
 
     <h2>Headline numbers</h2>
-    <div class="grid k4">
+    <div class="grid" :class="isAccount() ? 'k5' : 'k4'">
       <div class="card kpi"><div class="l">Content published</div><div class="v" x-text="num(s.kpis.posts)"></div>
         <div :class="s.target && s.kpis.posts >= s.target ? 'up' : 'na'" x-text="s.target ? ('Target ' + s.target + ' · ' + Math.round(s.kpis.posts / s.target * 100) + '%') : change(s.kpis.changes.posts)"></div></div>
-      <div class="card kpi"><div class="l">Reach</div><div class="v" x-text="num(s.kpis.reach)"></div><div :class="cls(s.kpis.changes.reach)" x-text="change(s.kpis.changes.reach)"></div></div>
-      <div class="card kpi"><div class="l">Engagement</div><div class="v" x-text="num(s.kpis.engagement)"></div><div :class="cls(s.kpis.changes.engagement)" x-text="change(s.kpis.changes.engagement)"></div></div>
-      <div class="card kpi"><div class="l">Engagement rate</div><div class="v" x-text="(s.kpis.engagementRate || 0).toFixed(1) + '%'"></div><div class="na">engagements ÷ impressions</div></div>
+      <template x-if="isAccount()">
+        <div class="card kpi"><div class="l">Views</div><div class="v" x-text="num(s.kpis.views)"></div><div :class="cls(s.kpis.changes.views)" x-text="change(s.kpis.changes.views)"></div></div>
+      </template>
+      <div class="card kpi"><div class="l" x-text="isAccount() ? 'Accounts reached' : 'Reach (posts only)'"></div><div class="v" x-text="num(s.kpis.reach)"></div><div :class="cls(s.kpis.changes.reach)" x-text="change(s.kpis.changes.reach)"></div><div class="na" x-show="isAccount() && s.kpis.account && s.kpis.account.reachApproximate">approximate (see note below)</div></div>
+      <div class="card kpi"><div class="l" x-text="isAccount() ? 'Interactions' : 'Engagement (posts only)'"></div><div class="v" x-text="num(s.kpis.engagement)"></div><div :class="cls(s.kpis.changes.engagement)" x-text="change(s.kpis.changes.engagement)"></div></div>
+      <div class="card kpi"><div class="l" x-text="isAccount() ? 'Interaction rate' : 'Engagement rate'"></div><div class="v" x-text="(s.kpis.engagementRate || 0).toFixed(1) + '%'"></div><div class="na" x-text="isAccount() ? 'interactions ÷ accounts reached' : 'engagements ÷ impressions'"></div></div>
     </div>
+    <p class="na" style="margin:10px 0 0" x-text="measureNote()"></p>
 
     <h2>Content mix</h2>
     <div class="grid k2">
@@ -168,7 +173,7 @@ table.pb{width:100%;border-collapse:collapse;font-size:14px}table.pb td,table.pb
     </div>
 
     <div x-show="Object.keys(s.platformBreakdown || {}).length">
-      <h2>By platform</h2>
+      <h2>By platform (posts published this month)</h2>
       <div class="card"><table class="pb"><thead><tr><th>Platform</th><th>Posts</th><th>Reach</th><th>Impressions</th><th>Engagement</th></tr></thead>
         <tbody><template x-for="[p, v] in Object.entries(s.platformBreakdown)"><tr><td x-text="label(p)"></td><td x-text="v.posts"></td><td x-text="num(v.reach)"></td><td x-text="num(v.impressions)"></td><td x-text="num(v.engagement)"></td></tr></template></tbody></table></div>
     </div>
@@ -272,6 +277,15 @@ function webReport() {
     historyLine() {
       const h = this.r.review.history.slice(-3).map((x) => x.action + ' ' + this.fmtDate(x.at));
       return 'Recent: ' + h.join(' · ');
+    },
+    isAccount() { return this.s && this.s.kpis && this.s.kpis.source === 'instagram_account'; },
+    measureNote() {
+      const k = this.s.kpis; if (!k) return '';
+      if (!this.isAccount()) return (k.sourceNote || 'Added up from the posts published this month.') + ' Reports built before this change use this method.';
+      const a = k.account || {}; const fo = (a.viewsByFollowType || {}).NON_FOLLOWER;
+      let t = (k.sourceNote || '') + ' Interaction rate = interactions ÷ accounts reached. Changes compare with the previous month, measured the same way.';
+      if (fo) t += ' ' + this.num(fo) + ' of ' + this.num(k.views) + ' views came from people who do not follow the account.';
+      return t + ' ' + ((a.notes || []).join(' '));
     },
     num(v) { v = Number(v) || 0; if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M'; if (v >= 1e4) return Math.round(v / 1e3) + 'K'; if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K'; return String(Math.round(v)); },
     change(c) { if (c === undefined || c === null || !isFinite(c)) return 'vs last month: —'; return (c > 0 ? '▲ +' : c < 0 ? '▼ ' : '') + Math.round(c) + '% vs last month'; },
