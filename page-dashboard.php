@@ -413,28 +413,29 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedViews())"></p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Paid + organic · Meta account views</p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.views?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                                    <span x-text="formatChange(dashboardData.metrics?.views?.change || 0)"></span>
+                                    <span x-text="formatChange(dashboardData.metrics?.views?.change)"></span>
                                 </p>
                             </div>
                             <div x-show="isWidgetVisible('reach')" class="hub-stat-card hub-stat-card--teal rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Reach</h3>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Accounts reached</h3>
                                     <div class="hub-stat-card__icon text-teal-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg></div>
                                 </div>
                                 <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedReach())"></p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Paid + organic · unique accounts</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><span x-text="hasAccountReach() ? 'Unique Instagram accounts (Viewers in the app)' : 'Added up from posts (lower than Instagram)'"></span><span x-show="reachIsApproximate()" :title="accountNotes()"> · approximate*</span></p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.reach?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                                    <span x-text="formatChange(dashboardData.metrics?.reach?.change || 0)"></span>
+                                    <span x-text="formatChange(dashboardData.metrics?.reach?.change)"></span>
                                 </p>
                             </div>
                             <div x-show="isWidgetVisible('engagement_rate')" class="hub-stat-card hub-stat-card--pink rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Engagement Rate</h3>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Interaction rate</h3>
                                     <div class="hub-stat-card__icon text-pink-600"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg></div>
                                 </div>
                                 <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="(dashboardData.metrics?.engagementRate?.current || 0).toFixed(2) + '%'"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="hasAccountReach() ? 'Interactions ÷ accounts reached' : 'Engagement ÷ views (posts only)'"></p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.engagementRate?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                                    <span x-text="formatChange(dashboardData.metrics?.engagementRate?.change || 0)"></span>
+                                    <span x-text="formatChange(dashboardData.metrics?.engagementRate?.change)"></span>
                                 </p>
                             </div>
                             <div x-show="isWidgetVisible('total_engagement')" class="hub-stat-card hub-stat-card--blue rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
@@ -444,7 +445,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 </div>
                                 <p class="text-3xl font-bold mt-3 tracking-tight text-gray-900 dark:text-white" x-text="formatNumber(getCombinedEngagement())"></p>
                                 <p class="text-sm font-medium mt-1" :class="(dashboardData.metrics?.engagement?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                                    <span x-text="formatChange(dashboardData.metrics?.engagement?.change || 0)"></span>
+                                    <span x-text="formatChange(dashboardData.metrics?.engagement?.change)"></span>
                                 </p>
                             </div>
                         </div>
@@ -455,7 +456,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Impressions</h3>
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedImpressions())"></p>
                                 <p class="text-xs mt-1" :class="(dashboardData.metrics?.impressions?.change || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
-                                    <span x-text="formatChange(dashboardData.metrics?.impressions?.change || 0)"></span>
+                                    <span x-text="formatChange(dashboardData.metrics?.impressions?.change)"></span>
                                 </p>
                             </div>
                             <div x-show="isWidgetVisible('likes')" class="hub-stat-card hub-stat-card--red">
@@ -5073,6 +5074,23 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return accountTotal > 0 ? Math.max(postTotal, accountTotal) : postTotal;
                 },
 
+                hasAccountReach(usePreviousPeriod = false) {
+                    return this.getAccountActivityForPlatforms('reach', usePreviousPeriod) > 0;
+                },
+
+                getRateBase(usePreviousPeriod, views, impressions, reach) {
+                    if (this.hasAccountReach(usePreviousPeriod)) return reach;
+                    return views || impressions || reach;
+                },
+
+                reachIsApproximate() {
+                    return !!this.getActiveAccountActivity(false)?.approximate?.reach;
+                },
+
+                accountNotes() {
+                    return (this.getActiveAccountActivity(false)?.notes || []).join(' ');
+                },
+
                 getCombinedReach(usePreviousPeriod = false) {
                     return this.mergePostAndAccountTotals('reach', usePreviousPeriod);
                 },
@@ -5329,6 +5347,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
                 
                 calculatePercentageChange(currentValue, previousValue) {
+                    if (currentValue === null || currentValue === undefined || previousValue === null || previousValue === undefined) return null;
                     if (previousValue === 0) {
                         return currentValue > 0 ? 100 : 0;
                     }
@@ -6141,14 +6160,19 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     
                     // Calculate current and previous period metrics
                     const currentReach = this.getCombinedReach(false);
-                    const previousReach = this.getCombinedReach(true);
+                    let previousReach = this.getCombinedReach(true);
                     const currentImpressions = this.getCombinedImpressions(false);
-                    const previousImpressions = this.getCombinedImpressions(true);
+                    let previousImpressions = this.getCombinedImpressions(true);
                     const currentViews = this.getCombinedViews(false);
-                    const previousViews = this.getCombinedViews(true);
+                    let previousViews = this.getCombinedViews(true);
                     
                     let currentEngagement = this.getCombinedEngagement(false);
                     let previousEngagement = this.getCombinedEngagement(true);
+                    // Never compare Instagram account totals with post sums: if this period uses account totals
+                    // but the earlier period couldn't be read, show no comparison instead of a misleading one.
+                    if (this.hasAccountReach(false) && !this.hasAccountReach(true)) {
+                        previousReach = null; previousImpressions = null; previousViews = null; previousEngagement = null;
+                    }
                     
                     this.dashboardData.metrics.reach = {
                         current: currentReach,
@@ -6167,11 +6191,12 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         change: this.calculatePercentageChange(currentEngagement, previousEngagement)
                     };
                     
-                    // Engagement rate: prefer views (IG native), then impressions, then reach
-                    const currentRateBase = currentViews || currentImpressions || currentReach;
-                    const previousRateBase = previousViews || previousImpressions || previousReach;
+                    // Interaction rate = interactions ÷ accounts reached (Instagram account totals). Without account
+                    // totals (post sums only) it falls back to views, then impressions, then reach.
+                    const currentRateBase = this.getRateBase(false, currentViews, currentImpressions, currentReach);
+                    const previousRateBase = this.getRateBase(true, previousViews, previousImpressions, previousReach);
                     const currentEngagementRate = currentRateBase > 0 ? (currentEngagement / currentRateBase) * 100 : 0;
-                    const previousEngagementRate = previousRateBase > 0 ? (previousEngagement / previousRateBase) * 100 : 0;
+                    const previousEngagementRate = previousEngagement === null ? null : (previousRateBase > 0 ? (previousEngagement / previousRateBase) * 100 : 0);
                     this.dashboardData.metrics.engagementRate = {
                         current: currentEngagementRate,
                         change: this.calculatePercentageChange(currentEngagementRate, previousEngagementRate)
@@ -6206,17 +6231,15 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         this.dashboardData.insights = {};
                     }
                     const pct = (cur, prev) => this.calculatePercentageChange(cur, prev);
-                    const currentEngagementRate = this.dashboardData.metrics?.engagementRate?.current || 0;
-                    const previousRateBase = this.getCombinedViews(true) || this.getCombinedImpressions(true) || this.getCombinedReach(true);
-                    const previousEngagement = this.getCombinedEngagement(true);
-                    const previousEngagementRate = previousRateBase > 0 ? (previousEngagement / previousRateBase) * 100 : 0;
+                    const m = this.dashboardData.metrics || {};
+                    const acct = this.hasAccountReach(false);
                     this.dashboardData.insights.progressMetrics = [
-                        { label: 'Views', change: pct(this.getCombinedViews(false), this.getCombinedViews(true)) },
-                        { label: 'Reach', change: pct(this.getCombinedReach(false), this.getCombinedReach(true)) },
-                        { label: 'Impressions', change: pct(this.getCombinedImpressions(false), this.getCombinedImpressions(true)) },
-                        { label: 'Engagement', change: pct(this.getCombinedEngagement(false), this.getCombinedEngagement(true)) },
-                        { label: 'Engagement rate', change: pct(currentEngagementRate, previousEngagementRate) }
-                    ];
+                        { label: 'Views', change: m.views?.change },
+                        { label: acct ? 'Accounts reached' : 'Reach', change: m.reach?.change },
+                        { label: 'Impressions', change: m.impressions?.change },
+                        { label: 'Engagement', change: m.engagement?.change },
+                        { label: acct ? 'Interaction rate' : 'Engagement rate', change: m.engagementRate?.change }
+                    ].filter((row) => row.change !== null && row.change !== undefined);
                     if (!this.dashboardData.insights.summaryStats) {
                         this.dashboardData.insights.summaryStats = {};
                     }
@@ -6404,6 +6427,7 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 },
 
                 formatChange(change) {
+                    if (change === null || change === undefined || !isFinite(change)) return 'No earlier-period figure to compare';
                     const sign = change >= 0 ? '+' : '';
                     return `${sign}${change.toFixed(1)}% ${this.getComparisonPeriodLabel()}`;
                 },
