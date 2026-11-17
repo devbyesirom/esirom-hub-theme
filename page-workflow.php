@@ -1462,7 +1462,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     <!-- Feed Items -->
                     <div x-show="!feedLoading" class="space-y-4">
                         <template x-for="item in feedItems" :key="item._id">
-                            <div @click="openConceptFromFeed(item.conceptId)" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-600">
+                            <div @click="openConceptFromFeed(item)" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-600">
                                 <div class="flex">
                                     <!-- Thumbnail -->
                                     <div x-show="item.thumbnail" class="w-20 h-20 md:w-28 md:h-28 flex-shrink-0 bg-gray-100 dark:bg-gray-700">
@@ -2244,11 +2244,11 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                         </div>
 
                         <!-- Feedback Section with @mentions -->
-                        <div class="border-t dark:border-gray-700 pt-6 mt-6">
+                        <div id="hub-concept-feedback-section" class="border-t dark:border-gray-700 pt-6 mt-6">
                             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Feedback & Comments</h3>
                             <div class="space-y-4 mb-4 max-h-60 overflow-y-auto">
                                 <template x-for="fb in selectedConcept?.feedback" :key="fb._id">
-                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <div :id="'hub-concept-feedback-' + fb._id" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 transition-shadow" :class="isFeedCommentHighlighted(fb) ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-800' : ''">
                                         <div class="flex justify-between items-start mb-2 gap-2">
                                             <span class="font-medium text-gray-900 dark:text-white" x-text="fb.from?.firstName + ' ' + fb.from?.lastName"></span>
                                             <div class="flex items-center gap-2 shrink-0">
@@ -3228,12 +3228,12 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                                 </div>
                                 
                                 <!-- Feedback & Comments Section -->
-                                <div class="border-t dark:border-gray-700 pt-4 mt-4">
+                                <div id="hub-bank-feedback-section" class="border-t dark:border-gray-700 pt-4 mt-4">
                                     <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Feedback & Comments</h4>
                                     <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
                                         <!-- Combined feed: client feedback + team comments sorted by date -->
                                         <template x-for="fb in [...(selectedContentBankItem?.clientFeedback || []).map(f => ({...f, _source: 'client'})), ...(selectedContentBankItem?.feedback || []).map(f => ({...f, _source: 'team'}))].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))" :key="fb._id">
-                                            <div class="p-3 rounded-lg" :class="fb._source === 'client' ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800' : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'">
+                                            <div :id="'hub-bank-feedback-' + fb._id" class="p-3 rounded-lg transition-shadow" :class="[(fb._source === 'client' ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800' : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'), isFeedCommentHighlighted(fb) ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-800' : '']">
                                                 <div class="flex justify-between items-start mb-1 gap-2">
                                                     <span class="font-medium text-sm text-gray-900 dark:text-white" x-text="fb.from?.firstName ? fb.from.firstName + ' ' + (fb.from.lastName || '') : (fb._source === 'client' ? 'Client' : 'Team')"></span>
                                                     <div class="flex items-center gap-2 shrink-0">
@@ -3374,6 +3374,29 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
         // Keep the "Share Content for Posting" deep link (e.g. from the announcement email)
         // across a sign-in, so the form still opens after the client logs in.
         try { if (new URLSearchParams(window.location.search).get('share') === '1') sessionStorage.setItem('hubPendingShare', '1'); } catch (e) {}
+
+        // Activity Feed click routing (kept as plain functions so they can be tested in isolation)
+        function hubFeedConceptId(itemOrId) {
+            if (itemOrId && typeof itemOrId === 'object') return itemOrId.conceptId || null;
+            return itemOrId || null;
+        }
+        function hubFeedFeedbackId(itemOrId) {
+            if (!itemOrId || typeof itemOrId !== 'object') return null;
+            if (itemOrId.feedbackId) return String(itemOrId.feedbackId);
+            if (itemOrId.type && itemOrId._id) return String(itemOrId._id);
+            return null;
+        }
+        function hubShouldOpenContentBankFromFeed(item, concept, viewMode, role) {
+            const type = item && item.type;
+            const status = (concept && concept.status) || (item && item.conceptStatus) || '';
+            if (type === 'client_feedback') return true;
+            if (viewMode === 'client' || role === 'client') return true;
+            if (['in_content_bank', 'client_approved', 'posted', 'approved'].includes(status)) return true;
+            const approval = (concept && concept.clientApprovalStatus) || (item && item.clientApprovalStatus) || '';
+            // needs_revision is also used earlier in the concept workflow; only treat it as a bank item once the client has reviewed it
+            if (status === 'needs_revision' && approval && approval !== 'pending') return true;
+            return false;
+        }
 
         function workflowApp() {
             return {
@@ -3531,6 +3554,7 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                 unreadFeedCount: 0,
                 lastFeedCheck: null,
                 feedPoller: null,
+                highlightedFeedbackId: null,
 
                 conceptDragOver: false,
                 contentBankDragOver: false,
@@ -3618,16 +3642,18 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                             if (!Number.isNaN(am)) this.efficiencyMonth = am;
                             await this.loadConcepts();
                         }
+                        const deepFeedback = sp.get('feedback');
                         const deepConcept = sp.get('concept') || sp.get('conceptId');
                         if (deepConcept) {
-                            this.activeTab = 'concepts';
-                            await this.openConceptFromFeed(deepConcept);
+                            await this.openConceptFromFeed({ conceptId: deepConcept, feedbackId: deepFeedback });
                         }
                         const deepContent = sp.get('content');
                         if (deepContent) {
                             this.activeTab = 'contentBank';
+                            this.highlightedFeedbackId = deepFeedback || null;
                             await this.loadContentBank();
                             await this.viewContentBankItem({ _id: deepContent });
+                            await this.scrollToHighlightedFeedback();
                         }
                         const deepProject = sp.get('project');
                         if (deepProject) {
@@ -6336,19 +6362,88 @@ $api_url = get_option('esirom_api_url', 'https://esirom-hub-backend-production.u
                     return 'Team Comment';
                 },
 
-                async openConceptFromFeed(conceptId) {
+                isFeedCommentHighlighted(fb) {
+                    return !!(this.highlightedFeedbackId && fb && String(fb._id) === String(this.highlightedFeedbackId));
+                },
+
+                async scrollToHighlightedFeedback() {
+                    await this.$nextTick();
+                    const tryScroll = () => {
+                        const id = this.highlightedFeedbackId;
+                        const candidates = [];
+                        if (id) {
+                            candidates.push(document.getElementById('hub-bank-feedback-' + id));
+                            candidates.push(document.getElementById('hub-concept-feedback-' + id));
+                        }
+                        candidates.push(document.getElementById('hub-bank-feedback-section'));
+                        candidates.push(document.getElementById('hub-concept-feedback-section'));
+                        const visible = candidates.find((n) => n && n.offsetParent !== null);
+                        const el = visible || candidates.find(Boolean);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    };
+                    tryScroll();
+                    setTimeout(tryScroll, 150);
+                    setTimeout(tryScroll, 400);
+                },
+
+                async openConceptFromFeed(itemOrId) {
+                    const conceptId = hubFeedConceptId(itemOrId);
                     if (!conceptId) return;
+                    const item = (itemOrId && typeof itemOrId === 'object') ? itemOrId : null;
+                    const feedbackId = hubFeedFeedbackId(itemOrId);
+                    this.highlightedFeedbackId = feedbackId;
+                    const fromFeed = !!(item && item.type);
                     const token = localStorage.getItem('token');
+                    const role = this.user && this.user.role;
+                    const viewMode = this.viewMode;
+                    const preferBank = hubShouldOpenContentBankFromFeed(item, null, viewMode, role);
+
+                    const openBankView = async () => {
+                        this.showConceptDetail = false;
+                        await this.viewContentBankItem({ _id: conceptId });
+                        if (this.showContentBankDetail) {
+                            if (!fromFeed) {
+                                this.activeTab = 'contentBank';
+                                this.setWorkflowQuery('contentBank', { content: String(conceptId), ...(feedbackId ? { feedback: String(feedbackId) } : {}) });
+                            }
+                            await this.scrollToHighlightedFeedback();
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    const openConceptView = async (concept) => {
+                        this.showContentBankDetail = false;
+                        this.selectedConcept = concept;
+                        this.showConceptDetail = true;
+                        if (!fromFeed) {
+                            this.activeTab = 'concepts';
+                            this.setWorkflowQuery('concepts', { concept: String(conceptId), ...(feedbackId ? { feedback: String(feedbackId) } : {}) });
+                        }
+                        await this.scrollToHighlightedFeedback();
+                    };
+
                     try {
+                        if (preferBank) {
+                            if (await openBankView()) return;
+                        }
                         const res = await fetch(`${API_URL}/workflow/concepts/${conceptId}`, { headers: { 'Authorization': `Bearer ${token}` } });
                         if (res.ok) {
                             const data = await res.json();
-                            this.selectedConcept = data.concept;
-                            this.showConceptDetail = true;
-                            this.activeTab = 'concepts';
-                            this.setWorkflowQuery('concepts', { concept: conceptId });
+                            const concept = data.concept;
+                            if (!concept) return;
+                            if (hubShouldOpenContentBankFromFeed(item, concept, viewMode, role)) {
+                                if (await openBankView()) return;
+                            }
+                            await openConceptView(concept);
+                            return;
                         }
-                    } catch (error) { console.error('Open concept from feed error:', error); }
+                        if (!preferBank && await openBankView()) return;
+                        this.showToast('Could not open that item', 'error');
+                    } catch (error) {
+                        console.error('Open concept from feed error:', error);
+                        this.showToast('Could not open that item', 'error');
+                    }
                 },
 
                 // ===== PLANNER METHODS =====
