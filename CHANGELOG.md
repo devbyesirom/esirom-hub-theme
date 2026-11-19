@@ -5,6 +5,12 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.87] - 2026-11-17
+
+### Fixed
+- Activity Feed: clicking a Client Feedback item (and Team Comments on items already in the Content Bank) opens the post with the full feedback thread and reply box, scrolled and highlighted to that comment. Previously every feed item opened the concept view, which does not show client feedback.
+- The same routing is used for deep links (`?concept=` / `?content=` / `?feedback=`), including items in any stage (concept, production, bank, approved, or sent back for changes).
+
 ## [2.3.86] - 2026-11-12
 
 ### Fixed
