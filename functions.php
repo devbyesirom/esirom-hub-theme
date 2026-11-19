@@ -28,6 +28,11 @@ add_action('after_setup_theme', 'esirom_hub_setup');
  * Resolve a Hub page URL by slug, with fallback when the WP page is not created yet.
  */
 function esirom_hub_page_url($slug) {
+    // Short names whose live page slug differs.
+    $aliases = array('privacy' => 'privacy-policy');
+    if (isset($aliases[$slug])) {
+        $slug = $aliases[$slug];
+    }
     $page = get_page_by_path($slug);
     if ($page && !is_wp_error($page)) {
         $url = get_permalink($page);
@@ -309,7 +314,7 @@ function esirom_hub_handle_media_upload() {
     wp_die();
 }
 add_action('wp_ajax_upload_media', 'esirom_hub_handle_media_upload');
-add_action('wp_ajax_nopriv_upload_media', 'esirom_hub_handle_media_upload');
+// No wp_ajax_nopriv_ hook: only signed-in WordPress administrators can reach this legacy uploader.
 
 /**
  * Register theme settings page
@@ -490,3 +495,15 @@ function esirom_hub_maybe_flush_rewrite_rules() {
     }
 }
 add_action('init', 'esirom_hub_maybe_flush_rewrite_rules', 20);
+
+/**
+ * The old /insights/ page was replaced by the Insights view on the dashboard.
+ * Browsers keep the #overview fragment from a Location header (RFC 7231 7.1.2).
+ */
+function esirom_hub_redirect_old_insights() {
+    if (is_page('insights')) {
+        wp_safe_redirect(esirom_hub_page_url('dashboard') . '#overview', 301);
+        exit;
+    }
+}
+add_action('template_redirect', 'esirom_hub_redirect_old_insights', 1);

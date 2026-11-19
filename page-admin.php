@@ -4470,9 +4470,14 @@ show_admin_bar(false);
                                         this.mediaUploadProgress.uploaded += (result.data?.uploaded || []).length;
                                         (result.data?.errors || []).forEach(msg => failures.push(msg));
                                     } else {
-                                        const errorMessage = result.data?.message || result.message || `Upload failed (${response.status})`;
+                                        // WordPress answers "0" (400) when nobody is signed in to wp-admin:
+                                        // this legacy uploader only accepts WordPress administrators.
+                                        const notSignedIn = response.status === 400 && !result.data && !result.message;
+                                        const errorMessage = notSignedIn
+                                            ? 'Unauthorised: sign in to WordPress admin (wp-admin) as an administrator, then try again'
+                                            : (result.data?.message || result.message || `Upload failed (${response.status})`);
                                         failures.push(`${mediaType}/${monthFolder || ''}: ${errorMessage}`);
-                                        if (response.status === 401) throw new Error(errorMessage);
+                                        if (response.status === 401 || notSignedIn) throw new Error(errorMessage);
                                     }
                                 } catch (error) {
                                     failures.push(error.message || 'Network error');
