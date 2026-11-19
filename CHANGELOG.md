@@ -5,6 +5,15 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.88] - 2026-11-19
+
+### Changed
+- `/insights/` (old page) now redirects permanently (301) to the dashboard Insights view (`/dashboard/#overview`).
+- Login and registration privacy links point straight to `/privacy-policy/` (no extra redirect).
+
+### Security
+- The legacy export-media uploader (Admin → Import → upload media folder) no longer accepts requests from people who are not signed in to WordPress (`wp_ajax_nopriv_upload_media` removed). It now needs a WordPress administrator session; the Admin page says so if you are not signed in.
+
 ## [2.3.87] - 2026-11-17
 
 ### Fixed
