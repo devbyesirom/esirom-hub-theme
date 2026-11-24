@@ -5,6 +5,19 @@ All notable changes to the Esirom Agency Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.89] - 2026-11-24
+
+### Added
+- **Latest News**: new `/news/` page (WordPress page `news`, template *Latest News*) and a Latest News card at the bottom of Insights. Both show the newest esirom.com blog posts (title, image, date, excerpt, link) for staff and clients, via `GET /api/news`. Linked from the client, staff and mobile menus.
+- **Monthly newsletter review** (admins only): a *Monthly newsletter* tab on `/news/` to preview each month's draft, edit the subject and opening paragraph, email yourself a test, and press **Approve and send to clients**. Nothing is sent automatically.
+
+### Changed
+- Insights: Instagram Stories are no longer listed in Top Content (their images expire after 24 hours). Their views and reach appear in a labelled **From Stories** card and are not mixed into post totals.
+
+### Removed
+- Insights → **Audience activity** ("When your audience is online"). Meta refuses `online_followers` for this app (error #10, permission) and Facebook fan times are deprecated, so the card could never fill.
+- Insights → **Facebook & Instagram account metrics** table. It repeated the headline Insights figures (views, accounts reached, interactions, profile visits) from the same source. Profile activity stays.
+
 ## [2.3.88] - 2026-11-19
 
 ### Changed

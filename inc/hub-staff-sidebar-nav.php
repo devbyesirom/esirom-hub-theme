@@ -27,6 +27,7 @@ $hub_ai_studio_url = esc_url(esirom_hub_page_url('ai-studio'));
 $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
+$hub_news_url = esc_url(esirom_hub_page_url('news'));
 $hub_password_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 
 $hub_is_dashboard = ($hub_nav_context === 'dashboard');
@@ -176,6 +177,11 @@ $hub_view_class = function ($view) {
 
     <!-- ── Standalone items ───────────────────────────────────────────────── -->
     <div class="space-y-0.5">
+        <a href="<?php echo $hub_news_url; ?>" class="<?php echo esc_attr($hub_item_class('news')); ?>"<?php echo $hub_current('news'); ?>>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
+            <span class="nav-text"<?php echo $hub_label_attrs; ?>>Latest News</span>
+        </a>
+
         <a href="<?php echo $hub_progress_url; ?>" class="<?php echo esc_attr($hub_item_class('progress')); ?>"<?php echo $hub_current('progress'); ?>>
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <span class="nav-text"<?php echo $hub_label_attrs; ?>>My Progress</span>

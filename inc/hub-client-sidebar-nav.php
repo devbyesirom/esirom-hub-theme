@@ -3,7 +3,7 @@
  * Shared sidebar navigation for client view (viewMode === 'client').
  *
  * Expects:
- *   $hub_client_nav_active   content_bank|password_vault|brand_info|published_posts|overview|reports|event_coverage|content_calendar|website_projects
+ *   $hub_client_nav_active   content_bank|password_vault|brand_info|news|published_posts|overview|reports|event_coverage|content_calendar|website_projects
  *   $hub_client_nav_context    site|dashboard
  *   $hub_nav_alpine_labels     bool
  */
@@ -23,6 +23,7 @@ $hub_vault_url = esc_url(esirom_hub_page_url('password-vault'));
 $hub_calendar_url = esc_url(esirom_hub_page_url('content-calendar'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_brand_info_url = esc_url(esirom_hub_page_url('brand-info'));
+$hub_news_url = esc_url(esirom_hub_page_url('news'));
 $hub_is_dashboard = ($hub_client_nav_context === 'dashboard');
 
 $hub_client_show = esirom_hub_client_nav_show_attr();
@@ -101,6 +102,10 @@ $hub_view_class = function ($view) {
 
     <div class="space-y-0.5">
         <p class="hub-nav-group-title"<?php echo $hub_label_attrs; ?>><span>Account</span></p>
+        <a href="<?php echo $hub_news_url; ?>" class="<?php echo esc_attr($hub_link_class('news')); ?>"<?php echo $hub_current('news'); ?>>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>
+            <span class="nav-text"<?php echo $hub_label_attrs; ?>>Latest News</span>
+        </a>
         <a href="<?php echo $hub_vault_url; ?>" class="<?php echo esc_attr($hub_link_class('password_vault')); ?>"<?php echo $hub_current('password_vault'); ?>>
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
             <span class="nav-text"<?php echo $hub_label_attrs; ?>>Password Vault</span>
