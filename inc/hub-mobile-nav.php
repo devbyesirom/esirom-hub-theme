@@ -27,6 +27,7 @@ $hub_inventory_url = esc_url(esirom_hub_page_url('inventory'));
 $hub_website_projects_url = esc_url(esirom_hub_page_url('website-projects'));
 $hub_progress_url = esc_url(esirom_hub_page_url('progress'));
 $hub_vault_url = esc_url(esirom_hub_page_url('password-vault'));
+$hub_news_url = esc_url(esirom_hub_page_url('news'));
 $hub_admin_url = esc_url(esirom_hub_page_url('admin'));
 
 $hub_staff_show = esirom_hub_staff_nav_show_attr();
@@ -50,7 +51,7 @@ $hub_current = function ($key) use ($hub_tab_is_active) {
 
 $hub_more_active = in_array($hub_mobile_active, [
     'overview', 'messages', 'event_coverage', 'password_vault', 'website_projects',
-    'inventory', 'ads', 'ai_studio', 'admin', 'content_calendar'
+    'inventory', 'ads', 'ai_studio', 'admin', 'content_calendar', 'news'
 ], true);
 
 $hub_more_tab_class = 'hub-tab' . ($hub_more_active ? ' is-active' : '');
@@ -78,6 +79,7 @@ $hub_icons = array(
     'vault'     => 'M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z',
     'website'   => 'M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5',
     'inventory' => 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z',
+    'news'      => 'M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z',
     'ads'       => 'M3.75 13.5l10.5-11.25L15 6.75m-3-3v11.25m9-5.25H9',
     'admin'     => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
 );
@@ -194,6 +196,7 @@ $hub_icon = function ($name) use ($hub_icons) {
             <div <?php echo $hub_client_show; ?> class="py-1">
                 <a href="<?php echo $hub_calendar_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('calendar'); ?> Content Calendar</a>
                 <a href="<?php echo $hub_dashboard_url; ?>#event-coverage" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('events'); ?> Event Coverage</a>
+                <a href="<?php echo $hub_news_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('news'); ?> Latest News</a>
                 <a href="<?php echo $hub_vault_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('vault'); ?> Password Vault</a>
                 <a href="<?php echo $hub_website_projects_url; ?>" x-show="$store.clientNav.hasWebsiteProjects" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('website'); ?> Website Projects</a>
             </div>
@@ -205,6 +208,7 @@ $hub_icon = function ($name) use ($hub_icons) {
                 <a href="<?php echo $hub_dashboard_url; ?>#content-calendar" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('posts'); ?> Published Posts</a>
                 <a href="<?php echo $hub_dashboard_url; ?>#reports" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('reports'); ?> Reports</a>
                 <a href="<?php echo $hub_dashboard_url; ?>#event-coverage" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('events'); ?> Event Coverage</a>
+                <a href="<?php echo $hub_news_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('news'); ?> Latest News</a>
                 <a href="<?php echo $hub_vault_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('vault'); ?> Password Vault</a>
                 <a href="<?php echo $hub_website_projects_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('website'); ?> Website Projects</a>
                 <a href="<?php echo $hub_inventory_url; ?>" @click="moreOpen = false" class="hub-sheet-link"><?php echo $hub_icon('inventory'); ?> Inventory</a>

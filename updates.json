@@ -1,5 +1,18 @@
 [
   {
+    "id": 37,
+    "title": "Latest News in the Hub",
+    "version": "2.3.89",
+    "description": "The newest stories from the Esirom blog now appear in the Hub: a Latest News card on Insights and a full Latest News page in the menu. Insights is tidier too: Stories views and reach now sit in their own From Stories card, and two cards that could not fill with Meta data have been removed.",
+    "date": "2026-11-24",
+    "highlights": [
+      "Latest News page and Insights card for everyone",
+      "From Stories card for Story views and reach",
+      "Stories no longer show as broken thumbnails in Top Content"
+    ],
+    "type": "feature"
+  },
+  {
     "id": 36,
     "title": "Cleaner Reports Page",
     "version": "2.3.68",

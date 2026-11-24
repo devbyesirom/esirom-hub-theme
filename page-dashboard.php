@@ -492,9 +492,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedAddressTaps())"></p>
                             </div>
                             <div x-show="isWidgetVisible('stories')" class="hub-stat-card rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
-                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Story Views</h3>
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">From Stories</h3>
                                 <p class="text-2xl font-bold mt-2 text-gray-900 dark:text-white" x-text="formatNumber(getCombinedStoriesViews())"></p>
-                                <p class="text-[10px] text-gray-400 mt-1" x-show="getCombinedStoriesReach() > 0"><span x-text="formatNumber(getCombinedStoriesReach())"></span> story reach</p>
+                                <p class="text-[10px] text-gray-400 mt-1">Story views<span x-show="getCombinedStoriesReach() > 0"> · <span x-text="formatNumber(getCombinedStoriesReach())"></span> reached</span></p>
+                                <p class="text-[10px] text-gray-400">Instagram Stories only; Stories are not shown in Top Content</p>
                             </div>
                             <div x-show="isWidgetVisible('plays_3s')" class="hub-stat-card hub-stat-card--cyan rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
                                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">3s Plays</h3>
@@ -612,111 +613,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                             </div>
                         </div>
 
-                        <!-- Follower Active Times -->
-                        <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
-                            <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
-                                <div class="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                                    <div>
-                                        <p class="hub-insights-section-title mb-1">Audience activity</p>
-                                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">When your audience is online</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Peak hours from Meta Insights · times shown in your browser's local timezone</p>
-                                    </div>
-                                    <button @click="refreshAudienceInsights()" :disabled="audienceInsightsLoading" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-60">Refresh</button>
-                                </div>
-
-                                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                    <div x-show="clientPlatforms.includes('instagram')">
-                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Instagram follower active times</h4>
-                                        <div x-show="getInstagramOnlineFollowers().length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                            <template x-for="slot in getInstagramOnlineFollowers().slice(0, 12)" :key="'ig-hour-' + slot.hour">
-                                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatHourLabel(slot.hour)"></p>
-                                                    <p class="text-lg font-bold text-gray-900 dark:text-white mt-1" x-text="formatNumber(slot.count)"></p>
-                                                </div>
-                                            </template>
-                                        </div>
-                                        <div x-show="getInstagramOnlineFollowers().length === 0" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm dark:border-gray-600 dark:bg-gray-900/40">
-                                            <p x-show="!getAudienceActivityErrors().length">Instagram peak hours need a Business or Creator account with 100+ followers and the Instagram insights permission. Tap <strong>Refresh</strong> after the next sync. Meta still withholds this for some accounts.</p>
-                                            <template x-for="err in getAudienceActivityErrors().filter(e => /instagram/i.test(e)).slice(0,2)" :key="err">
-                                                <p class="text-amber-700 dark:text-amber-300 mt-2" x-text="err"></p>
-                                            </template>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="clientPlatforms.includes('facebook')">
-                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Facebook fan active times</h4>
-                                        <div x-show="getFacebookFansOnline().length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                            <template x-for="slot in getFacebookFansOnline().slice(0, 12)" :key="'fb-hour-' + slot.hour">
-                                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatHourLabel(slot.hour)"></p>
-                                                    <p class="text-lg font-bold text-gray-900 dark:text-white mt-1" x-text="formatNumber(slot.count)"></p>
-                                                </div>
-                                            </template>
-                                        </div>
-                                        <div x-show="getFacebookFansOnline().length === 0" class="text-xs text-gray-500 dark:text-gray-400">
-                                            <p>Meta no longer provides Facebook fan active times for most Pages. Use Instagram hours above when available.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Meta Account Activity -->
-                        <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
-                            <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
-                                <div class="mb-4">
-                                    <p class="hub-insights-section-title mb-1">Meta account activity</p>
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Facebook & Instagram account metrics</h3>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Account-level totals from Meta · <span x-text="currentPeriodLabel"></span></p>
-                                </div>
-                                <div x-show="hasMetaAccountActivity()" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-                                    <template x-for="row in getMetaAccountActivityRows().slice(0, 4)" :key="'summary-' + row.label">
-                                        <div class="rounded-xl border border-gray-200 bg-gradient-to-br from-white to-indigo-50/60 p-4 dark:border-gray-700 dark:from-gray-800 dark:to-indigo-950/20">
-                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" x-text="row.label"></p>
-                                            <p class="text-2xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatNumber(row.total)"></p>
-                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                                                <span x-show="clientPlatforms.includes('instagram')">IG <span x-text="formatNumber(row.instagram)"></span></span>
-                                                <span x-show="clientPlatforms.includes('facebook')" :class="clientPlatforms.includes('instagram') ? 'ml-2' : ''">FB <span x-text="formatNumber(row.facebook)"></span></span>
-                                            </p>
-                                        </div>
-                                    </template>
-                                </div>
-                                <div x-show="hasMetaAccountActivity()" class="overflow-x-auto">
-                                    <table class="min-w-full text-sm rounded-xl overflow-hidden">
-                                        <thead>
-                                            <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                                <th class="py-2 pr-4">Metric</th>
-                                                <th class="py-2 pr-4" x-show="clientPlatforms.includes('facebook')">Facebook</th>
-                                                <th class="py-2 pr-4" x-show="clientPlatforms.includes('instagram')">Instagram</th>
-                                                <th class="py-2">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                                            <template x-for="row in getMetaAccountActivityRows()" :key="row.label">
-                                                <tr>
-                                                    <td class="py-3 pr-4 font-medium text-gray-800 dark:text-gray-200" x-text="row.label"></td>
-                                                    <td class="py-3 pr-4 text-gray-700 dark:text-gray-300" x-show="clientPlatforms.includes('facebook')" x-text="formatNumber(row.facebook)"></td>
-                                                    <td class="py-3 pr-4 text-gray-700 dark:text-gray-300" x-show="clientPlatforms.includes('instagram')" x-text="formatNumber(row.instagram)"></td>
-                                                    <td class="py-3 font-semibold text-gray-900 dark:text-white" x-text="formatNumber(row.total)"></td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div x-show="!hasMetaAccountActivity()" class="hub-insights-empty rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-gray-600 dark:bg-gray-900/40">
-                                    <p class="font-medium text-gray-700 dark:text-gray-300 mb-1">Account activity not loaded yet</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Connect Facebook or Instagram for this brand, then tap <strong>Refresh audience</strong> to pull Meta account metrics.</p>
-                                    <template x-if="getAudienceActivityErrors().length">
-                                        <div class="mt-3 text-left text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
-                                            <p class="font-semibold mb-1">Meta API notes</p>
-                                            <template x-for="err in getAudienceActivityErrors().slice(0, 4)" :key="err">
-                                                <p x-text="err"></p>
-                                            </template>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
+                        <?php /* "Audience activity" (when followers are online) and the "Facebook & Instagram account metrics" table were
+                           removed in v2.3.89: Meta refuses online_followers for this app (permission #10) and Facebook fan times are
+                           deprecated; the account metrics repeated the headline Insights figures above. */ ?>
 
                         <!-- Profile Activity (IG-style) -->
                         <div x-show="hasSocialAudiencePlatforms()" class="mt-6">
@@ -1090,6 +989,37 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 </div>
 
                 <!-- Reports View -->
+                <!-- Latest News (esirom.com blog) -->
+                <div x-show="activeView === 'dashboard' && !loading" x-cloak class="mt-6" x-init="loadLatestNews()">
+                    <div class="hub-insights-panel rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800/80 md:p-6">
+                        <div class="mb-4 flex items-end justify-between gap-3">
+                            <div>
+                                <p class="hub-insights-section-title mb-1">From Esirom</p>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Latest News</h3>
+                            </div>
+                            <a href="<?php echo esc_url(esirom_hub_page_url('news')); ?>" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">View all news &rarr;</a>
+                        </div>
+                        <div x-show="latestNewsLoading" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div class="hub-skeleton h-56 rounded-xl"></div><div class="hub-skeleton h-56 rounded-xl hidden md:block"></div><div class="hub-skeleton h-56 rounded-xl hidden md:block"></div>
+                        </div>
+                        <p x-show="!latestNewsLoading && latestNewsError" class="text-sm text-gray-500 dark:text-gray-400" x-text="latestNewsError"></p>
+                        <div x-show="!latestNewsLoading && latestNews.length" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <template x-for="post in latestNews.slice(0, 3)" :key="'news-' + post.id">
+                                <a :href="post.link" target="_blank" rel="noopener" class="group block overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                                    <div class="aspect-[16/9] w-full bg-gray-100 dark:bg-gray-700">
+                                        <img x-show="post.image" :src="post.image" :alt="post.title" loading="lazy" class="h-full w-full object-cover">
+                                    </div>
+                                    <div class="p-4">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400"><span x-text="post.category || 'News'"></span> · <span x-text="formatNewsDate(post.date)"></span></p>
+                                        <h4 class="mt-1 line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400" x-text="post.title"></h4>
+                                        <p class="mt-1 line-clamp-3 text-xs text-gray-500 dark:text-gray-400" x-text="post.excerpt"></p>
+                                    </div>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <div x-show="activeView === 'reports'" x-cloak class="hub-reports">
                     <!-- Header -->
                     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
@@ -2556,6 +2486,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                 insightsNarrativesLoading: false,
                 insightsNarrativesError: '',
                 audienceInsights: null,
+                latestNews: [],
+                latestNewsLoading: false,
+                latestNewsError: '',
+                latestNewsLoaded: false,
                 audienceInsightsLoading: false,
                 periodAccountActivity: null,
                 previousPeriodAccountActivity: null,
@@ -5144,8 +5078,16 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     return Math.max(accountViews, storyPostViews);
                 },
 
+                isStoryPost(post) {
+                    return Boolean(post) && (post.contentType === 'story' || post.mediaType === 'story' || (post.tags || []).includes('story'));
+                },
+
                 getCombinedStoriesReach() {
-                    return Number(this.getActiveAccountActivity(false)?.stories?.reach) || 0;
+                    const accountReach = Number(this.getActiveAccountActivity(false)?.stories?.reach) || 0;
+                    const storyPostReach = this.posts
+                        .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post) && this.isStoryPost(post))
+                        .reduce((sum, post) => sum + (this.activePlatforms.includes('instagram') ? (Number(post.kpis?.instagram_reach) || 0) : 0), 0);
+                    return Math.max(accountReach, storyPostReach);
                 },
 
                 getInstagramOnlineFollowers() {
@@ -5241,8 +5183,10 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
 
                 getSortedTopContent() {
                     const sortBy = this.topContentSortBy || 'score';
+                    // Stories expire after 24h (their images stop loading), so they are never listed here; their
+                    // views and reach appear in the labelled "From Stories" card instead.
                     const fromPosts = this.posts
-                        .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post))
+                        .filter((post) => this.isPublishedInsightPost(post) && this.isPostInDateRange(post) && !this.isStoryPost(post))
                         .map((post) => {
                             const platform = (post.platforms || [])[0] || 'instagram';
                             if (!this.activePlatforms.includes(platform)) return null;
@@ -5272,7 +5216,9 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                         })
                         .filter(Boolean);
 
-                    const apiContent = (this.dashboardData.insights?.topContent || []).map((item) => ({
+                    const apiContent = (this.dashboardData.insights?.topContent || [])
+                        .filter((item) => item.type !== 'story' && item.contentType !== 'story')
+                        .map((item) => ({
                         ...item,
                         score: (Number(item.views) || 0) + (Number(item.engagement) || 0) + (Number(item.reach) || 0)
                     }));
@@ -5586,6 +5532,29 @@ $dashboard_url = $dashboard_page ? get_permalink($dashboard_page->ID) : home_url
                     const pct = item?.percentage;
                     if (pct != null) return Math.min(100, pct) + '%';
                     return '0%';
+                },
+
+                async loadLatestNews() {
+                    if (this.latestNewsLoaded || this.latestNewsLoading) return;
+                    this.latestNewsLoading = true;
+                    this.latestNewsError = '';
+                    try {
+                        const res = await fetch(`${API_URL}/news?limit=3`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok || !data.success) throw new Error('unavailable');
+                        this.latestNews = data.posts || [];
+                        this.latestNewsLoaded = true;
+                        if (!this.latestNews.length) this.latestNewsError = 'No news yet.';
+                    } catch (e) {
+                        this.latestNewsError = 'Latest News is temporarily unavailable. Read it on esirom.com.';
+                    } finally {
+                        this.latestNewsLoading = false;
+                    }
+                },
+
+                formatNewsDate(value) {
+                    const d = new Date(value);
+                    return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Jamaica' });
                 },
 
                 async refreshAudienceInsights() {
